@@ -8,11 +8,10 @@ interface Props {
     title: string;
     highlight?: string;
     description?: string;
-    isSignIn?: boolean;
     children: ReactNode;
 }
 
-const AuthPageLayout = ({ title, highlight, description, isSignIn = false, children }: Props) => {
+const AuthPageLayout = ({ title, highlight, description, children }: Props) => {
     const { isMobile } = useContextProvider();
 
     const titleStyle: CSSProperties = {
@@ -31,7 +30,7 @@ const AuthPageLayout = ({ title, highlight, description, isSignIn = false, child
     };
 
     return (
-        <AuthLayout isSignIn={isSignIn}>
+        <AuthLayout>
             <div style={titleStyle}>
                 {title}{highlight && <span style={highlightStyle}>{highlight}</span>}
             </div>

@@ -7,10 +7,10 @@ import { safeNavigate } from '../utils/navigation';
 import { PrimaryButton } from '../components/common/PrimaryButton';
 import { ErrorMessage } from '../components/common/ErrorMessage';
 import { useContextProvider } from '../components/layout/ContextProvider';
-import AuthPageLayout from '../components/layout/AuthPageLayout';
 import { useDispatch, useSelector } from 'react-redux';
 import { setUserError, signIn } from '../actions/userAction';
 import type { RootState } from '../reducers/rootReducer';
+import AuthLayout from '../components/layout/AuthLayout';
 
 const SignInPage = () => {
     const { isMobile } = useContextProvider();
@@ -80,12 +80,7 @@ const SignInPage = () => {
     }, [email, password]);
 
     return (
-        <AuthPageLayout
-        title="Welcome Back To Onyx"
-        highlight="XR"
-        description="Please sign in to continue to your account."
-        isSignIn
-        >
+        <AuthLayout>
             <div style={inputContainerStyle}>
                 <PrimaryTextField type="text" label="Email" value={email} onChange={setEmail} placeholder="Enter your email" />
                 <PrimaryTextField type="password" label="Password" value={password} onChange={setPassword} placeholder="Enter your password" />
@@ -102,7 +97,7 @@ const SignInPage = () => {
             <div style={errorMessageContainerStyle}>
                 <ErrorMessage message={errorMessage} />
             </div>
-        </AuthPageLayout>
+        </AuthLayout>
     );
 };
 

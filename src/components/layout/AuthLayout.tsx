@@ -1,29 +1,43 @@
 import { type CSSProperties } from 'react';
-import { useContextProvider } from './ContextProvider';
+import authBackground from '../../assets/images/authBackground.jpg';
 
-const AuthLayout = ({children, isSignIn}: {children: React.ReactNode, isSignIn: boolean}) => {
-    const { isMobile } = useContextProvider();
+const AuthLayout = ({children}: {children: React.ReactNode}) => {
 
     const contentStyle: CSSProperties = {
-        height: `calc(100% - ${isMobile ? '60px' : '80px'})`,
+        width: '40%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        paddingTop: isSignIn ? (isMobile ? '10vh' : '15vh') : (isMobile ? '10vh' : '5vh'),
     };
 
     const pageStyle: CSSProperties = {
         width: '100vw',
         height: '100vh',
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'row'
     };
     
-    
+    const logoStyle: CSSProperties = {
+        width: '60%',
+        height: '100%',
+        overflow: 'hidden',
+    };
 
     return (
         <div style={pageStyle}>
-        <div style={contentStyle}>{children}</div>
+            <div style={logoStyle}>
+                <img src={authBackground} alt="authBackground"
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                    }}
+                />
+            </div>
+
+            <div style={contentStyle}>
+                {children}
+            </div>
         </div>
     );
 };

@@ -90,7 +90,6 @@ const SetInitPasswordPage = () => {
         <AuthPageLayout
             title="Reset Your Password"
             description={'Please enter your new password and confirm to sign in again.'}
-            isSignIn={false}
         >
 
             <div style={inputContainerStyle}>
