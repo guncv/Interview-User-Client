@@ -1,0 +1,66 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+@font-face {
+    font-family: 'Prompt-Regular';
+    src: url('./assets/fonts/Prompt-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Prompt-Medium';
+    src: url('./assets/fonts/Prompt-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Prompt-Bold';
+    src: url('./assets/fonts/Prompt-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Prompt-Light';
+    src: url('./assets/fonts/Prompt-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Prompt-ExtraLight';
+    src: url('./assets/fonts/Prompt-ExtraLight.ttf') format('truetype');
+    font-weight: 200;
+    font-style: normal;
+}
+
+/* Hide Scrollbar but keep functionality */
+::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: transparent;
+}
+
+/* For Firefox */
+* {
+    scrollbar-width: none;
+}
+
+/* For Internet Explorer and Edge */
+* {
+    -ms-overflow-style: none;
+}
+
+/* Spin animation for loading spinners */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

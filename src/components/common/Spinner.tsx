@@ -1,4 +1,5 @@
 import React from 'react';
+import loadingAnimation from '../../assets/animations/loading.lottie?url';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import Colors from '../../assets/styles/Color';
 
@@ -49,7 +50,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ isVisible }) => {
             <div style={backdropStyle} />
             <div style={animationContainerStyle}>
                 <DotLottieReact
-                    src="/loading.lottie"
+                    src={loadingAnimation}
                     loop={true}
                     autoplay={true}
                     style={animationStyle}

@@ -1,4 +1,4 @@
-# interview-user-client
+# onyx-trainee-dashboard
 
 
 
@@ -15,14 +15,14 @@ Already a pro? Just edit this README.md and make it your own. Want to make it ea
 
 ```
 cd existing_repo
-git remote add origin https://gitlab.com/interview-simulation/interview-user-client.git
+git remote add origin https://gitlab.com/onyxxr/onyx-trainee-dashboard.git
 git branch -M main
 git push -uf origin main
 ```
 
 ## Integrate with your tools
 
-- [ ] [Set up project integrations](https://gitlab.com/interview-simulation/interview-user-client/-/settings/integrations)
+- [ ] [Set up project integrations](https://gitlab.com/onyxxr/onyx-trainee-dashboard/-/settings/integrations)
 
 ## Collaborate with your team
 

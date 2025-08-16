@@ -5,7 +5,7 @@ export interface ErrorResponse {
     code: string;
     message: string;
     statusCode: number;
-    err: unknown;
+    err: any;
 }
 
 export const handleApiError = (error: AxiosError): ErrorResponse => {

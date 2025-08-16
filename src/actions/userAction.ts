@@ -1,11 +1,11 @@
-export const SIGN_IN_MENTOR = 'SIGN_IN_MENTOR';
+export const SIGN_IN = 'SIGN_IN';
 export const SET_INITIAL_PASSWORD = 'SET_INITIAL_PASSWORD';
 export const FORGOT_PASSWORD = 'FORGOT_PASSWORD';
 export const SET_USER_ERROR = 'SET_USER_ERROR';
 export const SIGN_OUT = 'SIGN_OUT';
 
-export const signInMentor = (email: string, password: string) => {
-    return { type: SIGN_IN_MENTOR, payload: { email, password } };
+export const signIn = (email: string, password: string) => {
+    return { type: SIGN_IN, payload: { email, password } };
 };
 
 export const setInitialPassword = (password: string) => {

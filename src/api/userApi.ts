@@ -1,13 +1,13 @@
 import { AxiosError } from 'axios';
-import { config } from '../env';
+import { config } from '../../env';
 import type { UserForgotPasswordRequest, UserSignInRequest } from '../interface/userInterface';
 import { handleApiError } from './errorApi';
 import { API_ENDPOINTS, HTTP_HEADERS, ROLE } from '../constants';
 import axiosInstance from './axiosInstance';
 
-export const apiSignInMentor = async (payload: UserSignInRequest) => {
+export const apiSignIn = async (payload: UserSignInRequest) => {
     try {
-        const response = await axiosInstance.post(`${config.API_BASE_URL}${API_ENDPOINTS.SIGN_IN_MENTOR}`, {
+        const response = await axiosInstance.post(`${config.Domain}${API_ENDPOINTS.SIGN_IN}`, {
             email: payload.email,
             password: payload.password,
         },
@@ -25,7 +25,7 @@ export const apiSignInMentor = async (payload: UserSignInRequest) => {
 
 export const apiSetInitialPassword = async (password: string) => {
     try {
-        const response = await axiosInstance.post(`${config.API_BASE_URL}${API_ENDPOINTS.SET_INITIAL_PASSWORD}`, {
+        const response = await axiosInstance.post(`${config.Domain}${API_ENDPOINTS.SET_INITIAL_PASSWORD}`, {
             password,
         });
 
@@ -37,7 +37,7 @@ export const apiSetInitialPassword = async (password: string) => {
 
 export const apiForgotPassword = async (payload: UserForgotPasswordRequest) => {
     try {
-        const response = await axiosInstance.post(`${config.API_BASE_URL}${API_ENDPOINTS.FORGOT_PASSWORD}`, {
+        const response = await axiosInstance.post(`${config.Domain}${API_ENDPOINTS.FORGOT_PASSWORD}`, {
             email: payload.email,
         });
 
@@ -49,7 +49,7 @@ export const apiForgotPassword = async (payload: UserForgotPasswordRequest) => {
 
 export const apiSignOut = async () => {
     try {
-        const response = await axiosInstance.post(`${config.API_BASE_URL}${API_ENDPOINTS.SIGN_OUT}`);
+        const response = await axiosInstance.post(`${config.Domain}${API_ENDPOINTS.SIGN_OUT}`);
 
         return { success: true, data: response.data };
     } catch (error) {

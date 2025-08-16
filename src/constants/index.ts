@@ -1,6 +1,6 @@
 // API Constants
 export const API_ENDPOINTS = {
-  SIGN_IN_MENTOR: '/api/v1/auth/sign-in',
+  SIGN_IN: '/api/v1/auth/sign-in',
   SET_INITIAL_PASSWORD: '/api/v1/auth/set-init-password',
   FORGOT_PASSWORD: '/api/v1/auth/forgot-password',
   SIGN_OUT: '/api/v1/auth/sign-out',

@@ -5,16 +5,16 @@ import SideBarItem from '../common/SideBarItem';
 import { LogOut, Menu, School, X } from 'lucide-react';
 import Size from '../../assets/styles/Size';
 import Fonts from '../../assets/styles/Font';
-import { usePathname } from 'next/navigation';
-import { useSafeNavigate } from '../../utils/navigation';
+import { useLocation } from 'react-router-dom';
+import { safeNavigate } from '../../utils/navigation';
 import { useContextProvider } from './ContextProvider';
 import { showSignOutPopup } from './AppProvider';
 
 
 
 const ContentLayout = ({ children }: { children: React.ReactNode }) => {
-    const pathname = usePathname();
-    const navigate = useSafeNavigate();
+    const location = useLocation();
+    const pathname = location.pathname;
     const { isMobile, isTablet } = useContextProvider();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -32,7 +32,7 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
     const isActive = (path: string) => pathname === path;
 
     const handleNavigate = (path: string) => {
-        if (!isActive(path)) navigate(path);
+        if (!isActive(path)) safeNavigate(path);
     };
 
 
@@ -148,7 +148,7 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
         <div style={sideBarStyle}>
             {isMobile || isTablet ? (
             <div style={barContentWrapperStyle}>
-                <img src={logo.src} alt="Logo" style={logoStyle} />
+                <img src={logo} alt="Logo" style={logoStyle} />
                 <SideBarItem
                 icon={<Menu style={sideBarItemStyle} />}
                 text=""
@@ -161,7 +161,7 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
             <>
                 <div>
                     <div style={{ paddingLeft: '10px', paddingTop: '15px' }}>
-                        <img src={logo.src} alt="Logo" style={logoStyle} />
+                        <img src={logo} alt="Logo" style={logoStyle} />
                     </div>
                     <div style={sideBarItemContainerStyle}>
                         {menuItems.map((item) => (

@@ -1,9 +1,9 @@
 import { all } from 'redux-saga/effects';
-import { watcherSignInMentor, watcherSetInitialPassword, watcherForgotPassword, watcherSignOut } from './userSaga';
+import { watcherSetInitialPassword, watcherForgotPassword, watcherSignOut, watcherSignIn } from './userSaga';
 
 export default function* rootSaga() {
     yield all([
-        watcherSignInMentor(),
+        watcherSignIn(),
         watcherSetInitialPassword(),
         watcherForgotPassword(),
         watcherSignOut(),

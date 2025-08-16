@@ -1,18 +1,18 @@
 import { call, delay, put} from 'redux-saga/effects';
 import type { SagaIterator } from 'redux-saga';
 import { take } from 'redux-saga/effects';
-import { FORGOT_PASSWORD, SET_INITIAL_PASSWORD, SIGN_IN_MENTOR, setUserError, SIGN_OUT } from '../actions/userAction';
+import { FORGOT_PASSWORD, SET_INITIAL_PASSWORD, SIGN_IN, setUserError, SIGN_OUT } from '../actions/userAction';
 import { showSpinner, hideSpinner, hideSignOutPopup } from '../components/layout/AppProvider';
 import type { UserForgotPasswordRequest, UserSetInitialPasswordRequest, UserSignInRequest } from '../interface/userInterface';
-import { apiForgotPassword, apiSetInitialPassword, apiSignInMentor, apiSignOut } from '../api/userApi';
+import { apiForgotPassword, apiSetInitialPassword, apiSignIn, apiSignOut } from '../api/userApi';
 import { safeNavigate } from '../utils/navigation';
 import { STORAGE_KEYS, ROUTES, HTTP_STATUS, ERROR_MESSAGES } from '../constants';
 
-function* workerSignInMentor(payload: UserSignInRequest): SagaIterator {
+function* workerSignIn(payload: UserSignInRequest): SagaIterator {
     try {
         yield delay(0);
         yield call(showSpinner);
-        const response = yield call(apiSignInMentor, payload);
+        const response = yield call(apiSignIn, payload);
         if (response.success) {
             localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.data.access_token);
             if (response.data.is_temp_password) {
@@ -32,10 +32,10 @@ function* workerSignInMentor(payload: UserSignInRequest): SagaIterator {
     }
 }
 
-export function* watcherSignInMentor(): SagaIterator {
+export function* watcherSignIn(): SagaIterator {
     while (true) {
-        const action = yield take(SIGN_IN_MENTOR);
-        yield call(workerSignInMentor, action.payload);
+        const action = yield take(SIGN_IN);
+        yield call(workerSignIn, action.payload);
     }
 }
 

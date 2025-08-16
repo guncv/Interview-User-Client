@@ -32,11 +32,11 @@ export const userReducer = (
         }
     };
     
-export const selectUser = (state: RootState) => state.user;
-
-export const userSelector = createSelector(
-    [selectUser],
-    (user: UserState) => ({
+    const selectUser = (state: RootState) => state.user;
+    
+    export const userSelector = createSelector(
+        [selectUser],
+        (user: UserState) => ({
         error: user.error,
-    }),
-);
+        }),
+    );

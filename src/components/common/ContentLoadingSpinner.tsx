@@ -1,5 +1,6 @@
 import React from 'react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import loadingAnimation from '../../assets/animations/loading.lottie?url';
 
 interface ContentLoadingSpinnerProps {
     isVisible?: boolean;
@@ -17,7 +18,7 @@ const ContentLoadingSpinner: React.FC<ContentLoadingSpinnerProps> = ({ isVisible
     return (
         <div style={wrapperStyle}>
             <DotLottieReact
-                src="/loading.lottie"
+                src={loadingAnimation}
                 loop={true}
                 autoplay={true}
                 style={animationStyle}

@@ -8,8 +8,10 @@ interface ContextProviderProps {
 const Context = createContext<ContextProviderProps | undefined>(undefined);
 
 export const ContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [isMobile, setIsMobile] = useState(false);
-    const [isTablet, setIsTablet] = useState(false);
+    const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 640);
+    const [isTablet, setIsTablet] = useState(() =>
+        window.innerWidth > 640 && window.innerWidth <= 1024,
+    );
     
     useEffect(() => {
         const handleResize = () => {
@@ -18,10 +20,8 @@ export const ContextProvider: React.FC<{ children: ReactNode }> = ({ children })
             setIsTablet(width > 640 && width <= 1024);
         };
     
-        // Set initial values
-        handleResize();
-        
         window.addEventListener('resize', handleResize);
+        handleResize();
         
         return () => window.removeEventListener('resize', handleResize);
     }, []);

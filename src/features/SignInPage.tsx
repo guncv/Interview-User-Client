@@ -3,20 +3,19 @@ import Colors from '../assets/styles/Color';
 import Size from '../assets/styles/Size';
 import { isValidEmail } from '../utils/format';
 import { PrimaryTextField } from '../components/common/PrimaryTextField';
-import { useSafeNavigate } from '../utils/navigation';
+import { safeNavigate } from '../utils/navigation';
 import { PrimaryButton } from '../components/common/PrimaryButton';
 import { ErrorMessage } from '../components/common/ErrorMessage';
 import { useContextProvider } from '../components/layout/ContextProvider';
 import AuthPageLayout from '../components/layout/AuthPageLayout';
 import { useDispatch, useSelector } from 'react-redux';
-import { setUserError, signInMentor } from '../actions/userAction';
-import { userSelector } from '../reducers/userReducer';
+import { setUserError, signIn } from '../actions/userAction';
+import type { RootState } from '../reducers/rootReducer';
 
 const SignInPage = () => {
     const { isMobile } = useContextProvider();
     const dispatch = useDispatch();
-    const { error } = useSelector(userSelector);
-    const navigate = useSafeNavigate();
+    const { error } = useSelector((state: RootState) => state.user);
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -73,7 +72,7 @@ const SignInPage = () => {
         }
         setErrorMessage('');
         dispatch(setUserError(''));
-        dispatch(signInMentor(email, password));
+        dispatch(signIn(email, password));
     };
     
     useEffect(() => {
@@ -93,7 +92,7 @@ const SignInPage = () => {
             </div>
 
             <div style={forgotPasswordContainerStyle}>
-                <span style={forgotPasswordTextStyle} onClick={() => navigate('/forgot-password')}>Forgot Password?</span>
+                <span style={forgotPasswordTextStyle} onClick={() => safeNavigate('/forgot-password')}>Forgot Password?</span>
             </div>
 
             <div style={buttonContainerStyle}>
