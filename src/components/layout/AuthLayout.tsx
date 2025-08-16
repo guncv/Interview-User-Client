@@ -4,10 +4,11 @@ import authBackground from '../../assets/images/authBackground.jpg';
 const AuthLayout = ({children}: {children: React.ReactNode}) => {
 
     const contentStyle: CSSProperties = {
-        width: '40%',
+        width: '45%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
+        justifyContent: 'center',
     };
 
     const pageStyle: CSSProperties = {
@@ -20,7 +21,7 @@ const AuthLayout = ({children}: {children: React.ReactNode}) => {
     };
     
     const logoStyle: CSSProperties = {
-        width: '60%',
+        width: '55%',
         height: '100%',
         overflow: 'hidden',
     };

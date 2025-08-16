@@ -5,7 +5,6 @@ import { isValidEmail } from '../utils/format';
 import { PrimaryTextField } from '../components/common/PrimaryTextField';
 import { safeNavigate } from '../utils/navigation';
 import { PrimaryButton } from '../components/common/PrimaryButton';
-import { ErrorMessage } from '../components/common/ErrorMessage';
 import { useContextProvider } from '../components/layout/ContextProvider';
 import { useDispatch, useSelector } from 'react-redux';
 import { setUserError, signIn } from '../actions/userAction';
@@ -24,6 +23,11 @@ const SignUpPage = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [fullName, setFullName] = useState('');
+    const [address, setAddress] = useState('');
+    const [country, setCountry] = useState('');
+    const [city, setCity] = useState('');
+    const [gender, setGender] = useState('');
+    const [dateOfBirth, setDateOfBirth] = useState('');
 
     useEffect(() => {
         if (error) {
@@ -35,7 +39,7 @@ const SignUpPage = () => {
         display: 'flex',
         flexDirection: 'column',
         gap: Size.Medium,
-        marginTop: Size.Large,
+        marginTop: Size.Small,
         width: isMobile ? '80vw' : '450px',
     };
 
@@ -63,7 +67,7 @@ const SignUpPage = () => {
 
     const buttonContainerStyle: CSSProperties = {
         width: isMobile ? '80vw' : '450px',
-        marginTop: Size.ExtraLarge,
+        marginTop: Size.LargeMedium,
     };
 
     const errorMessageContainerStyle: CSSProperties = {
@@ -77,6 +81,12 @@ const SignUpPage = () => {
         marginTop: Size.Small,
         color: Colors.ACCENT_COLOR,
         fontFamily: font.Regular,
+    };
+
+    const halfFormContainerStyle: CSSProperties = {
+        display: 'flex',
+        flexDirection: 'row',
+        gap: Size.Medium,
     };
 
     const handleSignIn = () => {
@@ -105,7 +115,6 @@ const SignUpPage = () => {
     return (
         <AuthPageLayout
             title="Create Your Account"
-            description="Please enter your email and password to create your account."
             signUp={true}
         >
             <div style={inputContainerStyle}>
@@ -113,22 +122,30 @@ const SignUpPage = () => {
                 <PrimaryTextField type="password" label="Password" value={password} onChange={setPassword} placeholder="Enter your password" />
                 <PrimaryTextField type="password" label="Confirm Password" value={confirmPassword} onChange={setConfirmPassword} placeholder="Confirm your password" />
                 <PrimaryTextField type="text" label="Full Name" value={fullName} onChange={setFullName} placeholder="Enter your full name" />
+                <PrimaryTextField type="text" label="Address" value={address} onChange={setAddress} placeholder="Enter your address" />
+
+                <div style={halfFormContainerStyle}>
+                    <PrimaryTextField type="text" label="Country" value={country} onChange={setCountry} placeholder="Enter your country" />
+                    <PrimaryTextField type="text" label="City" value={city} onChange={setCity} placeholder="Enter your city" />
+                </div>
+
+                <div style={halfFormContainerStyle}>
+                    <PrimaryTextField type="text" label="Gender" value={gender} onChange={setGender} placeholder="Enter your gender" />
+                    <PrimaryTextField type="text" label="Date of Birth" value={dateOfBirth} onChange={setDateOfBirth} placeholder="Enter your date of birth" />
+                </div>
             </div>
 
             <div style={buttonContainerStyle}>
-                <PrimaryButton label="Sign In" onClick={handleSignIn} />
+                <PrimaryButton label="Sign Up Your Account" onClick={handleSignIn} />
             </div>
 
             <div style={createAccountStyle}>
-                <span style={dontHaveAccountTextStyle}>Don't have an account? </span>
+                <span style={dontHaveAccountTextStyle}>Already have an account? </span>
                 <span>{" "}</span>
-                <span style={createAccountTextStyle} onClick={() => safeNavigate('/create-account')}>Sign up here</span>
+                <span style={createAccountTextStyle} onClick={() => safeNavigate('/')}>Sign in here</span>
                 <ArrowRightIcon style={arrowRightIconStyle} />
             </div>
 
-            <div style={errorMessageContainerStyle}>
-                <ErrorMessage message={errorMessage} />
-            </div>
         </AuthPageLayout>
     );
 };
