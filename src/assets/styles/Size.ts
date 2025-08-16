@@ -3,7 +3,7 @@ const Size = {
     Medium: '15px',
     LargeMedium: '20px',
     Large: '25px',
-    ExtraLarge: '30px',
+    ExtraLarge: '40px',
 };
 
 export default Size;

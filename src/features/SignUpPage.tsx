@@ -14,14 +14,16 @@ import AuthPageLayout from '../components/layout/AuthPageLayout';
 import { ArrowRightIcon } from 'lucide-react';
 import font from '../assets/styles/Font';
 
-const SignInPage = () => {
+const SignUpPage = () => {
     const { isMobile } = useContextProvider();
     const dispatch = useDispatch();
     const { error } = useSelector((state: RootState) => state.user);
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [fullName, setFullName] = useState('');
 
     useEffect(() => {
         if (error) {
@@ -35,19 +37,6 @@ const SignInPage = () => {
         gap: Size.Medium,
         marginTop: Size.Large,
         width: isMobile ? '80vw' : '450px',
-    };
-
-    const forgotPasswordContainerStyle: CSSProperties = {
-        width: isMobile ? '80vw' : '450px',
-        textAlign: 'right',
-        marginTop: Size.Small,
-    };
-
-    const forgotPasswordTextStyle: CSSProperties = {
-        cursor: 'pointer',
-        display: 'inline-block',
-        color: Colors.ACCENT_COLOR,
-        fontSize: Size.Medium,
     };
 
     const dontHaveAccountTextStyle: CSSProperties = {
@@ -100,6 +89,9 @@ const SignInPage = () => {
         } if (password.length < 8) {
             setErrorMessage('Your password must be at least 8 characters long.');
             return;
+        } if (password !== confirmPassword) {
+            setErrorMessage('The passwords you entered do not match. Please check and try again.');
+            return;
         }
         setErrorMessage('');
         dispatch(setUserError(''));
@@ -108,21 +100,19 @@ const SignInPage = () => {
     
     useEffect(() => {
         setErrorMessage('');
-    }, [email, password]);
+    }, [email, password, confirmPassword]);
 
     return (
         <AuthPageLayout
-            title="Welcome Back To Eval"
-            highlight="ia"
-            description="Please sign in to continue to your account."
+            title="Create Your Account"
+            description="Please enter your email and password to create your account."
+            signUp={true}
         >
             <div style={inputContainerStyle}>
                 <PrimaryTextField type="text" label="Email" value={email} onChange={setEmail} placeholder="Enter your email" />
                 <PrimaryTextField type="password" label="Password" value={password} onChange={setPassword} placeholder="Enter your password" />
-            </div>
-
-            <div style={forgotPasswordContainerStyle}>
-                <span style={forgotPasswordTextStyle} onClick={() => safeNavigate('/forgot-password')}>Forgot Password?</span>
+                <PrimaryTextField type="password" label="Confirm Password" value={confirmPassword} onChange={setConfirmPassword} placeholder="Confirm your password" />
+                <PrimaryTextField type="text" label="Full Name" value={fullName} onChange={setFullName} placeholder="Enter your full name" />
             </div>
 
             <div style={buttonContainerStyle}>
@@ -132,7 +122,7 @@ const SignInPage = () => {
             <div style={createAccountStyle}>
                 <span style={dontHaveAccountTextStyle}>Don't have an account? </span>
                 <span>{" "}</span>
-                <span style={createAccountTextStyle} onClick={() => safeNavigate('/sign-up')}>Sign up here</span>
+                <span style={createAccountTextStyle} onClick={() => safeNavigate('/create-account')}>Sign up here</span>
                 <ArrowRightIcon style={arrowRightIconStyle} />
             </div>
 
@@ -143,4 +133,4 @@ const SignInPage = () => {
     );
 };
 
-export default SignInPage;
+export default SignUpPage;

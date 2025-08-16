@@ -14,7 +14,9 @@ const AuthLayout = ({children}: {children: React.ReactNode}) => {
         width: '100vw',
         height: '100vh',
         display: 'flex',
-        flexDirection: 'row'
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
     };
     
     const logoStyle: CSSProperties = {

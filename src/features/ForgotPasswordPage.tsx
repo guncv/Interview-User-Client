@@ -129,7 +129,7 @@ const ForgotPasswordPage = () => {
     return (
         <AuthPageLayout
             title="Forgot Password"
-            description={'Please enter the email you used to register.\nWe\'ll send you a link to reset your password.'}
+            description={'Please enter the email you used to sign in.\nWe\'ll send you a link to reset your password.'}
         >
 
             <div style={inputContainerStyle}>

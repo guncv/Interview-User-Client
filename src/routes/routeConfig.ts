@@ -1,6 +1,6 @@
 import SignInPage from '../features/SignInPage';
 import ForgotPasswordPage from '../features/ForgotPasswordPage';
-import SetInitPasswordPage from '../features/SetInitPassword';
+import SignUpPage from '../features/SignUpPage';
 
 interface ComponentProps {
   title: string;
@@ -15,5 +15,5 @@ export interface RouteConfig {
 export const routes: RouteConfig[]= [
   { path: '/', component: SignInPage, exact: true },
   { path: '/forgot-password', component: ForgotPasswordPage, exact: true },
-  { path: '/set-init-password', component: SetInitPasswordPage, exact: true},
+  { path: '/sign-up', component: SignUpPage, exact: true},
 ];

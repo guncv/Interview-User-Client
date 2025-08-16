@@ -14,7 +14,7 @@ type Props = {
 export const PrimaryButton = ({ label, onClick, style, isCancel = false, isDisabled = false }: Props) => {
     const buttonStyle: CSSProperties = {
         width: '100%',
-        borderRadius: Size.Medium,
+        borderRadius: Size.Small,
         backgroundColor: isCancel ? Colors.TEXT_ERROR_COLOR : isDisabled ? Colors.DISABLED_TEXT_COLOR : Colors.ACCENT_COLOR,
         color: Colors.TEXT_WHITE_COLOR,
         fontFamily: font.Regular,

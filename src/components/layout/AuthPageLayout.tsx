@@ -3,15 +3,17 @@ import AuthLayout from './AuthLayout';
 import { useContextProvider } from './ContextProvider';
 import Colors from '../../assets/styles/Color';
 import Size from '../../assets/styles/Size';
+import font from '../../assets/styles/Font';
 
 interface Props {
     title: string;
     highlight?: string;
     description?: string;
+    signUp?: boolean;
     children: ReactNode;
 }
 
-const AuthPageLayout = ({ title, highlight, description, children }: Props) => {
+const AuthPageLayout = ({ title, highlight, description, signUp = false, children }: Props) => {
     const { isMobile } = useContextProvider();
 
     const titleStyle: CSSProperties = {
@@ -35,7 +37,18 @@ const AuthPageLayout = ({ title, highlight, description, children }: Props) => {
                 {title}{highlight && <span style={highlightStyle}>{highlight}</span>}
             </div>
             {description && <div style={descriptionStyle}>{description}</div>}
-            {children}
+
+            <div style={{ 
+                width: '100%', 
+                marginTop: signUp ? Size.Small : Size.ExtraLarge, 
+                fontFamily: font.Regular, 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: Size.Medium,
+                alignItems: 'center',
+            }}>
+                {children}
+            </div>
         </AuthLayout>
     );
 };
