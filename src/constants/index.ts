@@ -1,0 +1,104 @@
+// API Constants
+export const API_ENDPOINTS = {
+  SIGN_IN_MENTOR: '/api/v1/auth/sign-in',
+  SET_INITIAL_PASSWORD: '/api/v1/auth/set-init-password',
+  FORGOT_PASSWORD: '/api/v1/auth/forgot-password',
+  SIGN_OUT: '/api/v1/auth/sign-out',
+} as const;
+
+export const HTTP_HEADERS = {
+  CONTENT_TYPE: 'Content-Type',
+  AUTHORIZATION: 'Authorization',
+  APPLICATION_JSON: 'application/json',
+  BEARER: 'Bearer',
+  ROLE: 'X-Active-Role',
+  WITH_CREDENTIALS: true,
+} as const;
+
+export const ROLE = {
+  TRAINEE: 'trainee',
+} as const;
+
+// Local Storage Keys
+export const STORAGE_KEYS = {
+  ACCESS_TOKEN: 'access_token',
+} as const;
+
+// HTTP Status Codes
+export const HTTP_STATUS = {
+  UNAUTHORIZED: 401,
+} as const;
+
+// Navigation Routes
+export const ROUTES = {
+  HOME: '/',
+  SET_INIT_PASSWORD: '/set-init-password',
+  COURSE_LIST: '/courses',
+} as const;
+
+// Rating Constants
+export const RATING = {
+  MAX_STARS: 5,
+  MIN_STARS: 1,
+  DEFAULT_SIZE: 24,
+  SMALL_SIZE: 20,
+  LARGE_SIZE: 25,
+} as const;
+
+// Review Constants
+export const REVIEW = {
+  MIN_DESCRIPTION_LENGTH: 50,
+  DEFAULT_RATING: 0,
+} as const;
+
+// UI Constants
+export const UI = {
+  BORDER_RADIUS: {
+    SMALL: '4px',
+    MEDIUM: '10px',
+    LARGE: '12px',
+  },
+  GAP: {
+    SMALL: '5px',
+    MEDIUM: '10px',
+    LARGE: '15px',
+    XLARGE: '20px',
+    XXLARGE: '30px',
+  },
+  PADDING: {
+    SMALL: '10px',
+    MEDIUM: '20px',
+  },
+  MARGIN: {
+    SMALL: '5px',
+    MEDIUM: '10px',
+    LARGE: '20px',
+  },
+  WIDTH: {
+    BUTTON: '150px',
+    TEXTAREA: '60%',
+  },
+  HEIGHT: {
+    BUTTON: '40px',
+    PROGRESS_BAR: '8px',
+  },
+} as const;
+
+// Colors
+export const COLORS = {
+  GOLD: 'gold',
+  GRAY: 'gray',
+} as const;
+
+// Event Names
+export const EVENTS = {
+  SHOW_SPINNER: 'show_spinner',
+  HIDE_SPINNER: 'hide_spinner',
+  SHOW_SIGN_OUT_POPUP: 'show_sign_out_popup',
+  HIDE_SIGN_OUT_POPUP: 'hide_sign_out_popup',
+} as const;
+
+// Error Messages
+export const ERROR_MESSAGES = {
+  UNEXPECTED_ERROR: 'Unexpected error',
+} as const; 
