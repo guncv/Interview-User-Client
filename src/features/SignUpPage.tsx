@@ -2,9 +2,10 @@ import { useState, useEffect, type CSSProperties } from 'react';
 import Colors from '../assets/styles/Color';
 import Size from '../assets/styles/Size';
 import { isValidEmail } from '../utils/format';
-import { PrimaryTextField } from '../components/common/PrimaryTextField';
+import { PrimaryTextField, PrimaryDropdown, PrimaryDatePicker } from '../components/common';
 import { safeNavigate } from '../utils/navigation';
 import { PrimaryButton } from '../components/common/PrimaryButton';
+import { ErrorMessage } from '../components/common/ErrorMessage';
 import { useContextProvider } from '../components/layout/ContextProvider';
 import { useDispatch, useSelector } from 'react-redux';
 import { setUserError, signIn } from '../actions/userAction';
@@ -23,11 +24,17 @@ const SignUpPage = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [fullName, setFullName] = useState('');
-    const [address, setAddress] = useState('');
-    const [country, setCountry] = useState('');
     const [city, setCity] = useState('');
     const [gender, setGender] = useState('');
     const [dateOfBirth, setDateOfBirth] = useState('');
+
+    // Gender options for the dropdown
+    const genderOptions = [
+        { value: 'male', label: 'Male' },
+        { value: 'female', label: 'Female' },
+        { value: 'other', label: 'Other' },
+        { value: 'prefer-not-to-say', label: 'Prefer not to say' }
+    ];
 
     useEffect(() => {
         if (error) {
@@ -63,7 +70,6 @@ const SignUpPage = () => {
         width: Size.Medium,
         height: Size.Medium,
     };
-
 
     const buttonContainerStyle: CSSProperties = {
         width: isMobile ? '80vw' : '450px',
@@ -102,6 +108,18 @@ const SignUpPage = () => {
         } if (password !== confirmPassword) {
             setErrorMessage('The passwords you entered do not match. Please check and try again.');
             return;
+        } if (!fullName.trim()) {
+            setErrorMessage('Please enter your full name.');
+            return;
+        } if (!city.trim()) {
+            setErrorMessage('Please enter your city.');
+            return;
+        } if (!gender) {
+            setErrorMessage('Please select your gender.');
+            return;
+        } if (!dateOfBirth) {
+            setErrorMessage('Please select your date of birth.');
+            return;
         }
         setErrorMessage('');
         dispatch(setUserError(''));
@@ -110,7 +128,7 @@ const SignUpPage = () => {
     
     useEffect(() => {
         setErrorMessage('');
-    }, [email, password, confirmPassword]);
+    }, [email, password, confirmPassword, fullName, city, gender, dateOfBirth]);
 
     return (
         <AuthPageLayout
@@ -121,23 +139,40 @@ const SignUpPage = () => {
                 <PrimaryTextField type="text" label="Email" value={email} onChange={setEmail} placeholder="Enter your email" />
                 <PrimaryTextField type="password" label="Password" value={password} onChange={setPassword} placeholder="Enter your password" />
                 <PrimaryTextField type="password" label="Confirm Password" value={confirmPassword} onChange={setConfirmPassword} placeholder="Confirm your password" />
-                <PrimaryTextField type="text" label="Full Name" value={fullName} onChange={setFullName} placeholder="Enter your full name" />
-                <PrimaryTextField type="text" label="Address" value={address} onChange={setAddress} placeholder="Enter your address" />
 
                 <div style={halfFormContainerStyle}>
-                    <PrimaryTextField type="text" label="Country" value={country} onChange={setCountry} placeholder="Enter your country" />
-                    <PrimaryTextField type="text" label="City" value={city} onChange={setCity} placeholder="Enter your city" />
+                    <PrimaryDropdown
+                        label="Gender"
+                        value={gender}
+                        onChange={setGender}
+                        placeholder="Select your gender"
+                        options={genderOptions}
+                    />
+                    <PrimaryDatePicker
+                        label="Date of Birth"
+                        value={dateOfBirth}
+                        onChange={setDateOfBirth}
+                        placeholder="Select your date of birth"
+                        maxDate={new Date().toISOString().split('T')[0]}
+                    />
                 </div>
 
+                <PrimaryTextField type="text" label="Full Name" value={fullName} onChange={setFullName} placeholder="Enter your full name" />
+
                 <div style={halfFormContainerStyle}>
-                    <PrimaryTextField type="text" label="Gender" value={gender} onChange={setGender} placeholder="Enter your gender" />
-                    <PrimaryTextField type="text" label="Date of Birth" value={dateOfBirth} onChange={setDateOfBirth} placeholder="Enter your date of birth" />
+                    <PrimaryTextField type="text" label="City" value={city} onChange={setCity} placeholder="Enter your city" />
                 </div>
             </div>
 
             <div style={buttonContainerStyle}>
                 <PrimaryButton label="Sign Up Your Account" onClick={handleSignIn} />
             </div>
+
+            {errorMessage && (
+                <div style={errorMessageContainerStyle}>
+                    <ErrorMessage message={errorMessage} />
+                </div>
+            )}
 
             <div style={createAccountStyle}>
                 <span style={dontHaveAccountTextStyle}>Already have an account? </span>
