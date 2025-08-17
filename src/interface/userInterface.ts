@@ -3,6 +3,20 @@ export interface UserSignInRequest {
     password: string;
 }
 
+export interface UserSignUpRequest {
+    email: string;
+    password: string;
+    full_name: string;
+    country: string;
+    gender: string;
+    date_of_birth: string;
+}
+
+export interface UserVerifyEmailRequest {
+    token: string;
+    code: string;
+}
+
 export interface UserSignInResponse {
     id: string;
     access_token: string;

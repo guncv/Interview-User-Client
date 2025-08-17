@@ -3,20 +3,21 @@ import AuthLayout from './AuthLayout';
 import { useContextProvider } from './ContextProvider';
 import Colors from '../../assets/styles/Color';
 import Size from '../../assets/styles/Size';
+import font from '../../assets/styles/Font';
 
 interface Props {
     title: string;
     highlight?: string;
     description?: string;
-    isSignIn?: boolean;
+    signUp?: boolean;
     children: ReactNode;
 }
 
-const AuthPageLayout = ({ title, highlight, description, isSignIn = false, children }: Props) => {
+const AuthPageLayout = ({ title, highlight, description, signUp = false, children }: Props) => {
     const { isMobile } = useContextProvider();
 
     const titleStyle: CSSProperties = {
-        fontSize: isMobile ? '6vw' : Size.ExtraLarge,
+        fontSize: isMobile ? '20px' : '35px',
         color: Colors.PRIMARY_COLOR,
     };
 
@@ -25,18 +26,29 @@ const AuthPageLayout = ({ title, highlight, description, isSignIn = false, child
     };
 
     const descriptionStyle: CSSProperties = {
-        fontSize: isMobile ? '3vw' : Size.Medium,
+        fontSize: isMobile ? Size.Small : Size.Medium,
         color: Colors.SECONDARY_TEXT_COLOR,
         whiteSpace: 'pre-line',
     };
 
     return (
-        <AuthLayout isSignIn={isSignIn}>
+        <AuthLayout>
             <div style={titleStyle}>
                 {title}{highlight && <span style={highlightStyle}>{highlight}</span>}
             </div>
             {description && <div style={descriptionStyle}>{description}</div>}
-            {children}
+
+            <div style={{
+                width: '100%',
+                marginTop: signUp ? Size.Small : Size.Medium,
+                fontFamily: font.Regular, 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: Size.Small,
+                alignItems: 'center',
+            }}>
+                {children}
+            </div>
         </AuthLayout>
     );
 };

@@ -1,19 +1,26 @@
 import SignInPage from '../features/SignInPage';
 import ForgotPasswordPage from '../features/ForgotPasswordPage';
-import SetInitPasswordPage from '../features/SetInitPassword';
+import SignUpPage from '../features/SignUpPage';
+import VerifyEmail from '../features/VerifyEmail';
+import ResetPassword from '../features/ResetPassword';
+import ResetPasswordSuccess from '../features/ResetPasswordSuccess';
 
 interface ComponentProps {
   title: string;
   isActive: boolean;
 }
 export interface RouteConfig {
+  routes?: any;
   path: string;
-  component: React.FC<ComponentProps>
+  component: React.FC<ComponentProps>;
   exact: boolean;
 } 
 
 export const routes: RouteConfig[]= [
   { path: '/', component: SignInPage, exact: true },
   { path: '/forgot-password', component: ForgotPasswordPage, exact: true },
-  { path: '/set-init-password', component: SetInitPasswordPage, exact: true},
+  { path: '/sign-up', component: SignUpPage, exact: true},
+  { path: '/verify-email', component: VerifyEmail, exact: true},
+  { path: '/reset-password', component: ResetPassword, exact: true},
+  { path: '/reset-password-success', component: ResetPasswordSuccess, exact: true},
 ];

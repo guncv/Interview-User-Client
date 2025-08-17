@@ -1,6 +1,5 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import Colors from '../../assets/styles/Color';
-import logo from '../../assets/images/logo_darktheme.png';
 import SideBarItem from '../common/SideBarItem';
 import { LogOut, Menu, School, X } from 'lucide-react';
 import Size from '../../assets/styles/Size';
@@ -132,12 +131,6 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
         fontFamily: Fonts.Light,
     };
 
-    const logoStyle: CSSProperties = {
-        height: '40px',
-        width: 'auto',
-        objectFit: 'contain',
-    };
-
     const menuItems: { icon: React.ReactNode; text: string; path: string }[] = [
         { icon: <School style={sideBarItemStyle} />, text: 'Courses List', path: '/courses' },
     ];
@@ -148,7 +141,7 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
         <div style={sideBarStyle}>
             {isMobile || isTablet ? (
             <div style={barContentWrapperStyle}>
-                <img src={logo} alt="Logo" style={logoStyle} />
+                {/* <img src={logo} alt="Logo" style={logoStyle} /> */}
                 <SideBarItem
                 icon={<Menu style={sideBarItemStyle} />}
                 text=""
@@ -161,7 +154,7 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
             <>
                 <div>
                     <div style={{ paddingLeft: '10px', paddingTop: '15px' }}>
-                        <img src={logo} alt="Logo" style={logoStyle} />
+                        {/* <img src={logo} alt="Logo" style={logoStyle} /> */}
                     </div>
                     <div style={sideBarItemContainerStyle}>
                         {menuItems.map((item) => (

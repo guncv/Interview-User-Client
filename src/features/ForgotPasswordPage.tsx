@@ -5,7 +5,6 @@ import { isValidEmail } from '../utils/format';
 import { PrimaryTextField } from '../components/common/PrimaryTextField';
 import { ArrowLeftIcon } from 'lucide-react';
 import { safeNavigate } from '../utils/navigation';
-import { ErrorMessage } from '../components/common/ErrorMessage';
 import { PrimaryButton } from '../components/common/PrimaryButton';
 import { useContextProvider } from '../components/layout/ContextProvider';
 import AuthPageLayout from '../components/layout/AuthPageLayout';
@@ -16,7 +15,7 @@ const ForgotPasswordPage = () => {
     const { isMobile } = useContextProvider();
     const dispatch = useDispatch();
     const [email, setEmail] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
+    const [emailError, setEmailError] = useState('');
     const [infoMessage, setInfoMessage] = useState('');
     const [isSent, setIsSent] = useState(false);
     const [isButtonDisabled, setIsButtonDisabled] = useState(false);
@@ -60,7 +59,7 @@ const ForgotPasswordPage = () => {
 
     const backToSignInStyle: CSSProperties = {
         width: isMobile ? '80vw' : '400px',
-        fontSize: Size.Medium,
+        fontSize: isMobile ? Size.Small : Size.Medium,
         marginTop: Size.Large,
         color: Colors.ACCENT_COLOR,
     };
@@ -74,13 +73,8 @@ const ForgotPasswordPage = () => {
     const arrowLeftIconStyle: CSSProperties = {
         marginRight: Size.Small,
         verticalAlign: 'middle',
-        width: Size.Medium,
-        height: Size.Medium,
-    };
-
-    const errorMessageContainerStyle: CSSProperties = {
-        width: isMobile ? '80vw' : '400px',
-        marginTop: Size.ExtraLarge,
+        width: isMobile ? Size.Small : Size.Medium,
+        height: isMobile ? Size.Small : Size.Medium,
     };
 
     const infoMessageContainerStyle: CSSProperties = {
@@ -99,57 +93,50 @@ const ForgotPasswordPage = () => {
         color: isButtonDisabled ? Colors.SECONDARY_TEXT_COLOR : Colors.TEXT_WHITE_COLOR,
     };
 
-    const handleSignIn = () => {
+    const handleForgotPassword = () => {
         if (!email) {
-            setErrorMessage('Please enter your email address.');
+            setEmailError('Please enter your email address.');
             setIsSent(false);
             setInfoMessage('');
             return;
         }
         if (!isValidEmail(email)) {
-            setErrorMessage('Please enter a valid email address to receive the reset link.');
+            setEmailError('Please enter a valid email address to receive the reset link.');
             setIsSent(false);
             setInfoMessage('');
             return;
         }
     
-        setErrorMessage('');
+        setEmailError('');
         setIsSent(true);
         setCountdown(3);
-        setInfoMessage('If an account with this email exists, we’ll send you a reset link shortly.');
+        setInfoMessage('If an account with this email exists, we\'ll send you a reset link shortly.');
         dispatch(forgotPassword(email));
     };
     
     
     useEffect(() => {
-        setErrorMessage('');
+        setEmailError('');
         setInfoMessage('');
     }, [email]);
 
     return (
         <AuthPageLayout
             title="Forgot Password"
-            description={'Please enter the email you used to register.\nWe\'ll send you a link to reset your password.'}
-            isSignIn={false}
+            description={'Please enter the email you used to sign in.\nWe\'ll send you a link to reset your password.'}
         >
 
             <div style={inputContainerStyle}>
-                <PrimaryTextField type="text" label="Email" value={email} onChange={setEmail} placeholder="Enter your email" />
+                <PrimaryTextField type="text" label="Email" value={email} onChange={setEmail} placeholder="Enter your email" error={emailError} />
             </div>
 
             <div style={buttonContainerStyle}>
-                <PrimaryButton label={buttonLabel} onClick={handleSignIn} style={buttonStyle}/>
+                <PrimaryButton label={buttonLabel} onClick={handleForgotPassword} style={buttonStyle}/>
             </div>
 
             <div style={backToSignInStyle}>
                 <span style={backToSignInTextStyle} onClick={() => safeNavigate('/')}><ArrowLeftIcon style={arrowLeftIconStyle} />Back to Sign In</span>
             </div>
-
-            {errorMessage && (
-                <div style={errorMessageContainerStyle}>
-                    <ErrorMessage message={errorMessage} />
-                </div>
-            )}
 
             {infoMessage && (
                 <div style={infoMessageContainerStyle}>

@@ -5,12 +5,13 @@ import { isValidEmail } from '../utils/format';
 import { PrimaryTextField } from '../components/common/PrimaryTextField';
 import { safeNavigate } from '../utils/navigation';
 import { PrimaryButton } from '../components/common/PrimaryButton';
-import { ErrorMessage } from '../components/common/ErrorMessage';
 import { useContextProvider } from '../components/layout/ContextProvider';
-import AuthPageLayout from '../components/layout/AuthPageLayout';
 import { useDispatch, useSelector } from 'react-redux';
 import { setUserError, signIn } from '../actions/userAction';
 import type { RootState } from '../reducers/rootReducer';
+import AuthPageLayout from '../components/layout/AuthPageLayout';
+import { ArrowRightIcon } from 'lucide-react';
+import font from '../assets/styles/Font';
 
 const SignInPage = () => {
     const { isMobile } = useContextProvider();
@@ -19,11 +20,14 @@ const SignInPage = () => {
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
+    const [emailError, setEmailError] = useState('');
+    const [passwordError, setPasswordError] = useState('');
 
     useEffect(() => {
         if (error) {
-            setErrorMessage(error);
+            // Don't set email error for backend errors, just clear field errors
+            setEmailError('');
+            setPasswordError('');
         }
     }, [error]);
 
@@ -32,63 +36,97 @@ const SignInPage = () => {
         flexDirection: 'column',
         gap: Size.Medium,
         marginTop: Size.Large,
-        width: isMobile ? '80vw' : '400px',
+        width: isMobile ? '80vw' : '450px',
     };
 
     const forgotPasswordContainerStyle: CSSProperties = {
-        width: isMobile ? '80vw' : '400px',
+        width: isMobile ? '80vw' : '450px',
         textAlign: 'right',
-        marginTop: Size.Small,
+        marginTop: isMobile ? '0px' : Size.Small,
     };
 
     const forgotPasswordTextStyle: CSSProperties = {
         cursor: 'pointer',
         display: 'inline-block',
         color: Colors.ACCENT_COLOR,
-        fontSize: Size.Medium,
+        fontSize: isMobile ? Size.Small : Size.Medium,
     };
 
+    const dontHaveAccountTextStyle: CSSProperties = {
+        display: 'inline-block',
+        color: Colors.SECONDARY_TEXT_COLOR,
+        fontSize: isMobile ? Size.Small : Size.Medium,
+        fontFamily: font.Regular,
+    };
+
+    const createAccountTextStyle: CSSProperties = {
+        cursor: 'pointer',
+        display: 'inline-block',
+        color: Colors.ACCENT_COLOR,
+        fontSize: isMobile ? Size.Small : Size.Medium,
+    };
+
+    const arrowRightIconStyle: CSSProperties = {
+        marginLeft: Size.Small,
+        verticalAlign: 'middle',
+        width: Size.Medium,
+        height: Size.Medium,
+    };
 
     const buttonContainerStyle: CSSProperties = {
-        width: isMobile ? '80vw' : '400px',
+        width: isMobile ? '80vw' : '450px',
         marginTop: Size.ExtraLarge,
     };
 
-    const errorMessageContainerStyle: CSSProperties = {
-        width: isMobile ? '80vw' : '400px',
-        marginTop: Size.ExtraLarge,
+    const createAccountStyle: CSSProperties = {
+        width: isMobile ? '80vw' : '450px',
+        fontSize: Size.Medium,
+        marginTop: Size.Small,
+        color: Colors.ACCENT_COLOR,
+        fontFamily: font.Regular,
+    };
+
+    const backendErrorStyle: CSSProperties = {
+        width: isMobile ? '80vw' : '450px',
+        marginTop: Size.Medium,
+        padding: Size.Medium,
+        color: Colors.TEXT_ERROR_COLOR,
+        fontSize: isMobile ? Size.Small : Size.Medium,
+        fontFamily: font.Regular,
+        textAlign: 'center',
     };
 
     const handleSignIn = () => {
         if (!email || !password) {
-            setErrorMessage('Please enter both your email and password.');
+            setEmailError('Please enter both your email and password.');
             return;
         } if (!isValidEmail(email)) {
-            setErrorMessage('The email address you entered is not valid. Please check and try again.');
+            setEmailError('The email address you entered is not valid. Please check and try again.');
             return;
         } if (password.length < 8) {
-            setErrorMessage('Your password must be at least 8 characters long.');
+            setPasswordError('Your password must be at least 8 characters long.');
             return;
         }
-        setErrorMessage('');
+        setEmailError('');
+        setPasswordError('');
         dispatch(setUserError(''));
         dispatch(signIn(email, password));
     };
     
     useEffect(() => {
-        setErrorMessage('');
+        setEmailError('');
+        setPasswordError('');
     }, [email, password]);
 
     return (
         <AuthPageLayout
-        title="Welcome Back To Onyx"
-        highlight="XR"
-        description="Please sign in to continue to your account."
-        isSignIn
+            title="Welcome Back To Eval"
+            highlight="ia"
+            description="Please sign in to continue to your account."
         >
             <div style={inputContainerStyle}>
-                <PrimaryTextField type="text" label="Email" value={email} onChange={setEmail} placeholder="Enter your email" />
-                <PrimaryTextField type="password" label="Password" value={password} onChange={setPassword} placeholder="Enter your password" />
+                <PrimaryTextField type="text" label="Email" value={email} onChange={setEmail} placeholder="Enter your email" error={emailError} />
+                <PrimaryTextField type="password" label="Password" value={password} onChange={setPassword} placeholder="Enter your password" error={passwordError} />
             </div>
 
             <div style={forgotPasswordContainerStyle}>
@@ -99,8 +137,17 @@ const SignInPage = () => {
                 <PrimaryButton label="Sign In" onClick={handleSignIn} />
             </div>
 
-            <div style={errorMessageContainerStyle}>
-                <ErrorMessage message={errorMessage} />
+            {error && (
+                <div style={backendErrorStyle}>
+                    {error}
+                </div>
+            )}
+
+            <div style={createAccountStyle}>
+                <span style={dontHaveAccountTextStyle}>Don't have an account? </span>
+                <span>{" "}</span>
+                <span style={createAccountTextStyle} onClick={() => safeNavigate('/sign-up')}>Sign up here</span>
+                <ArrowRightIcon style={arrowRightIconStyle} />
             </div>
         </AuthPageLayout>
     );

@@ -1,9 +1,68 @@
 import { AxiosError } from 'axios';
 import { config } from '../../env';
-import type { UserForgotPasswordRequest, UserSignInRequest } from '../interface/userInterface';
+import type { UserForgotPasswordRequest, UserSignInRequest, UserSignUpRequest, UserVerifyEmailRequest } from '../interface/userInterface';
 import { handleApiError } from './errorApi';
 import { API_ENDPOINTS, HTTP_HEADERS, ROLE } from '../constants';
 import axiosInstance from './axiosInstance';
+
+export const apiResetVerifyEmail = async (token: string) => {
+    try {
+        const response = await axiosInstance.post(`${config.Domain}${API_ENDPOINTS.RESET_VERIFY_EMAIL}`, {
+            token: token,
+        });
+
+        return { success: true, data: response.data };
+    }
+    catch (error) {
+        return handleApiError(error as AxiosError);
+    }
+};
+
+export const apiResetPassword = async (token: string, password: string) => {
+    try {
+        const response = await axiosInstance.post(`${config.Domain}${API_ENDPOINTS.RESET_PASSWORD}`, {
+            token: token,
+            new_password: password,
+        });
+
+        return { success: true, data: response.data };
+    }
+    catch (error) {
+        return handleApiError(error as AxiosError);
+    }
+};
+
+export const apiSignUp = async (payload: UserSignUpRequest) => {
+    try {
+        const response = await axiosInstance.post(`${config.Domain}${API_ENDPOINTS.SIGN_UP}`, {
+            email: payload.email,
+            password: payload.password,
+            full_name: payload.full_name,
+            country: payload.country,
+            gender: payload.gender,
+            date_of_birth: payload.date_of_birth,
+        });
+
+        return { success: true, data: response.data };
+    }
+    catch (error) {
+        return handleApiError(error as AxiosError);
+    }
+};
+
+export const apiVerifyEmail = async (payload: UserVerifyEmailRequest) => {
+    try {
+        const response = await axiosInstance.post(`${config.Domain}${API_ENDPOINTS.VERIFY_EMAIL}`, {
+            token: payload.token,
+            code: payload.code,
+        });
+
+        return { success: true, data: response.data };
+    }
+    catch (error) {
+        return handleApiError(error as AxiosError);
+    }
+};
 
 export const apiSignIn = async (payload: UserSignInRequest) => {
     try {
@@ -15,18 +74,6 @@ export const apiSignIn = async (payload: UserSignInRequest) => {
             headers: {
                 [HTTP_HEADERS.ROLE]: ROLE.TRAINEE,
             },
-        });
-
-        return { success: true, data: response.data };
-    } catch (error) {
-        return handleApiError(error as AxiosError);
-    }
-};
-
-export const apiSetInitialPassword = async (password: string) => {
-    try {
-        const response = await axiosInstance.post(`${config.Domain}${API_ENDPOINTS.SET_INITIAL_PASSWORD}`, {
-            password,
         });
 
         return { success: true, data: response.data };
