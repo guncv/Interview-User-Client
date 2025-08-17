@@ -4,8 +4,11 @@ import AuthPageLayout from "../components/layout/AuthPageLayout";
 import { PrimaryTextField } from "../components/common/PrimaryTextField";
 import { PrimaryButton } from "../components/common/PrimaryButton";
 import Size from "../assets/styles/Size";
+import Colors from "../assets/styles/Color";
+import font from "../assets/styles/Font";
 import { resetPassword } from "../actions/userAction";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState } from "../reducers/rootReducer";
 
 interface ResetPasswordProps {
     title: string;
@@ -19,6 +22,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ title }) => {
     const [errors, setErrors] = useState<{ newPassword?: string; confirmPassword?: string }>({});
     const [isLoading, setIsLoading] = useState(false);
     const dispatch = useDispatch();
+    const { error } = useSelector((state: RootState) => state.user);
 
     const validateForm = () => {
         const newErrors: { newPassword?: string; confirmPassword?: string } = {};
@@ -81,6 +85,17 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ title }) => {
         marginTop: Size.Large,
     };
 
+    const backendErrorStyle: React.CSSProperties = {
+        width: '100%',
+        maxWidth: '400px',
+        marginTop: Size.Medium,
+        padding: Size.Medium,
+        color: Colors.TEXT_ERROR_COLOR,
+        fontSize: Size.Medium,
+        fontFamily: font.Regular,
+        textAlign: 'center',
+    };
+
     return (
         <AuthPageLayout title={title || "Reset Password"} description="Enter your new password below.">
             <div style={containerStyle}>
@@ -110,6 +125,12 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ title }) => {
                             isDisabled={isLoading}
                         />
                     </div>
+
+                    {error && (
+                        <div style={backendErrorStyle}>
+                            {error}
+                        </div>
+                    )}
                 </form>
             </div>
         </AuthPageLayout>

@@ -3,6 +3,7 @@ import { Calendar } from 'lucide-react';
 import Colors from '../../assets/styles/Color';
 import Size from '../../assets/styles/Size';
 import font from '../../assets/styles/Font';
+import { useContextProvider } from '../layout/ContextProvider';
 
 type PrimaryDatePickerProps = {
     label: string;
@@ -21,6 +22,7 @@ export const PrimaryDatePicker = ({
     disabled = false,
     error,
 }: PrimaryDatePickerProps) => {
+    const { isMobile } = useContextProvider();
     const [isOpen, setIsOpen] = useState(false);
     const [hoveredDay, setHoveredDay] = useState<number | null>(null);
     const datePickerRef = useRef<HTMLDivElement>(null);
@@ -61,7 +63,7 @@ export const PrimaryDatePicker = ({
     };
 
     const labelStyle: CSSProperties = {
-        fontSize: Size.Medium,
+        fontSize: isMobile ? Size.Small : Size.Medium,
         color: Colors.PRIMARY_COLOR,
         opacity: disabled ? 0.5 : 1,
     };
@@ -83,7 +85,7 @@ export const PrimaryDatePicker = ({
     const datePickerStyle: CSSProperties = {
         width: '100%',
         marginTop: Size.Small,
-        height: '45px',
+        height: isMobile ? '35px' : '45px',
         border: `1px solid ${error ? Colors.TEXT_ERROR_COLOR : Colors.SECONDARY_TEXT_COLOR}`,
         borderRadius: Size.Small,
         padding: Size.Small,
@@ -106,19 +108,26 @@ export const PrimaryDatePicker = ({
     };
 
     const calendarContainerStyle: CSSProperties = {
-        position: 'absolute',
-        top: '100%',
-        left: 0,
-        right: 0,
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        right: 'auto',
+        transform: 'translate(-50%, -50%)',
         backgroundColor: Colors.TEXT_WHITE_COLOR,
         border: `1px solid ${Colors.SECONDARY_TEXT_COLOR}`,
         borderRadius: Size.Small,
-        marginTop: '2px',
+        marginTop: 0,
         padding: Size.Medium,
         zIndex: 1000,
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
         minWidth: '280px',
-        maxWidth: '320px',
+        maxWidth: '90vw',
+        maxHeight: '80vh',
+        overflow: 'auto',
+        display: 'block',
+        // Ensure visibility
+        visibility: 'visible',
+        opacity: 1,
     };
 
     const calendarHeaderStyle: CSSProperties = {
@@ -129,7 +138,7 @@ export const PrimaryDatePicker = ({
     };
 
     const monthYearStyle: CSSProperties = {
-        fontSize: Size.Medium,
+        fontSize: isMobile ? Size.Small : Size.Medium,
         fontFamily: font.Medium,
         color: Colors.PRIMARY_COLOR,
     };
@@ -141,7 +150,7 @@ export const PrimaryDatePicker = ({
         padding: Size.Small,
         borderRadius: Size.Small,
         color: Colors.ACCENT_COLOR,
-        fontSize: Size.Medium,
+        fontSize: isMobile ? Size.Small : Size.Medium,
         transition: 'background-color 0.2s ease',
     };
 
@@ -176,7 +185,7 @@ export const PrimaryDatePicker = ({
         padding: Size.Small,
         cursor: 'pointer',
         borderRadius: Size.Small,
-        fontSize: Size.Small,
+        fontSize: isMobile ? Size.Small : Size.Medium,
         fontFamily: font.Regular,
         transition: 'background-color 0.2s ease',
         border: 'none',
@@ -203,7 +212,7 @@ export const PrimaryDatePicker = ({
 
     const selectedValueStyle: CSSProperties = {
         color: value ? Colors.PRIMARY_COLOR : Colors.SECONDARY_TEXT_COLOR,
-        fontSize: "13px",
+        fontSize: isMobile ? Size.Small : Size.Medium,
     };
 
     const handleToggle = () => {
@@ -294,6 +303,35 @@ export const PrimaryDatePicker = ({
     const { days, year, month } = getCurrentMonthData();
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+    const backdropStyle: CSSProperties = {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        zIndex: 999,
+    };
+
+    const closeButtonStyle: CSSProperties = {
+        position: 'absolute',
+        top: Size.Small,
+        right: Size.Small,
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        fontSize: Size.Large,
+        color: Colors.SECONDARY_TEXT_COLOR,
+        padding: Size.Small,
+        borderRadius: Size.Small,
+        lineHeight: 1,
+    };
+
+    const closeButtonHoverStyle: CSSProperties = {
+        backgroundColor: Colors.ACCENT_COLOR,
+        color: Colors.TEXT_WHITE_COLOR,
+    };
+
     return (
         <div style={fieldWrapperStyle} ref={datePickerRef}>
             <div style={labelContainerStyle}>
@@ -313,69 +351,93 @@ export const PrimaryDatePicker = ({
                 </div>
                 
                 {isOpen && (
-                    <div style={calendarContainerStyle}>
-                        <div style={calendarHeaderStyle}>
+                    <>
+                        <div 
+                            style={backdropStyle} 
+                            onClick={() => setIsOpen(false)}
+                        />
+                        <div 
+                            style={calendarContainerStyle}
+                            onClick={(e) => e.stopPropagation()}
+                        >
                             <button
-                                style={navButtonStyle}
+                                style={closeButtonStyle}
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    navigateMonth(-1);
+                                    setIsOpen(false);
                                 }}
                                 onMouseEnter={(e) => {
-                                    Object.assign(e.currentTarget.style, navButtonHoverStyle);
+                                    Object.assign(e.currentTarget.style, closeButtonHoverStyle);
                                 }}
                                 onMouseLeave={(e) => {
-                                    Object.assign(e.currentTarget.style, navButtonStyle);
+                                    Object.assign(e.currentTarget.style, closeButtonStyle);
                                 }}
                             >
-                                ‹
+                                ×
                             </button>
-                            <div style={monthYearStyle}>
-                                {formatMonthYear(year, month)}
-                            </div>
-                            <button
-                                style={navButtonStyle}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigateMonth(1);
-                                }}
-                                onMouseEnter={(e) => {
-                                    Object.assign(e.currentTarget.style, navButtonHoverStyle);
-                                }}
-                                onMouseLeave={(e) => {
-                                    Object.assign(e.currentTarget.style, navButtonStyle);
-                                }}
-                            >
-                                ›
-                            </button>
-                        </div>
-                        
-                        <div style={weekdaysContainerStyle}>
-                            {weekdays.map(weekday => (
-                                <div key={weekday} style={weekdayStyle}>
-                                    {weekday}
-                                </div>
-                            ))}
-                        </div>
-                        
-                        <div style={daysContainerStyle}>
-                            {days.map((date, index) => (
+                            <div style={calendarHeaderStyle}>
                                 <button
-                                    key={index}
-                                    style={getDayStyle(date, index)}
+                                    style={navButtonStyle}
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        handleDateSelect(date);
+                                        navigateMonth(-1);
                                     }}
-                                    onMouseEnter={() => setHoveredDay(index)}
-                                    onMouseLeave={() => setHoveredDay(null)}
-                                    disabled={isOtherMonth(date, month)}
+                                    onMouseEnter={(e) => {
+                                        Object.assign(e.currentTarget.style, navButtonHoverStyle);
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        Object.assign(e.currentTarget.style, navButtonStyle);
+                                    }}
                                 >
-                                    {date.getDate()}
+                                    ‹
                                 </button>
-                            ))}
+                                <div style={monthYearStyle}>
+                                    {formatMonthYear(year, month)}
+                                </div>
+                                <button
+                                    style={navButtonStyle}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigateMonth(1);
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        Object.assign(e.currentTarget.style, navButtonHoverStyle);
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        Object.assign(e.currentTarget.style, navButtonStyle);
+                                    }}
+                                >
+                                    ›
+                                </button>
+                            </div>
+                            
+                            <div style={weekdaysContainerStyle}>
+                                {weekdays.map(weekday => (
+                                    <div key={weekday} style={weekdayStyle}>
+                                        {weekday}
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            <div style={daysContainerStyle}>
+                                {days.map((date, index) => (
+                                    <button
+                                        key={index}
+                                        style={getDayStyle(date, index)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDateSelect(date);
+                                        }}
+                                        onMouseEnter={() => setHoveredDay(index)}
+                                        onMouseLeave={() => setHoveredDay(null)}
+                                        disabled={isOtherMonth(date, month)}
+                                    >
+                                        {date.getDate()}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    </>
                 )}
             </div>
         </div>

@@ -59,7 +59,7 @@ const ForgotPasswordPage = () => {
 
     const backToSignInStyle: CSSProperties = {
         width: isMobile ? '80vw' : '400px',
-        fontSize: Size.Medium,
+        fontSize: isMobile ? Size.Small : Size.Medium,
         marginTop: Size.Large,
         color: Colors.ACCENT_COLOR,
     };
@@ -73,8 +73,8 @@ const ForgotPasswordPage = () => {
     const arrowLeftIconStyle: CSSProperties = {
         marginRight: Size.Small,
         verticalAlign: 'middle',
-        width: Size.Medium,
-        height: Size.Medium,
+        width: isMobile ? Size.Small : Size.Medium,
+        height: isMobile ? Size.Small : Size.Medium,
     };
 
     const infoMessageContainerStyle: CSSProperties = {

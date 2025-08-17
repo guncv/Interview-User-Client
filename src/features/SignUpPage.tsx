@@ -45,8 +45,14 @@ const SignUpPage = () => {
 
     useEffect(() => {
         if (error) {
-            // Set a general error for the email field if it's a server error
-            setEmailError(error);
+            // Don't set email error for backend errors, just clear field errors
+            setEmailError('');
+            setPasswordError('');
+            setConfirmPasswordError('');
+            setFullNameError('');
+            setCountryError('');
+            setGenderError('');
+            setDateOfBirthError('');
         }
     }, [error]);
 
@@ -190,10 +196,20 @@ const SignUpPage = () => {
         width: isMobile ? '80vw' : '450px',
     };
 
+    const backendErrorStyle: CSSProperties = {
+        width: isMobile ? '80vw' : '450px',
+        marginTop: Size.Medium,
+        padding: Size.Medium,
+        color: Colors.TEXT_ERROR_COLOR,
+        fontSize: isMobile ? Size.Small : Size.Medium,
+        fontFamily: font.Regular,
+        textAlign: 'center',
+    };
+
     const dontHaveAccountTextStyle: CSSProperties = {
         display: 'inline-block',
         color: Colors.SECONDARY_TEXT_COLOR,
-        fontSize: Size.Medium,
+        fontSize: isMobile ? Size.Small : Size.Medium,
         fontFamily: font.Regular,
     };
 
@@ -201,7 +217,7 @@ const SignUpPage = () => {
         cursor: 'pointer',
         display: 'inline-block',
         color: Colors.ACCENT_COLOR,
-        fontSize: Size.Medium,
+        fontSize: isMobile ? Size.Small : Size.Medium,
     };
 
     const arrowRightIconStyle: CSSProperties = {
@@ -218,7 +234,7 @@ const SignUpPage = () => {
 
     const createAccountStyle: CSSProperties = {
         width: isMobile ? '80vw' : '450px',
-        fontSize: Size.Medium,
+        fontSize: isMobile ? Size.Small : Size.Medium,
         marginTop: Size.Small,
         color: Colors.ACCENT_COLOR,
         fontFamily: font.Regular,
@@ -272,28 +288,28 @@ const SignUpPage = () => {
             signUp={true}
         >
             <div style={inputContainerStyle}>
-                <PrimaryTextField 
-                    type="text" 
-                    label="Email" 
-                    value={email} 
-                    onChange={(value) => handleFieldChange('email', value)} 
-                    placeholder="Enter your email" 
+                <PrimaryTextField
+                    type="text"
+                    label="Email"
+                    value={email}
+                    onChange={(value) => handleFieldChange('email', value)}
+                    placeholder="Enter your email"
                     error={emailError}
                 />
-                <PrimaryTextField 
-                    type="password" 
-                    label="Password" 
-                    value={password} 
-                    onChange={(value) => handleFieldChange('password', value)} 
-                    placeholder="Enter your password" 
+                <PrimaryTextField
+                    type="password"
+                    label="Password"
+                    value={password}
+                    onChange={(value) => handleFieldChange('password', value)}
+                    placeholder="Enter your password"
                     error={passwordError}
                 />
-                <PrimaryTextField 
-                    type="password" 
-                    label="Confirm Password" 
-                    value={confirmPassword} 
-                    onChange={(value) => handleFieldChange('confirmPassword', value)} 
-                    placeholder="Confirm your password" 
+                <PrimaryTextField
+                    type="password"
+                    label="Confirm Password"
+                    value={confirmPassword}
+                    onChange={(value) => handleFieldChange('confirmPassword', value)}
+                    placeholder="Confirm your password"
                     error={confirmPasswordError}
                 />
 
@@ -335,6 +351,12 @@ const SignUpPage = () => {
                     />
                 </div>
             </div>
+
+            {error && (
+                <div style={backendErrorStyle}>
+                    {error}
+                </div>
+            )}
 
             <div style={buttonContainerStyle}>
                 <PrimaryButton label="Sign Up Your Account" onClick={handleSignIn} />

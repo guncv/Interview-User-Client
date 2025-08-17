@@ -9,11 +9,13 @@ import { safeNavigate } from '../utils/navigation';
 import font from '../assets/styles/Font';
 import AuthPageLayout from "../components/layout/AuthPageLayout";
 import { resetVerifyEmail, verifyEmail } from '../actions/userAction';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import type { RootState } from '../reducers/rootReducer';
 
 const VerifyEmail = () => {
     const { isMobile } = useContextProvider();
     const dispatch = useDispatch();
+    const { error } = useSelector((state: RootState) => state.user);
     const [otp, setOtp] = useState('');
     const [otpError, setOtpError] = useState('');
     const [isVerifying, setIsVerifying] = useState(false);
@@ -28,6 +30,13 @@ const VerifyEmail = () => {
         const tokenFromUrl = urlParams.get('token');
         setToken(tokenFromUrl || '');
     }, []);
+
+    useEffect(() => {
+        if (error) {
+            // Clear field errors when there's a backend error
+            setOtpError('');
+        }
+    }, [error]);
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
@@ -96,21 +105,22 @@ const VerifyEmail = () => {
 
     const backToSignInStyle: CSSProperties = {
         width: isMobile ? '80vw' : '400px',
-        fontSize: Size.Medium,
-        marginTop: Size.Large,
+        fontSize: isMobile ? Size.Small : Size.Medium,
+        marginTop: Size.Small,
         color: Colors.ACCENT_COLOR,
     };
 
     const backToSignInTextStyle: CSSProperties = {
         cursor: 'pointer',
         display: 'inline-block',
+        fontSize: isMobile ? Size.Small : Size.Medium,
     };
 
     const arrowLeftIconStyle: CSSProperties = {
         marginRight: Size.Small,
         verticalAlign: 'middle',
-        width: Size.Medium,
-        height: Size.Medium,
+        width: isMobile ? Size.Small : Size.Medium,
+        height: isMobile ? Size.Small : Size.Medium,
     };
 
     const resendContainerStyle: CSSProperties = {
@@ -120,9 +130,19 @@ const VerifyEmail = () => {
     };
 
     const resendTextStyle: CSSProperties = {
-        fontSize: Size.Medium,
+        fontSize: isMobile ? Size.Small : Size.Medium,
         color: Colors.SECONDARY_TEXT_COLOR,
         fontFamily: font.Regular,
+    };
+
+    const backendErrorStyle: CSSProperties = {
+        width: isMobile ? '80vw' : '400px',
+        marginTop: Size.Medium,
+        padding: Size.Medium,
+        color: Colors.TEXT_ERROR_COLOR,
+        fontSize: isMobile ? Size.Small : Size.Medium,
+        fontFamily: font.Regular,
+        textAlign: 'center',
     };
 
     const resendButtonStyle: CSSProperties = {
@@ -131,14 +151,7 @@ const VerifyEmail = () => {
         textDecoration: 'underline',
         marginLeft: Size.Small,
         opacity: canResend ? 1 : 0.6,
-    };
-
-    const infoTextStyle: CSSProperties = {
-        fontSize: "12px",
-        color: Colors.SECONDARY_TEXT_COLOR,
-        textAlign: 'center',
-        marginTop: Size.Small,
-        fontFamily: font.Regular,
+        fontSize: isMobile ? Size.Small : Size.Medium,
     };
 
     return (
@@ -155,9 +168,6 @@ const VerifyEmail = () => {
                     placeholder="Enter 6-character code" 
                     error={otpError}
                 />
-                <div style={infoTextStyle}>
-                    Code should contain only letters (A-Z) and numbers (0-9)
-                </div>
             </div>
 
             <div style={buttonContainerStyle}>
@@ -181,10 +191,15 @@ const VerifyEmail = () => {
                 )}
             </div>
 
+            {error && (
+                <div style={backendErrorStyle}>
+                    {error}
+                </div>
+            )}
+
             <div style={backToSignInStyle}>
                 <span style={backToSignInTextStyle} onClick={() => safeNavigate('/')}>
-                    <ArrowLeftIcon style={arrowLeftIconStyle} />
-                    Back to Sign In
+                    <ArrowLeftIcon style={arrowLeftIconStyle} />Back to Sign In
                 </span>
             </div>
         </AuthPageLayout>

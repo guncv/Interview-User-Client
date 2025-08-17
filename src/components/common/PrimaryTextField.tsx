@@ -3,6 +3,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import Colors from '../../assets/styles/Color';
 import Size from '../../assets/styles/Size';
 import font from '../../assets/styles/Font';
+import { useContextProvider } from '../layout/ContextProvider';
 
 type PrimaryTextFieldProps = {
     label: string;
@@ -23,6 +24,7 @@ export const PrimaryTextField = ({
     disabled = false,
     error,
 }: PrimaryTextFieldProps) => {
+    const { isMobile } = useContextProvider();
     const [isVisible, setIsVisible] = useState(false);
     const isPassword = type === 'password';
     
@@ -37,7 +39,7 @@ export const PrimaryTextField = ({
     };
 
     const labelStyle: CSSProperties = {
-        fontSize: Size.Medium,
+        fontSize: isMobile ? Size.Small : Size.Medium,
         color: Colors.PRIMARY_COLOR,
         opacity: disabled ? 0.5 : 1,
     };
@@ -59,24 +61,26 @@ export const PrimaryTextField = ({
     const inputStyle: CSSProperties = {
         width: '100%',
         marginTop: Size.Small,
-        height: '45px',
+        height: isMobile ? '35px' : '45px',
+        paddingLeft: isMobile ? '10px' : Size.Medium,
+        paddingRight: isMobile ? '10px' : Size.Medium,
+        paddingTop: isMobile ? '0px' : Size.Medium,
+        paddingBottom: isMobile ? '0px' : Size.Medium,
         border: `1px solid ${error ? Colors.TEXT_ERROR_COLOR : Colors.SECONDARY_TEXT_COLOR}`,
         borderRadius: Size.Small,
-        padding: Size.Small,
-        paddingLeft: Size.Medium,
-        paddingRight: Size.Medium,
         fontFamily: font.Regular,
         outline: 'none',
         cursor: disabled ? 'default' : 'text',
         opacity: disabled ? 0.5 : 1,
+        fontSize: isMobile ? Size.Small : Size.Medium,
     };
 
     const eyeIconStyle: CSSProperties = {
         position: 'absolute',
         right: Size.Small,
-        top: '40%',
-        width: '20px',
-        height: '20px',
+        top: isMobile ? '45%' : '40%',
+        width: isMobile ? '15px' : '20px',
+        height: isMobile ? '15px' : '20px',
         cursor: disabled ? 'default' : 'pointer',
         color: Colors.SECONDARY_TEXT_COLOR,
         opacity: disabled ? 0.5 : 1,

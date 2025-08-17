@@ -1,14 +1,17 @@
 import { type CSSProperties } from 'react';
 import authBackground from '../../assets/images/authBackground.jpg';
+import { useContextProvider } from './ContextProvider';
 
 const AuthLayout = ({children}: {children: React.ReactNode}) => {
+    const { isMobile, isTablet } = useContextProvider();
 
     const contentStyle: CSSProperties = {
-        width: '45%',
+        width: isMobile || isTablet ? '100%' : '45vw',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: isMobile ? 'auto' : 'hidden',
     };
 
     const pageStyle: CSSProperties = {
@@ -23,12 +26,13 @@ const AuthLayout = ({children}: {children: React.ReactNode}) => {
     const logoStyle: CSSProperties = {
         width: '55%',
         height: '100%',
-        overflow: 'hidden',
+        overflow: isMobile ? 'auto' : 'hidden',
     };
 
     return (
         <div style={pageStyle}>
-            <div style={logoStyle}>
+            {
+                (!isMobile && !isTablet) && <div style={logoStyle}>
                 <img src={authBackground} alt="authBackground"
                     style={{
                         width: '100%',
@@ -36,7 +40,9 @@ const AuthLayout = ({children}: {children: React.ReactNode}) => {
                         objectFit: 'cover',
                     }}
                 />
-            </div>
+                </div>
+            }
+            
 
             <div style={contentStyle}>
                 {children}

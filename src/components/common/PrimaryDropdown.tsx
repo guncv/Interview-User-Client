@@ -3,6 +3,7 @@ import { ChevronDown } from 'lucide-react';
 import Colors from '../../assets/styles/Color';
 import Size from '../../assets/styles/Size';
 import font from '../../assets/styles/Font';
+import { useContextProvider } from '../layout/ContextProvider';
 
 type PrimaryDropdownProps = {
     label: string;
@@ -23,6 +24,7 @@ export const PrimaryDropdown = ({
     options,
     error,
 }: PrimaryDropdownProps) => {
+    const { isMobile } = useContextProvider();
     const [isOpen, setIsOpen] = useState(false);
     const [showAbove, setShowAbove] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -79,7 +81,7 @@ export const PrimaryDropdown = ({
     };
 
     const labelStyle: CSSProperties = {
-        fontSize: Size.Medium,
+        fontSize: isMobile ? Size.Small : Size.Medium,
         color: Colors.PRIMARY_COLOR,
         opacity: disabled ? 0.5 : 1,
     };
@@ -101,7 +103,7 @@ export const PrimaryDropdown = ({
     const dropdownStyle: CSSProperties = {
         width: '100%',
         marginTop: Size.Small,
-        height: '45px',
+        height: isMobile ? '35px' : '45px',
         border: `1px solid ${error ? Colors.TEXT_ERROR_COLOR : Colors.SECONDARY_TEXT_COLOR}`,
         borderRadius: Size.Small,
         padding: Size.Small,
@@ -148,7 +150,7 @@ export const PrimaryDropdown = ({
         paddingRight: Size.Medium,
         cursor: 'pointer',
         fontFamily: font.Regular,
-        fontSize: Size.Medium,
+        fontSize: isMobile ? Size.Small : Size.Medium,
         borderBottom: `1px solid ${Colors.SECONDARY_TEXT_COLOR}`,
         transition: 'background-color 0.2s ease',
     };
@@ -160,7 +162,7 @@ export const PrimaryDropdown = ({
 
     const selectedValueStyle: CSSProperties = {
         color: value ? Colors.PRIMARY_COLOR : Colors.SECONDARY_TEXT_COLOR,
-        fontSize: "13px",
+        fontSize: isMobile ? Size.Small : Size.Medium,
     };
 
     const handleOptionSelect = (optionValue: string) => {

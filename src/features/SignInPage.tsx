@@ -25,7 +25,9 @@ const SignInPage = () => {
 
     useEffect(() => {
         if (error) {
-            setEmailError(error);
+            // Don't set email error for backend errors, just clear field errors
+            setEmailError('');
+            setPasswordError('');
         }
     }, [error]);
 
@@ -40,20 +42,20 @@ const SignInPage = () => {
     const forgotPasswordContainerStyle: CSSProperties = {
         width: isMobile ? '80vw' : '450px',
         textAlign: 'right',
-        marginTop: Size.Small,
+        marginTop: isMobile ? '0px' : Size.Small,
     };
 
     const forgotPasswordTextStyle: CSSProperties = {
         cursor: 'pointer',
         display: 'inline-block',
         color: Colors.ACCENT_COLOR,
-        fontSize: Size.Medium,
+        fontSize: isMobile ? Size.Small : Size.Medium,
     };
 
     const dontHaveAccountTextStyle: CSSProperties = {
         display: 'inline-block',
         color: Colors.SECONDARY_TEXT_COLOR,
-        fontSize: Size.Medium,
+        fontSize: isMobile ? Size.Small : Size.Medium,
         fontFamily: font.Regular,
     };
 
@@ -61,7 +63,7 @@ const SignInPage = () => {
         cursor: 'pointer',
         display: 'inline-block',
         color: Colors.ACCENT_COLOR,
-        fontSize: Size.Medium,
+        fontSize: isMobile ? Size.Small : Size.Medium,
     };
 
     const arrowRightIconStyle: CSSProperties = {
@@ -70,7 +72,6 @@ const SignInPage = () => {
         width: Size.Medium,
         height: Size.Medium,
     };
-
 
     const buttonContainerStyle: CSSProperties = {
         width: isMobile ? '80vw' : '450px',
@@ -83,6 +84,16 @@ const SignInPage = () => {
         marginTop: Size.Small,
         color: Colors.ACCENT_COLOR,
         fontFamily: font.Regular,
+    };
+
+    const backendErrorStyle: CSSProperties = {
+        width: isMobile ? '80vw' : '450px',
+        marginTop: Size.Medium,
+        padding: Size.Medium,
+        color: Colors.TEXT_ERROR_COLOR,
+        fontSize: isMobile ? Size.Small : Size.Medium,
+        fontFamily: font.Regular,
+        textAlign: 'center',
     };
 
     const handleSignIn = () => {
@@ -125,6 +136,12 @@ const SignInPage = () => {
             <div style={buttonContainerStyle}>
                 <PrimaryButton label="Sign In" onClick={handleSignIn} />
             </div>
+
+            {error && (
+                <div style={backendErrorStyle}>
+                    {error}
+                </div>
+            )}
 
             <div style={createAccountStyle}>
                 <span style={dontHaveAccountTextStyle}>Don't have an account? </span>
