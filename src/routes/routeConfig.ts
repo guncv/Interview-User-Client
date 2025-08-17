@@ -9,8 +9,9 @@ interface ComponentProps {
   isActive: boolean;
 }
 export interface RouteConfig {
+  routes?: any;
   path: string;
-  component: React.FC<ComponentProps>
+  component: React.FC<ComponentProps>;
   exact: boolean;
 } 
 

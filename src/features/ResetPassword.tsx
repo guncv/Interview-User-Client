@@ -7,7 +7,11 @@ import Size from "../assets/styles/Size";
 import { resetPassword } from "../actions/userAction";
 import { useDispatch } from "react-redux";
 
-const ResetPassword = () => {
+interface ResetPasswordProps {
+    title: string;
+}
+
+const ResetPassword: React.FC<ResetPasswordProps> = ({ title }) => {
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token');
     const [newPassword, setNewPassword] = useState("");
@@ -78,7 +82,7 @@ const ResetPassword = () => {
     };
 
     return (
-        <AuthPageLayout title="Reset Password" description="Enter your new password below.">
+        <AuthPageLayout title={title || "Reset Password"} description="Enter your new password below.">
             <div style={containerStyle}>
                 <form style={formStyle} onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
                     <PrimaryTextField
