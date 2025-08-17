@@ -66,6 +66,7 @@ function* workerResetPassword(payload: any): SagaIterator {
         yield call(showSpinner);
         const response = yield call(apiResetPassword, payload.token, payload.password);
         if (response.success) {
+            safeNavigate(ROUTES.RESET_PASSWORD_SUCCESS);
         } else {
             yield call(hideSpinner);
             yield call(handleStatusUserError, response.statusCode, response.message);

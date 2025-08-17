@@ -3,6 +3,7 @@ import ForgotPasswordPage from '../features/ForgotPasswordPage';
 import SignUpPage from '../features/SignUpPage';
 import VerifyEmail from '../features/VerifyEmail';
 import ResetPassword from '../features/ResetPassword';
+import ResetPasswordSuccess from '../features/ResetPasswordSuccess';
 
 interface ComponentProps {
   title: string;
@@ -21,4 +22,5 @@ export const routes: RouteConfig[]= [
   { path: '/sign-up', component: SignUpPage, exact: true},
   { path: '/verify-email', component: VerifyEmail, exact: true},
   { path: '/reset-password', component: ResetPassword, exact: true},
+  { path: '/reset-password-success', component: ResetPasswordSuccess, exact: true},
 ];
