@@ -1,13 +1,13 @@
 import { useState, useEffect, type CSSProperties } from 'react';
 import Colors from '../assets/styles/Color';
 import Size from '../assets/styles/Size';
-import { isValidEmail } from '../utils/format';
+import { isValidEmail, formatDateForBackend } from '../utils/format';
 import { PrimaryTextField, PrimaryDropdown, PrimaryDatePicker } from '../components/common';
 import { safeNavigate } from '../utils/navigation';
 import { PrimaryButton } from '../components/common/PrimaryButton';
 import { useContextProvider } from '../components/layout/ContextProvider';
 import { useDispatch, useSelector } from 'react-redux';
-import { setUserError, signIn } from '../actions/userAction';
+import { setUserError, signUp } from '../actions/userAction';
 import type { RootState } from '../reducers/rootReducer';
 import AuthPageLayout from '../components/layout/AuthPageLayout';
 import { ArrowRightIcon } from 'lucide-react';
@@ -22,7 +22,7 @@ const SignUpPage = () => {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [fullName, setFullName] = useState('');
-    const [city, setCity] = useState('');
+    const [country, setCountry] = useState('');
     const [gender, setGender] = useState('');
     const [dateOfBirth, setDateOfBirth] = useState('');
 
@@ -31,7 +31,7 @@ const SignUpPage = () => {
     const [passwordError, setPasswordError] = useState('');
     const [confirmPasswordError, setConfirmPasswordError] = useState('');
     const [fullNameError, setFullNameError] = useState('');
-    const [cityError, setCityError] = useState('');
+    const [countryError, setCountryError] = useState('');
     const [genderError, setGenderError] = useState('');
     const [dateOfBirthError, setDateOfBirthError] = useState('');
 
@@ -96,12 +96,12 @@ const SignUpPage = () => {
                 setFullNameError('');
                 return true;
             
-            case 'city':
+            case 'country':
                 if (!value.trim()) {
-                    setCityError('Required');
+                    setCountryError('Required');
                     return false;
                 }
-                setCityError('');
+                setCountryError('');
                 return true;
             
             case 'gender':
@@ -140,8 +140,8 @@ const SignUpPage = () => {
             case 'fullName':
                 setFullName(value);
                 break;
-            case 'city':
-                setCity(value);
+            case 'country':
+                setCountry(value);
                 break;
             case 'gender':
                 setGender(value);
@@ -169,8 +169,8 @@ const SignUpPage = () => {
                 case 'fullName':
                     setFullNameError('');
                     break;
-                case 'city':
-                    setCityError('');
+                case 'country':
+                    setCountryError('');
                     break;
                 case 'gender':
                     setGenderError('');
@@ -231,20 +231,25 @@ const SignUpPage = () => {
     };
 
     const handleSignIn = () => {
-        // Validate all fields
         const isEmailValid = validateField('email', email);
         const isPasswordValid = validateField('password', password);
         const isConfirmPasswordValid = validateField('confirmPassword', confirmPassword);
         const isFullNameValid = validateField('fullName', fullName);
-        const isCityValid = validateField('city', city);
+        const isCountryValid = validateField('country', country);
         const isGenderValid = validateField('gender', gender);
         const isDateOfBirthValid = validateField('dateOfBirth', dateOfBirth);
 
-        // If all validations pass, proceed with sign up
         if (isEmailValid && isPasswordValid && isConfirmPasswordValid && 
-            isFullNameValid && isCityValid && isGenderValid && isDateOfBirthValid) {
+            isFullNameValid && isCountryValid && isGenderValid && isDateOfBirthValid) {
             dispatch(setUserError(''));
-            dispatch(signIn(email, password));
+            dispatch(signUp({
+                email: email,
+                password: password,
+                full_name: fullName,
+                country: country,
+                gender,
+                date_of_birth: formatDateForBackend(dateOfBirth),
+            }));
         }
     };
     
@@ -255,7 +260,7 @@ const SignUpPage = () => {
             setPasswordError('');
             setConfirmPasswordError('');
             setFullNameError('');
-            setCityError('');
+            setCountryError('');
             setGenderError('');
             setDateOfBirthError('');
         }
@@ -322,11 +327,11 @@ const SignUpPage = () => {
                 <div style={halfFormContainerStyle}>
                     <PrimaryTextField 
                         type="text" 
-                        label="City" 
-                        value={city} 
-                        onChange={(value) => handleFieldChange('city', value)} 
-                        placeholder="Enter your city" 
-                        error={cityError}
+                        label="Country" 
+                        value={country} 
+                        onChange={(value) => handleFieldChange('country', value)} 
+                        placeholder="Enter your country" 
+                        error={countryError}
                     />
                 </div>
             </div>

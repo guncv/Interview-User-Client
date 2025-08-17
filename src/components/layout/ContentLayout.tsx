@@ -131,12 +131,6 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
         fontFamily: Fonts.Light,
     };
 
-    const logoStyle: CSSProperties = {
-        height: '40px',
-        width: 'auto',
-        objectFit: 'contain',
-    };
-
     const menuItems: { icon: React.ReactNode; text: string; path: string }[] = [
         { icon: <School style={sideBarItemStyle} />, text: 'Courses List', path: '/courses' },
     ];

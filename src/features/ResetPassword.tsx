@@ -1,14 +1,20 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import AuthPageLayout from "../components/layout/AuthPageLayout";
 import { PrimaryTextField } from "../components/common/PrimaryTextField";
 import { PrimaryButton } from "../components/common/PrimaryButton";
 import Size from "../assets/styles/Size";
+import { resetPassword } from "../actions/userAction";
+import { useDispatch } from "react-redux";
 
 const ResetPassword = () => {
+    const [searchParams] = useSearchParams();
+    const token = searchParams.get('token');
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [errors, setErrors] = useState<{ newPassword?: string; confirmPassword?: string }>({});
     const [isLoading, setIsLoading] = useState(false);
+    const dispatch = useDispatch();
 
     const validateForm = () => {
         const newErrors: { newPassword?: string; confirmPassword?: string } = {};
@@ -34,6 +40,7 @@ const ResetPassword = () => {
             return;
         }
 
+        dispatch(resetPassword(token!, newPassword));
         setIsLoading(true);
         
         try {

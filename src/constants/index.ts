@@ -1,7 +1,10 @@
 // API Constants
 export const API_ENDPOINTS = {
+  SIGN_UP: '/api/v1/auth/sign-up',
   SIGN_IN: '/api/v1/auth/sign-in',
-  SET_INITIAL_PASSWORD: '/api/v1/auth/set-init-password',
+  VERIFY_EMAIL: '/api/v1/auth/verify-email',
+  RESET_VERIFY_EMAIL: '/api/v1/auth/reset-verify-email',
+  RESET_PASSWORD: '/api/v1/auth/reset-password',
   FORGOT_PASSWORD: '/api/v1/auth/forgot-password',
   SIGN_OUT: '/api/v1/auth/sign-out',
 } as const;
@@ -31,9 +34,10 @@ export const HTTP_STATUS = {
 
 // Navigation Routes
 export const ROUTES = {
-  HOME: '/',
-  SET_INIT_PASSWORD: '/set-init-password',
-  COURSE_LIST: '/courses',
+  SIGN_IN: '/',
+  VERIFY_EMAIL: '/verify-email',
+  SIGN_UP: '/sign-up',
+  RESET_PASSWORD: '/reset-password',
 } as const;
 
 // Rating Constants

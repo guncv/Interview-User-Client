@@ -8,16 +8,26 @@ import { ArrowLeftIcon } from 'lucide-react';
 import { safeNavigate } from '../utils/navigation';
 import font from '../assets/styles/Font';
 import AuthPageLayout from "../components/layout/AuthPageLayout";
+import { resetVerifyEmail, verifyEmail } from '../actions/userAction';
+import { useDispatch } from 'react-redux';
 
 const VerifyEmail = () => {
     const { isMobile } = useContextProvider();
+    const dispatch = useDispatch();
     const [otp, setOtp] = useState('');
     const [otpError, setOtpError] = useState('');
     const [isVerifying, setIsVerifying] = useState(false);
     const [countdown, setCountdown] = useState(0);
     const [canResend, setCanResend] = useState(true);
+    const [token, setToken] = useState<string>('');
 
     const otpRegex = /^[A-Z0-9]{6}$/;
+
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tokenFromUrl = urlParams.get('token');
+        setToken(tokenFromUrl || '');
+    }, []);
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
@@ -55,6 +65,7 @@ const VerifyEmail = () => {
         }
 
         setIsVerifying(true);
+        dispatch(verifyEmail({ token: token, code: otp }));
         
         setTimeout(() => {
             setIsVerifying(false);
@@ -64,7 +75,9 @@ const VerifyEmail = () => {
     const handleResendCode = () => {
         if (!canResend) return;
         
+        dispatch(resetVerifyEmail(token!));
         setCountdown(5);
+        
         console.log('Resending OTP...');
     };
 
