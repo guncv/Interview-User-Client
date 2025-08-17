@@ -11,6 +11,7 @@ type PrimaryTextFieldProps = {
     onChange: (value: string) => void;
     placeholder?: string;
     disabled?: boolean;
+    error?: string;
 };
 
 export const PrimaryTextField = ({
@@ -20,6 +21,7 @@ export const PrimaryTextField = ({
     onChange,
     placeholder,
     disabled = false,
+    error,
 }: PrimaryTextFieldProps) => {
     const [isVisible, setIsVisible] = useState(false);
     const isPassword = type === 'password';
@@ -28,10 +30,25 @@ export const PrimaryTextField = ({
         width: '100%',
     };
 
+    const labelContainerStyle: CSSProperties = {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    };
+
     const labelStyle: CSSProperties = {
         fontSize: Size.Medium,
         color: Colors.PRIMARY_COLOR,
         opacity: disabled ? 0.5 : 1,
+    };
+
+    const errorStyle: CSSProperties = {
+        fontSize: Size.Small,
+        color: Colors.TEXT_ERROR_COLOR,
+        fontFamily: font.Regular,
+        textAlign: 'right',
+        flexShrink: 0,
+        marginLeft: Size.Small,
     };
 
     const inputWrapperStyle: CSSProperties = {
@@ -43,7 +60,7 @@ export const PrimaryTextField = ({
         width: '100%',
         marginTop: Size.Small,
         height: '45px',
-        border: `1px solid ${Colors.SECONDARY_TEXT_COLOR}`,
+        border: `1px solid ${error ? Colors.TEXT_ERROR_COLOR : Colors.SECONDARY_TEXT_COLOR}`,
         borderRadius: Size.Small,
         padding: Size.Small,
         paddingLeft: Size.Medium,
@@ -67,7 +84,10 @@ export const PrimaryTextField = ({
 
     return (
         <div style={fieldWrapperStyle}>
-            <div style={labelStyle}>{label}</div>
+            <div style={labelContainerStyle}>
+                <div style={labelStyle}>{label}</div>
+                {error && <div style={errorStyle}>{error}</div>}
+            </div>
             
             <div style={inputWrapperStyle}>
                 <input

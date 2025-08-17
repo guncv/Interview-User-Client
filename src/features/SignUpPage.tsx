@@ -5,7 +5,6 @@ import { isValidEmail } from '../utils/format';
 import { PrimaryTextField, PrimaryDropdown, PrimaryDatePicker } from '../components/common';
 import { safeNavigate } from '../utils/navigation';
 import { PrimaryButton } from '../components/common/PrimaryButton';
-import { ErrorMessage } from '../components/common/ErrorMessage';
 import { useContextProvider } from '../components/layout/ContextProvider';
 import { useDispatch, useSelector } from 'react-redux';
 import { setUserError, signIn } from '../actions/userAction';
@@ -22,11 +21,19 @@ const SignUpPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
     const [fullName, setFullName] = useState('');
     const [city, setCity] = useState('');
     const [gender, setGender] = useState('');
     const [dateOfBirth, setDateOfBirth] = useState('');
+
+    // Field-specific error states
+    const [emailError, setEmailError] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+    const [confirmPasswordError, setConfirmPasswordError] = useState('');
+    const [fullNameError, setFullNameError] = useState('');
+    const [cityError, setCityError] = useState('');
+    const [genderError, setGenderError] = useState('');
+    const [dateOfBirthError, setDateOfBirthError] = useState('');
 
     // Gender options for the dropdown
     const genderOptions = [
@@ -38,9 +45,142 @@ const SignUpPage = () => {
 
     useEffect(() => {
         if (error) {
-            setErrorMessage(error);
+            // Set a general error for the email field if it's a server error
+            setEmailError(error);
         }
     }, [error]);
+
+    const validateField = (fieldName: string, value: string) => {
+        switch (fieldName) {
+            case 'email':
+                if (!value) {
+                    setEmailError('Required');
+                    return false;
+                }
+                if (!isValidEmail(value)) {
+                    setEmailError('Please enter a valid email address');
+                    return false;
+                }
+                setEmailError('');
+                return true;
+            
+            case 'password':
+                if (!value) {
+                    setPasswordError('Required');
+                    return false;
+                }
+                if (value.length < 8) {
+                    setPasswordError('Password must be at least 8 characters');
+                    return false;
+                }
+                setPasswordError('');
+                return true;
+            
+            case 'confirmPassword':
+                if (!value) {
+                    setConfirmPasswordError('Required');
+                    return false;
+                }
+                if (value !== password) {
+                    setConfirmPasswordError('Passwords do not match');
+                    return false;
+                }
+                setConfirmPasswordError('');
+                return true;
+            
+            case 'fullName':
+                if (!value.trim()) {
+                    setFullNameError('Required');
+                    return false;
+                }
+                setFullNameError('');
+                return true;
+            
+            case 'city':
+                if (!value.trim()) {
+                    setCityError('Required');
+                    return false;
+                }
+                setCityError('');
+                return true;
+            
+            case 'gender':
+                if (!value) {
+                    setGenderError('Required');
+                    return false;
+                }
+                setGenderError('');
+                return true;
+            
+            case 'dateOfBirth':
+                if (!value) {
+                    setDateOfBirthError('Required');
+                    return false;
+                }
+                setDateOfBirthError('');
+                return true;
+            
+            default:
+                return true;
+        }
+    };
+
+    const handleFieldChange = (fieldName: string, value: string) => {
+        // Update the field value
+        switch (fieldName) {
+            case 'email':
+                setEmail(value);
+                break;
+            case 'password':
+                setPassword(value);
+                break;
+            case 'confirmPassword':
+                setConfirmPassword(value);
+                break;
+            case 'fullName':
+                setFullName(value);
+                break;
+            case 'city':
+                setCity(value);
+                break;
+            case 'gender':
+                setGender(value);
+                break;
+            case 'dateOfBirth':
+                setDateOfBirth(value);
+                break;
+        }
+
+        // Clear the error when user starts typing
+        if (value) {
+            validateField(fieldName, value);
+        } else {
+            // Clear error if field is empty
+            switch (fieldName) {
+                case 'email':
+                    setEmailError('');
+                    break;
+                case 'password':
+                    setPasswordError('');
+                    break;
+                case 'confirmPassword':
+                    setConfirmPasswordError('');
+                    break;
+                case 'fullName':
+                    setFullNameError('');
+                    break;
+                case 'city':
+                    setCityError('');
+                    break;
+                case 'gender':
+                    setGenderError('');
+                    break;
+                case 'dateOfBirth':
+                    setDateOfBirthError('');
+                    break;
+            }
+        }
+    };
 
     const inputContainerStyle: CSSProperties = {
         display: 'flex',
@@ -76,11 +216,6 @@ const SignUpPage = () => {
         marginTop: Size.LargeMedium,
     };
 
-    const errorMessageContainerStyle: CSSProperties = {
-        width: isMobile ? '80vw' : '400px',
-        marginTop: Size.ExtraLarge,
-    };
-
     const createAccountStyle: CSSProperties = {
         width: isMobile ? '80vw' : '450px',
         fontSize: Size.Medium,
@@ -96,39 +231,35 @@ const SignUpPage = () => {
     };
 
     const handleSignIn = () => {
-        if (!email || !password) {
-            setErrorMessage('Please enter both your email and password.');
-            return;
-        } if (!isValidEmail(email)) {
-            setErrorMessage('The email address you entered is not valid. Please check and try again.');
-            return;
-        } if (password.length < 8) {
-            setErrorMessage('Your password must be at least 8 characters long.');
-            return;
-        } if (password !== confirmPassword) {
-            setErrorMessage('The passwords you entered do not match. Please check and try again.');
-            return;
-        } if (!fullName.trim()) {
-            setErrorMessage('Please enter your full name.');
-            return;
-        } if (!city.trim()) {
-            setErrorMessage('Please enter your city.');
-            return;
-        } if (!gender) {
-            setErrorMessage('Please select your gender.');
-            return;
-        } if (!dateOfBirth) {
-            setErrorMessage('Please select your date of birth.');
-            return;
+        // Validate all fields
+        const isEmailValid = validateField('email', email);
+        const isPasswordValid = validateField('password', password);
+        const isConfirmPasswordValid = validateField('confirmPassword', confirmPassword);
+        const isFullNameValid = validateField('fullName', fullName);
+        const isCityValid = validateField('city', city);
+        const isGenderValid = validateField('gender', gender);
+        const isDateOfBirthValid = validateField('dateOfBirth', dateOfBirth);
+
+        // If all validations pass, proceed with sign up
+        if (isEmailValid && isPasswordValid && isConfirmPasswordValid && 
+            isFullNameValid && isCityValid && isGenderValid && isDateOfBirthValid) {
+            dispatch(setUserError(''));
+            dispatch(signIn(email, password));
         }
-        setErrorMessage('');
-        dispatch(setUserError(''));
-        dispatch(signIn(email, password));
     };
     
     useEffect(() => {
-        setErrorMessage('');
-    }, [email, password, confirmPassword, fullName, city, gender, dateOfBirth]);
+        // Clear all errors when component mounts or when server error changes
+        if (!error) {
+            setEmailError('');
+            setPasswordError('');
+            setConfirmPasswordError('');
+            setFullNameError('');
+            setCityError('');
+            setGenderError('');
+            setDateOfBirthError('');
+        }
+    }, [error]);
 
     return (
         <AuthPageLayout
@@ -136,43 +267,73 @@ const SignUpPage = () => {
             signUp={true}
         >
             <div style={inputContainerStyle}>
-                <PrimaryTextField type="text" label="Email" value={email} onChange={setEmail} placeholder="Enter your email" />
-                <PrimaryTextField type="password" label="Password" value={password} onChange={setPassword} placeholder="Enter your password" />
-                <PrimaryTextField type="password" label="Confirm Password" value={confirmPassword} onChange={setConfirmPassword} placeholder="Confirm your password" />
+                <PrimaryTextField 
+                    type="text" 
+                    label="Email" 
+                    value={email} 
+                    onChange={(value) => handleFieldChange('email', value)} 
+                    placeholder="Enter your email" 
+                    error={emailError}
+                />
+                <PrimaryTextField 
+                    type="password" 
+                    label="Password" 
+                    value={password} 
+                    onChange={(value) => handleFieldChange('password', value)} 
+                    placeholder="Enter your password" 
+                    error={passwordError}
+                />
+                <PrimaryTextField 
+                    type="password" 
+                    label="Confirm Password" 
+                    value={confirmPassword} 
+                    onChange={(value) => handleFieldChange('confirmPassword', value)} 
+                    placeholder="Confirm your password" 
+                    error={confirmPasswordError}
+                />
 
                 <div style={halfFormContainerStyle}>
                     <PrimaryDropdown
                         label="Gender"
                         value={gender}
-                        onChange={setGender}
+                        onChange={(value) => handleFieldChange('gender', value)}
                         placeholder="Select your gender"
                         options={genderOptions}
+                        error={genderError}
                     />
                     <PrimaryDatePicker
                         label="Date of Birth"
                         value={dateOfBirth}
-                        onChange={setDateOfBirth}
+                        onChange={(value) => handleFieldChange('dateOfBirth', value)}
                         placeholder="Select your date of birth"
-                        maxDate={new Date().toISOString().split('T')[0]}
+                        error={dateOfBirthError}
                     />
                 </div>
 
-                <PrimaryTextField type="text" label="Full Name" value={fullName} onChange={setFullName} placeholder="Enter your full name" />
+                <PrimaryTextField 
+                    type="text" 
+                    label="Full Name" 
+                    value={fullName} 
+                    onChange={(value) => handleFieldChange('fullName', value)} 
+                    placeholder="Enter your full name" 
+                    error={fullNameError}
+                />
 
                 <div style={halfFormContainerStyle}>
-                    <PrimaryTextField type="text" label="City" value={city} onChange={setCity} placeholder="Enter your city" />
+                    <PrimaryTextField 
+                        type="text" 
+                        label="City" 
+                        value={city} 
+                        onChange={(value) => handleFieldChange('city', value)} 
+                        placeholder="Enter your city" 
+                        error={cityError}
+                    />
                 </div>
             </div>
 
             <div style={buttonContainerStyle}>
                 <PrimaryButton label="Sign Up Your Account" onClick={handleSignIn} />
             </div>
-
-            {errorMessage && (
-                <div style={errorMessageContainerStyle}>
-                    <ErrorMessage message={errorMessage} />
-                </div>
-            )}
 
             <div style={createAccountStyle}>
                 <span style={dontHaveAccountTextStyle}>Already have an account? </span>

@@ -5,7 +5,6 @@ import { isValidEmail } from '../utils/format';
 import { PrimaryTextField } from '../components/common/PrimaryTextField';
 import { safeNavigate } from '../utils/navigation';
 import { PrimaryButton } from '../components/common/PrimaryButton';
-import { ErrorMessage } from '../components/common/ErrorMessage';
 import { useContextProvider } from '../components/layout/ContextProvider';
 import { useDispatch, useSelector } from 'react-redux';
 import { setUserError, signIn } from '../actions/userAction';
@@ -21,11 +20,12 @@ const SignInPage = () => {
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
+    const [emailError, setEmailError] = useState('');
+    const [passwordError, setPasswordError] = useState('');
 
     useEffect(() => {
         if (error) {
-            setErrorMessage(error);
+            setEmailError(error);
         }
     }, [error]);
 
@@ -77,11 +77,6 @@ const SignInPage = () => {
         marginTop: Size.ExtraLarge,
     };
 
-    const errorMessageContainerStyle: CSSProperties = {
-        width: isMobile ? '80vw' : '400px',
-        marginTop: Size.ExtraLarge,
-    };
-
     const createAccountStyle: CSSProperties = {
         width: isMobile ? '80vw' : '450px',
         fontSize: Size.Medium,
@@ -92,22 +87,24 @@ const SignInPage = () => {
 
     const handleSignIn = () => {
         if (!email || !password) {
-            setErrorMessage('Please enter both your email and password.');
+            setEmailError('Please enter both your email and password.');
             return;
         } if (!isValidEmail(email)) {
-            setErrorMessage('The email address you entered is not valid. Please check and try again.');
+            setEmailError('The email address you entered is not valid. Please check and try again.');
             return;
         } if (password.length < 8) {
-            setErrorMessage('Your password must be at least 8 characters long.');
+            setPasswordError('Your password must be at least 8 characters long.');
             return;
         }
-        setErrorMessage('');
+        setEmailError('');
+        setPasswordError('');
         dispatch(setUserError(''));
         dispatch(signIn(email, password));
     };
     
     useEffect(() => {
-        setErrorMessage('');
+        setEmailError('');
+        setPasswordError('');
     }, [email, password]);
 
     return (
@@ -117,8 +114,8 @@ const SignInPage = () => {
             description="Please sign in to continue to your account."
         >
             <div style={inputContainerStyle}>
-                <PrimaryTextField type="text" label="Email" value={email} onChange={setEmail} placeholder="Enter your email" />
-                <PrimaryTextField type="password" label="Password" value={password} onChange={setPassword} placeholder="Enter your password" />
+                <PrimaryTextField type="text" label="Email" value={email} onChange={setEmail} placeholder="Enter your email" error={emailError} />
+                <PrimaryTextField type="password" label="Password" value={password} onChange={setPassword} placeholder="Enter your password" error={passwordError} />
             </div>
 
             <div style={forgotPasswordContainerStyle}>
@@ -134,10 +131,6 @@ const SignInPage = () => {
                 <span>{" "}</span>
                 <span style={createAccountTextStyle} onClick={() => safeNavigate('/sign-up')}>Sign up here</span>
                 <ArrowRightIcon style={arrowRightIconStyle} />
-            </div>
-
-            <div style={errorMessageContainerStyle}>
-                <ErrorMessage message={errorMessage} />
             </div>
         </AuthPageLayout>
     );

@@ -11,6 +11,7 @@ type PrimaryDropdownProps = {
     placeholder?: string;
     disabled?: boolean;
     options: { value: string; label: string }[];
+    error?: string;
 };
 
 export const PrimaryDropdown = ({
@@ -20,6 +21,7 @@ export const PrimaryDropdown = ({
     placeholder,
     disabled = false,
     options,
+    error,
 }: PrimaryDropdownProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [showAbove, setShowAbove] = useState(false);
@@ -70,10 +72,25 @@ export const PrimaryDropdown = ({
         position: 'relative',
     };
 
+    const labelContainerStyle: CSSProperties = {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    };
+
     const labelStyle: CSSProperties = {
         fontSize: Size.Medium,
         color: Colors.PRIMARY_COLOR,
         opacity: disabled ? 0.5 : 1,
+    };
+
+    const errorStyle: CSSProperties = {
+        fontSize: Size.Small,
+        color: Colors.TEXT_ERROR_COLOR,
+        fontFamily: font.Regular,
+        textAlign: 'right',
+        flexShrink: 0,
+        marginLeft: Size.Small,
     };
 
     const dropdownWrapperStyle: CSSProperties = {
@@ -85,7 +102,7 @@ export const PrimaryDropdown = ({
         width: '100%',
         marginTop: Size.Small,
         height: '45px',
-        border: `1px solid ${Colors.SECONDARY_TEXT_COLOR}`,
+        border: `1px solid ${error ? Colors.TEXT_ERROR_COLOR : Colors.SECONDARY_TEXT_COLOR}`,
         borderRadius: Size.Small,
         padding: Size.Small,
         paddingLeft: Size.Medium,
@@ -155,7 +172,10 @@ export const PrimaryDropdown = ({
 
     return (
         <div style={fieldWrapperStyle} ref={dropdownRef}>
-            <div style={labelStyle}>{label}</div>
+            <div style={labelContainerStyle}>
+                <div style={labelStyle}>{label}</div>
+                {error && <div style={errorStyle}>{error}</div>}
+            </div>
             
             <div style={dropdownWrapperStyle}>
                 <div 

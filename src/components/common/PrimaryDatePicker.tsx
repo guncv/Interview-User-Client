@@ -10,8 +10,7 @@ type PrimaryDatePickerProps = {
     onChange: (value: string) => void;
     placeholder?: string;
     disabled?: boolean;
-    minDate?: string;
-    maxDate?: string;
+    error?: string;
 };
 
 export const PrimaryDatePicker = ({
@@ -20,8 +19,7 @@ export const PrimaryDatePicker = ({
     onChange,
     placeholder,
     disabled = false,
-    minDate,
-    maxDate,
+    error,
 }: PrimaryDatePickerProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [hoveredDay, setHoveredDay] = useState<number | null>(null);
@@ -56,10 +54,25 @@ export const PrimaryDatePicker = ({
         position: 'relative',
     };
 
+    const labelContainerStyle: CSSProperties = {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    };
+
     const labelStyle: CSSProperties = {
         fontSize: Size.Medium,
         color: Colors.PRIMARY_COLOR,
         opacity: disabled ? 0.5 : 1,
+    };
+
+    const errorStyle: CSSProperties = {
+        fontSize: Size.Small,
+        color: Colors.TEXT_ERROR_COLOR,
+        fontFamily: font.Regular,
+        textAlign: 'right',
+        flexShrink: 0,
+        marginLeft: Size.Small,
     };
 
     const datePickerWrapperStyle: CSSProperties = {
@@ -71,7 +84,7 @@ export const PrimaryDatePicker = ({
         width: '100%',
         marginTop: Size.Small,
         height: '45px',
-        border: `1px solid ${Colors.SECONDARY_TEXT_COLOR}`,
+        border: `1px solid ${error ? Colors.TEXT_ERROR_COLOR : Colors.SECONDARY_TEXT_COLOR}`,
         borderRadius: Size.Small,
         padding: Size.Small,
         paddingLeft: Size.Medium,
@@ -283,7 +296,10 @@ export const PrimaryDatePicker = ({
 
     return (
         <div style={fieldWrapperStyle} ref={datePickerRef}>
-            <div style={labelStyle}>{label}</div>
+            <div style={labelContainerStyle}>
+                <div style={labelStyle}>{label}</div>
+                {error && <div style={errorStyle}>{error}</div>}
+            </div>
             
             <div style={datePickerWrapperStyle}>
                 <div 
