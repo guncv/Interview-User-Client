@@ -4,7 +4,8 @@ import SignUpPage from '../features/SignUpPage';
 import VerifyEmail from '../features/VerifyEmail';
 import ResetPassword from '../features/ResetPassword';
 import ResetPasswordSuccess from '../features/ResetPasswordSuccess';
-import InterviewList from '../features/InterviewList';
+import RecordingListPage from '../features/RecordingListPage';
+import CreateInterviewPage from '../features/CreateInterviewPage';
 
 interface ComponentProps {
   title: string;
@@ -24,5 +25,6 @@ export const routes: RouteConfig[]= [
   { path: '/verify-email', component: VerifyEmail, exact: true},
   { path: '/reset-password', component: ResetPassword, exact: true},
   { path: '/reset-password-success', component: ResetPasswordSuccess, exact: true},
-  { path: '/recordings', component: InterviewList, exact: true},
+  { path: '/recordings', component: RecordingListPage, exact: true},
+  { path: '/create-interview', component: CreateInterviewPage, exact: true},
 ];

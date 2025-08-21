@@ -1,0 +1,79 @@
+export interface InterviewRecording {
+    id: string;
+    title: string;
+    description?: string;
+    duration: number; // in seconds
+    fileSize: number; // in bytes
+    fileUrl: string;
+    thumbnailUrl?: string;
+    status: 'processing' | 'completed' | 'failed';
+    tags: string[];
+    category: string;
+    createdAt: string;
+    updatedAt: string;
+    userId: string;
+}
+
+export interface CreateInterviewRecordingRequest {
+    title: string;
+    description?: string;
+    category: string;
+    tags?: string[];
+    file: File;
+}
+
+export interface UpdateInterviewRecordingRequest {
+    id: string;
+    title?: string;
+    description?: string;
+    category?: string;
+    tags?: string[];
+}
+
+export interface DeleteInterviewRecordingRequest {
+    id: string;
+}
+
+export interface InterviewRecordingFilters {
+    category?: string;
+    status?: 'processing' | 'completed' | 'failed';
+    dateRange?: {
+        startDate: string;
+        endDate: string;
+    };
+    tags?: string[];
+    durationRange?: {
+        minDuration: number;
+        maxDuration: number;
+    };
+}
+
+export interface InterviewRecordingSearchParams {
+    query: string;
+    filters?: InterviewRecordingFilters;
+    sortBy?: 'title' | 'createdAt' | 'duration' | 'fileSize';
+    sortOrder?: 'asc' | 'desc';
+    page?: number;
+    limit?: number;
+}
+
+export interface InterviewRecordingListResponse {
+    recordings: InterviewRecording[];
+    totalCount: number;
+    currentPage: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+}
+
+export interface InterviewRecordingStats {
+    totalRecordings: number;
+    totalDuration: number; // in seconds
+    totalFileSize: number; // in bytes
+    recordingsByStatus: {
+        processing: number;
+        completed: number;
+        failed: number;
+    };
+    recordingsByCategory: Record<string, number>;
+}
