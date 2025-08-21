@@ -2,7 +2,7 @@ import { call, delay, put} from 'redux-saga/effects';
 import type { SagaIterator } from 'redux-saga';
 import { take } from 'redux-saga/effects';
 import { FORGOT_PASSWORD, SIGN_IN, setUserError, SIGN_OUT, SIGN_UP, VERIFY_EMAIL, RESET_VERIFY_EMAIL, RESET_PASSWORD } from '../actions/userAction';
-import { showSpinner, hideSpinner, hideSignOutPopup } from '../components/layout/AppProvider';
+import { showSpinner, hideSpinner} from '../components/layout/AppProvider';
 import type { UserForgotPasswordRequest, UserSignInRequest, UserSignUpRequest, UserVerifyEmailRequest } from '../interface/userInterface';
 import { apiForgotPassword, apiResetPassword, apiResetVerifyEmail, apiSignIn, apiSignOut, apiSignUp, apiVerifyEmail } from '../api/userApi';
 import { safeNavigate } from '../utils/navigation';
@@ -173,7 +173,6 @@ export function* workerSignOut(): SagaIterator {
         const response = yield call(apiSignOut);
         if (response.success) {
             localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-            hideSignOutPopup();
             safeNavigate(ROUTES.SIGN_IN);
         } else {
             yield call(hideSpinner);
@@ -198,7 +197,6 @@ export function* watcherSignOut(): SagaIterator {
 export function* handleStatusUserError(statusCode: number, message: string) {
     if (statusCode === HTTP_STATUS.UNAUTHORIZED) {
         localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-        hideSignOutPopup();
         safeNavigate(ROUTES.SIGN_IN);
     }
     yield put(setUserError(message));

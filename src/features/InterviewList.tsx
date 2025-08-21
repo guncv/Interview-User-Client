@@ -1,12 +1,11 @@
 
-import ContentLayout from "../components/layout/ContentLayout";
 
 const InterviewList = () => {
 
     return (
-        <ContentLayout>
+        <div style={{ padding: '20px', width: '100%' }}>
             <h1>Interview List</h1>
-        </ContentLayout>
+        </div>
     );
 };
 

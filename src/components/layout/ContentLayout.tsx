@@ -1,16 +1,18 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import Colors from '../../assets/styles/Color';
 import SideBarItem from '../common/SideBarItem';
-import { AudioLines, LogOut, Menu, X } from 'lucide-react';
+import { AudioLines, LogOut, Menu, Settings, X } from 'lucide-react';
 import Size from '../../assets/styles/Size';
 import Fonts from '../../assets/styles/Font';
 import { useLocation } from 'react-router-dom';
 import { safeNavigate } from '../../utils/navigation';
 import { useContextProvider } from './ContextProvider';
-import { showSignOutPopup } from './AppProvider';
 import logo from '../../assets/images/logo.png';
+import { signOut } from '../../actions/userAction';
+import { useDispatch } from 'react-redux';
 
 const ContentLayout = ({ children }: { children: React.ReactNode }) => {
+    const dispatch = useDispatch();
     const location = useLocation();
     const pathname = location.pathname;
     const { isMobile, isTablet } = useContextProvider();
@@ -137,99 +139,108 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
         objectFit: 'contain',
     };
 
+    const handleSignOut = () => {
+        dispatch(signOut());
+    };
+
     const menuItems: { icon: React.ReactNode; text: string; path: string }[] = [
         { icon: <AudioLines style={sideBarItemStyle} />, text: 'Recordings', path: '/recordings' },
     ];
     
     return (
         <div style={pageStyle}>
-        <div style={sideBarStyle}>
-            {isMobile || isTablet ? (
-            <div style={barContentWrapperStyle}>
-                <img src={logo} alt="Logo" style={logoStyle} />
-                <SideBarItem
-                icon={<Menu style={sideBarItemStyle} />}
-                text=""
-                isActive={false}
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                isMenu={true}
-                />
-            </div>
-            ) : (
-            <>
-                <div>
-                    <div style={{ paddingLeft: '10px', paddingTop: '15px' }}>
-                        <img src={logo} alt="Logo" style={logoStyle} />
+            <div style={sideBarStyle}>
+                {isMobile || isTablet ? (
+                <div style={barContentWrapperStyle}>
+                    <img src={logo} alt="Logo" style={logoStyle} />
+                    <SideBarItem
+                    icon={<Menu style={sideBarItemStyle} />}
+                    text=""
+                    isActive={false}
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    isMenu={true}
+                    />
+                </div>
+                ) : (
+                <>
+                    <div>
+                        <div style={{ paddingLeft: '10px', paddingTop: '15px' }}>
+                            <img src={logo} alt="Logo" style={logoStyle} />
+                        </div>
+                        <div style={sideBarItemContainerStyle}>
+                            {menuItems.map((item) => (
+                            <SideBarItem
+                                key={item.path}
+                                icon={item.icon}
+                                text={item.text}
+                                isActive={isActive(item.path)}
+                                onClick={() => handleNavigate(item.path)}
+                                isMenu={false}
+                            />
+                            ))}
+                        </div>
                     </div>
-                    <div style={sideBarItemContainerStyle}>
+
+                    <div style={{ paddingBottom: '20px' }}>
+                        <div style={sideBarItemContainerStyle}>
+                            <SideBarItem
+                            icon={<Settings style={sideBarItemStyle} />}
+                            text="Settings"
+                            isActive={false}
+                            onClick={() => {}}
+                            isMenu={false}
+                            />
+                            <SideBarItem
+                            icon={<LogOut style={sideBarItemStyle} />}
+                            text="Sign Out"
+                            isActive={false}
+                            onClick={handleSignOut}
+                            isMenu={false}
+                            />
+                        </div>
+                    </div>
+                </>
+                )}
+            </div>
+
+            {isMenuOpen && (isMobile || isTablet) && (
+                <>
+                <div onClick={() => setIsMenuOpen(false)} style={overlayStyle} />
+                    <div style={menuContainerStyle}>
+                        <div style={menuPopupStyle}>
+                        <div onClick={() => setIsMenuOpen(false)} style={closeButtonStyle}>
+                            <X style={sideBarItemStyle} />
+                        </div>
+
                         {menuItems.map((item) => (
-                        <SideBarItem
+                            <SideBarItem
                             key={item.path}
                             icon={item.icon}
                             text={item.text}
                             isActive={isActive(item.path)}
-                            onClick={() => handleNavigate(item.path)}
+                            onClick={() => {
+                                handleNavigate(item.path);
+                                setIsMenuOpen(false);
+                            }}
                             isMenu={false}
-                        />
+                            />
                         ))}
-                    </div>
-                </div>
+                        </div>
 
-                <div style={{ paddingBottom: '20px' }}>
-                    <div style={sideBarItemContainerStyle}>
                         <SideBarItem
                         icon={<LogOut style={sideBarItemStyle} />}
                         text="Sign Out"
                         isActive={false}
-                        onClick={() => showSignOutPopup()}
+                        onClick={handleSignOut}
                         isMenu={false}
                         />
                     </div>
-                </div>
-            </>
+                </>
             )}
-        </div>
 
-        {isMenuOpen && (isMobile || isTablet) && (
-            <>
-            <div onClick={() => setIsMenuOpen(false)} style={overlayStyle} />
-                <div style={menuContainerStyle}>
-                    <div style={menuPopupStyle}>
-                    <div onClick={() => setIsMenuOpen(false)} style={closeButtonStyle}>
-                        <X style={sideBarItemStyle} />
-                    </div>
-
-                    {menuItems.map((item) => (
-                        <SideBarItem
-                        key={item.path}
-                        icon={item.icon}
-                        text={item.text}
-                        isActive={isActive(item.path)}
-                        onClick={() => {
-                            handleNavigate(item.path);
-                            setIsMenuOpen(false);
-                        }}
-                        isMenu={false}
-                        />
-                    ))}
-                    </div>
-
-                    <SideBarItem
-                    icon={<LogOut style={sideBarItemStyle} />}
-                    text="Sign Out"
-                    isActive={false}
-                    onClick={() => {
-                        showSignOutPopup();
-                    }}
-                    isMenu={false}
-                    />
-                </div>
-            </>
-        )}
-
-        <div style={contentStyle}>
-            {children}
-        </div>
+            <div style={contentStyle}>
+                {children}
+            </div>
         </div>
     );
 };

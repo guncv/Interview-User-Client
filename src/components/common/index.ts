@@ -6,7 +6,7 @@ export { PrimaryTextField } from './PrimaryTextField';
 export { PrimaryDropdown } from './PrimaryDropdown';
 export { PrimaryDatePicker } from './PrimaryDatePicker';
 export { default as SideBarItem } from './SideBarItem';
-export { default as SignOutPopup } from './SignOutPopup';
 export { default as Spinner } from './Spinner';
 export { default as ContentLoadingSpinner } from './ContentLoadingSpinner';
 export { default as ContentError } from './ContentError';
+export { default as FullPageError } from './FullPageError';
