@@ -3,6 +3,7 @@ export { default as ErrorMessage } from './ErrorMessage';
 export { default as IconLabelPair } from './IconLabelPair';
 export { PrimaryButton } from './PrimaryButton';
 export { PrimaryTextField } from './PrimaryTextField';
+export { PrimaryTextArea } from './PrimaryTextArea';
 export { PrimaryDropdown } from './PrimaryDropdown';
 export { PrimaryDatePicker } from './PrimaryDatePicker';
 export { default as SideBarItem } from './SideBarItem';

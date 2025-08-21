@@ -3,6 +3,7 @@ import { Upload, FileText, Plus, X } from 'lucide-react';
 import ContentLayout from "../components/layout/ContentLayout";
 import { PrimaryButton } from "../components/common/PrimaryButton";
 import { PrimaryTextField } from "../components/common/PrimaryTextField";
+import { PrimaryTextArea } from "../components/common/PrimaryTextArea";
 import { PrimaryDropdown } from "../components/common/PrimaryDropdown";
 import Colors from "../assets/styles/Color";
 import Size from "../assets/styles/Size";
@@ -16,7 +17,7 @@ import type {
 } from "../interface/interviewInterface";
 
 const CreateInterviewPage = () => {
-    const { isMobile } = useContextProvider();
+    const { isMobile, isTablet } = useContextProvider();
     const fileInputRef = useRef<HTMLInputElement>(null);
     
     const [resumeMode, setResumeMode] = useState<'upload' | 'existing'>('upload');
@@ -59,11 +60,7 @@ const CreateInterviewPage = () => {
 
     const languageOptions = [
         { value: 'en', label: 'English' },
-        { value: 'es', label: 'Spanish' },
-        { value: 'fr', label: 'French' },
-        { value: 'de', label: 'German' },
-        { value: 'zh', label: 'Chinese' },
-        { value: 'ja', label: 'Japanese' },
+        { value: 'th', label: 'Thai' },
     ];
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,7 +80,7 @@ const CreateInterviewPage = () => {
         setFormData(prev => ({ 
             ...prev, 
             consentGiven: checked,
-            consentAt: checked ? new Date() : new Date(0) // Set consent date when given
+            consentAt: checked ? new Date() : prev.consentAt // Keep existing date when unchecking
         }));
         setErrors(prev => ({ ...prev, consentGiven: undefined }));
     };
@@ -100,35 +97,51 @@ const CreateInterviewPage = () => {
         }
 
         if (!formData.position.trim()) {
-            newErrors.position = 'Position is required';
+            newErrors.position = 'required';
         }
 
         if (!formData.company.trim()) {
-            newErrors.company = 'Company is required';
+            newErrors.company = 'required';
         }
 
         if (!formData.workType) {
-            newErrors.workType = 'Work type is required';
+            newErrors.workType = 'required';
         }
 
         if (!formData.jobRequirements.trim()) {
-            newErrors.jobRequirements = 'Job requirements are required';
+            newErrors.jobRequirements = 'required';
         }
 
         if (!formData.interviewType) {
-            newErrors.interviewType = 'Interview type is required';
+            newErrors.interviewType = 'required';
         }
 
         if (!formData.language) {
-            newErrors.language = 'Language is required';
+            newErrors.language = 'required';
         }
 
-        if (!formData.consentAt) {
-            newErrors.consentAt = 'Consent date is required';
+        if (!formData.consentGiven) {
+            newErrors.consentGiven = 'You must give consent to continue';
         }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
+    };
+
+    const isFormComplete = (): boolean => {
+        // Check if all required fields are filled
+        const hasResume = resumeMode === 'upload' ? !!formData.file : !!formData.resumeId;
+        const hasRequiredFields = !!formData.position.trim() && 
+                                !!formData.company.trim() && 
+                                !!formData.workType && 
+                                !!formData.jobRequirements.trim() && 
+                                !!formData.interviewType && 
+                                !!formData.language;
+        
+        // Check if consent is given
+        const hasConsent = !!formData.consentGiven;
+        
+        return hasResume && hasRequiredFields && hasConsent;
     };
 
     const handleSubmit = async () => {
@@ -148,7 +161,6 @@ const CreateInterviewPage = () => {
                     consentGiven: formData.consentGiven,
                 };
                 console.log('Creating interview with new resume:', request);
-                // TODO: Call API
             } else {
                 const request: CreateInterviewSessionWithExistingResumeRequest = {
                     resumeId: formData.resumeId,
@@ -178,23 +190,26 @@ const CreateInterviewPage = () => {
     };
 
     const pageContainerStyle: CSSProperties = {
-        padding: isMobile ? Size.Small : Size.Large,
         display: 'flex',
         flexDirection: 'column',
-        gap: isMobile ? Size.Small : Size.Medium,
+        gap: isMobile ? Size.Small : isTablet ? Size.Medium : Size.Medium,
         overflow: 'auto',
         minHeight: '100vh',
         width: '100%',
         maxWidth: '100vw',
+        paddingBottom: isMobile || isTablet ? '80px' : '40px',
     };
 
     const headerStyle: CSSProperties = {
+        display: 'flex',
+        justifyContent: 'space-between',
         textAlign: 'left',
-        marginBottom: isMobile ? Size.Small : Size.Medium,
+        marginBottom: isMobile ? Size.Small : isTablet ? Size.Medium : Size.Large,
+        alignItems: 'center',
     };
 
     const titleStyle: CSSProperties = {
-        fontSize: isMobile ? Size.Medium : Size.Large,
+        fontSize: isMobile ? Size.Medium : isTablet ? Size.LargeMedium : Size.Large,
         fontFamily: font.Regular,
         color: Colors.PRIMARY_COLOR,
         marginBottom: Size.Small,
@@ -206,7 +221,7 @@ const CreateInterviewPage = () => {
     };
 
     const subtitleStyle: CSSProperties = {
-        fontSize: isMobile ? Size.Small : Size.Medium,
+        fontSize: isMobile ? Size.Small : isTablet ? Size.Small : Size.Medium,
         fontFamily: font.Regular,
         color: Colors.SECONDARY_TEXT_COLOR,
         lineHeight: '1.6',
@@ -215,9 +230,9 @@ const CreateInterviewPage = () => {
 
     const mainContentStyle: CSSProperties = {
         display: 'grid',
-        gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-        gap: isMobile ? Size.Medium : Size.Large,
-        marginBottom: isMobile ? Size.Medium : Size.Large,
+        gridTemplateColumns: isMobile ? '1fr' : isTablet ? '1fr 1fr' : '1fr 1fr',
+        gap: isMobile ? Size.Medium : isTablet ? Size.Large : Size.Large,
+        marginBottom: isMobile ? Size.Medium : isTablet ? Size.Large : Size.Large,
         alignItems: 'start',
         width: '100%',
         ...(isMobile && {
@@ -229,7 +244,7 @@ const CreateInterviewPage = () => {
     const leftSideStyle: CSSProperties = {
         display: 'flex',
         flexDirection: 'column',
-        gap: isMobile ? Size.Small : Size.Medium,
+        gap: isMobile ? Size.Small : isTablet ? Size.Medium : Size.Medium,
         minHeight: 'fit-content',
         alignItems: 'center',
         width: '100%',
@@ -242,7 +257,8 @@ const CreateInterviewPage = () => {
     const rightSideStyle: CSSProperties = {
         display: 'flex',
         flexDirection: 'column',
-        gap: isMobile ? Size.Medium : Size.Large,
+        gap: isMobile ? Size.Medium : isTablet ? Size.Large : Size.Large,
+        overflow: 'auto',
         width: '100%',
         ...(isMobile && {
             gridArea: 'right',
@@ -251,38 +267,36 @@ const CreateInterviewPage = () => {
 
     const resumeModeToggleStyle: CSSProperties = {
         display: 'flex',
-        flexDirection: isMobile ? 'column' : 'row',
-        gap: isMobile ? Size.Small : Size.Small,
+        flexDirection: isMobile ? 'column' : isTablet ? 'row' : 'row',
+        gap: isMobile ? Size.Small : isTablet ? Size.Small : Size.Small,
         marginBottom: Size.Small,
         background: `linear-gradient(135deg, ${Colors.TEXT_WHITE_COLOR} 0%, ${Colors.LECTURE_CONTENT_PART_COLOR} 100%)`,
         borderRadius: Size.Small,
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
         border: `1px solid ${Colors.LECTURE_CONTENT_PART_COLOR}`,
         width: '100%',
-        fontSize: isMobile ? Size.Small : Size.Medium,
+        fontSize: isMobile ? Size.Small : isTablet ? Size.Medium : Size.Medium,
         fontFamily: font.Regular,
     };
 
     const modeButtonStyle: CSSProperties = {
         flex: 1,
-        padding: isMobile ? Size.Small : Size.Medium,
+        padding: isMobile ? Size.Small : isTablet ? Size.Medium : Size.Medium,
         border: 'none',
         borderRadius: Size.Small,
         fontFamily: font.Medium,
-        fontSize: isMobile ? Size.Small : Size.Medium,
+        fontSize: isMobile ? Size.Small : isTablet ? Size.Medium : Size.Medium,
         cursor: 'pointer',
         transition: 'all 0.3s ease',
         position: 'relative',
         overflow: 'hidden',
         whiteSpace: 'nowrap',
-        minHeight: isMobile ? '44px' : 'auto',
+        minHeight: isMobile ? '44px' : isTablet ? '48px' : 'auto',
     };
 
     const activeModeButtonStyle: CSSProperties = {
         ...modeButtonStyle,
         background: `linear-gradient(135deg, ${Colors.ACCENT_COLOR} 0%, ${Colors.ACCENT_COLOR_LIGHT} 100%)`,
         color: Colors.TEXT_WHITE_COLOR,
-        boxShadow: '0 4px 15px rgba(139, 21, 255, 0.3)',
         transform: 'translateY(-2px)',
     };
 
@@ -295,52 +309,43 @@ const CreateInterviewPage = () => {
 
     const formSectionLeftStyle: CSSProperties = {
         borderRadius: Size.Small,
-        padding: isMobile ? Size.Medium : Size.Large,
+        padding: isMobile ? Size.Medium : isTablet ? Size.Large : Size.Large,
         border: `1px solid ${Colors.LECTURE_CONTENT_PART_COLOR}`,
-        height: isMobile ? 'auto' : '500px',
-        minHeight: isMobile ? '400px' : '500px',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-        transition: 'all 0.3s ease',
+        height: isMobile ? 'auto' : isTablet ? '450px' : '500px',
+        minHeight: isMobile ? '400px' : isTablet ? '450px' : '500px',
         position: 'relative',
         overflow: 'auto',
         display: 'flex',
         flexDirection: 'column',
         width: '100%',
-        maxWidth: isMobile ? '100%' : '500px',
+        maxWidth: isMobile ? '100%' : isTablet ? '450px' : '500px',
         ...(isMobile && {
             marginBottom: Size.Medium,
         }),
     };
 
     const formSectionRightStyle: CSSProperties = {
-        backgroundColor: Colors.TEXT_WHITE_COLOR,
         borderRadius: Size.Small,
-        padding: isMobile ? Size.Medium : Size.Large,
-        minHeight: isMobile ? 'auto' : '600px',
-        maxHeight: isMobile ? 'none' : '600px',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-        transition: 'all 0.3s ease',
+        padding: isMobile ? Size.Medium : isTablet ? Size.Large : Size.Large,
+        minHeight: isMobile ? 'auto' : isTablet ? '550px' : '600px',
+        maxHeight: isMobile ? 'none' : isTablet ? '550px' : '600px',
         position: 'relative',
-        overflow: 'hidden',
+        overflow: 'auto',
         display: 'flex',
         flexDirection: 'column',
         width: '100%',
-        maxWidth: isMobile ? '100%' : '500px',
+        maxWidth: isMobile ? '100%' : isTablet ? '450px' : '500px',
     };
 
-    const formSectionStyleHover: CSSProperties = {
-        transform: 'translateY(-4px)',
-        boxShadow: '0 12px 40px rgba(0, 0, 0, 0.12)',
-    };
 
     const sectionTitleStyle: CSSProperties = {
-        fontSize: isMobile ? Size.Small : Size.Medium,
+        fontSize: isMobile ? Size.Small : isTablet ? Size.Medium : Size.Medium,
         fontFamily: font.Regular,
         color: Colors.PRIMARY_COLOR,
         marginBottom: Size.Medium,
         display: 'flex',
         width: '100%',
-        maxWidth: isMobile ? '100%' : '600px',
+        maxWidth: isMobile ? '100%' : isTablet ? '500px' : '600px',
         alignItems: 'start',
         gap: Size.Small,
         paddingBottom: Size.Small,
@@ -351,15 +356,15 @@ const CreateInterviewPage = () => {
     const fileUploadAreaStyle: CSSProperties = {
         border: `2px dashed ${Colors.ACCENT_COLOR}`,
         borderRadius: Size.Small,
-        padding: isMobile ? Size.Medium : Size.Large,
+        padding: isMobile ? Size.Medium : isTablet ? Size.Large : Size.Large,
         textAlign: 'center',
         cursor: 'pointer',
         transition: 'all 0.3s ease',
         background: `linear-gradient(135deg, ${Colors.ACCENT_COLOR_LIGHT} 0%, ${Colors.TEXT_WHITE_COLOR} 100%)`,
-        height: isMobile ? '200px' : '250px',
+        height: isMobile ? '200px' : isTablet ? '220px' : '250px',
         display: 'flex',
         width: '100%',
-        maxWidth: isMobile ? '100%' : '400px',
+        maxWidth: isMobile ? '100%' : isTablet ? '350px' : '400px',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
@@ -369,8 +374,8 @@ const CreateInterviewPage = () => {
     };
 
     const fileUploadIconStyle: CSSProperties = {
-        width: isMobile ? '35px' : '45px',
-        height: isMobile ? '30px' : '40px',
+        width: isMobile ? '35px' : isTablet ? '40px' : '45px',
+        height: isMobile ? '30px' : isTablet ? '35px' : '40px',
         color: Colors.ACCENT_COLOR,
         margin: '0 auto',
         marginBottom: Size.Medium,
@@ -378,12 +383,12 @@ const CreateInterviewPage = () => {
     };
 
     const fileUploadTextStyle: CSSProperties = {
-        fontSize: isMobile ? Size.Small : Size.Medium,
+        fontSize: isMobile ? Size.Small : isTablet ? Size.Medium : Size.Medium,
         fontFamily: font.Medium,
         color: Colors.PRIMARY_COLOR,
         marginBottom: Size.Small,
         textAlign: 'center',
-        padding: isMobile ? '0 10px' : '0',
+        padding: isMobile ? '0 10px' : isTablet ? '0 15px' : '0',
     };
 
     const fileUploadSubtextStyle: CSSProperties = {
@@ -392,22 +397,20 @@ const CreateInterviewPage = () => {
         color: Colors.SECONDARY_TEXT_COLOR,
         opacity: 0.8,
         textAlign: 'center',
-        padding: isMobile ? '0 10px' : '0',
+        padding: isMobile ? '0 10px' : isTablet ? '0 15px' : '0',
     };
 
     const selectedFileStyle: CSSProperties = {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: Colors.TEXT_WHITE_COLOR,
-        padding: isMobile ? Size.Small : Size.Small,
+        padding: isMobile ? Size.Small : isTablet ? Size.Small : Size.Small,
         borderRadius: Size.Small,
         border: `2px solid ${Colors.ACCENT_COLOR}`,
         marginTop: Size.Medium,
-        boxShadow: '0 4px 15px rgba(139, 21, 255, 0.1)',
         transition: 'all 0.3s ease',
-        flexWrap: isMobile ? 'wrap' : 'nowrap',
-        gap: isMobile ? Size.Small : Size.Small,
+        flexWrap: isMobile ? 'wrap' : isTablet ? 'nowrap' : 'nowrap',
+        gap: isMobile ? Size.Small : isTablet ? Size.Small : Size.Small,
     };
 
     const fileInfoStyle: CSSProperties = {
@@ -433,21 +436,17 @@ const CreateInterviewPage = () => {
         cursor: 'pointer',
         fontSize: '14px',
         transition: 'all 0.3s ease',
-        boxShadow: '0 2px 8px rgba(220, 53, 69, 0.3)',
     };
 
     const existingResumeCardStyle: CSSProperties = {
-        border: `2px solid ${Colors.LECTURE_CONTENT_PART_COLOR}`,
+        border: `1px solid ${Colors.LECTURE_CONTENT_PART_COLOR}`,
         borderRadius: Size.Small,
-        padding: isMobile ? Size.Small : Size.Medium,
+        padding: isMobile ? Size.Small : isTablet ? Size.Medium : Size.Medium,
         cursor: 'pointer',
         transition: 'all 0.3s ease',
         marginBottom: Size.Small,
-        backgroundColor: Colors.TEXT_WHITE_COLOR,
         position: 'relative',
         overflow: 'hidden',
-        height: isMobile ? 'auto' : '120px',
-        minHeight: isMobile ? '100px' : '120px',
         width: '100%',
     };
 
@@ -455,13 +454,11 @@ const CreateInterviewPage = () => {
         borderColor: Colors.ACCENT_COLOR,
         backgroundColor: Colors.ACCENT_COLOR_LIGHT,
         transform: 'translateX(8px)',
-        boxShadow: '0 6px 20px rgba(139, 21, 255, 0.15)',
     };
 
     const existingResumeCardSelectedStyle: CSSProperties = {
         borderColor: Colors.ACCENT_COLOR,
         backgroundColor: Colors.ACCENT_COLOR_LIGHT,
-        boxShadow: '0 6px 20px rgba(139, 21, 255, 0.2)',
         transform: 'translateX(8px)',
     };
 
@@ -473,7 +470,7 @@ const CreateInterviewPage = () => {
     };
 
     const resumeCardTitleStyle: CSSProperties = {
-        fontSize: isMobile ? Size.Small : Size.Medium,
+        fontSize: isMobile ? Size.Small : isTablet ? Size.Medium : Size.Medium,
         fontFamily: font.Medium,
         color: Colors.PRIMARY_COLOR,
         display: 'flex',
@@ -494,38 +491,25 @@ const CreateInterviewPage = () => {
     const formGridStyle: CSSProperties = {
         display: 'flex',
         flexDirection: 'column',
-        gap: isMobile ? Size.Small : Size.Medium,
-        marginBottom: isMobile ? Size.Small : Size.Medium,
+        gap: isMobile ? Size.Small : isTablet ? Size.Medium : Size.Medium,
+        marginBottom: isMobile ? Size.Small : isTablet ? Size.Medium : Size.Medium,
     };
 
     const submitButtonStyle: CSSProperties = {
-        marginTop: isMobile ? Size.Medium : Size.Large,
-        padding: isMobile ? Size.Small : Size.Medium,
-        fontSize: isMobile ? Size.Medium : Size.Large,
+        padding: isMobile ? Size.Small : isTablet ? Size.Small : Size.Small,
+        fontSize: isMobile ? Size.Small : isTablet ? Size.Medium : Size.Medium,
+        height: isMobile ? '40px' : isTablet ? '40px' : '40px',
+        width: isMobile ? '100%' : isTablet ? 'auto' : 'auto',
         fontFamily: font.Medium,
-        background: `linear-gradient(135deg, ${Colors.ACCENT_COLOR} 0%, ${Colors.ACCENT_COLOR_LIGHT} 100%)`,
-        boxShadow: '0 8px 25px rgba(139, 21, 255, 0.3)',
+        background: isFormComplete() ? Colors.ACCENT_COLOR : Colors.DISABLED_TEXT_COLOR,
+        cursor: isFormComplete() ? 'pointer' : '',
+        opacity: isFormComplete() ? 1 : 0.6,
         transition: 'all 0.3s ease',
-        transform: 'translateY(0)',
-        width: isMobile ? '100%' : 'auto',
-    };
-
-    const submitButtonContainerStyle: CSSProperties = {
-        gridColumn: '1 / -1',
-        display: 'flex',
-        justifyContent: 'center',
-        padding: Size.Small,
-        borderRadius: Size.Small,
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-        background: Colors.TEXT_WHITE_COLOR,
-        width: '100%',
-        maxWidth: isMobile ? '100%' : '600px',
-        margin: '0 auto',
     };
 
     const consentSectionStyle: CSSProperties = {
-        paddingLeft: isMobile ? Size.Medium : Size.Large,
-        paddingRight: isMobile ? Size.Medium : Size.Large,
+        paddingLeft: isMobile ? Size.Medium : isTablet ? Size.Large : Size.Large,
+        paddingRight: isMobile ? Size.Medium : isTablet ? Size.Large : Size.Large,
         transition: 'all 0.3s ease',
         display: 'flex',
         flexDirection: 'column',
@@ -547,7 +531,7 @@ const CreateInterviewPage = () => {
     };
 
     const consentTextStyle: CSSProperties = {
-        fontSize: Size.Small,
+        fontSize: isMobile ? Size.Small : isTablet ? '13px' : '13px',
         fontFamily: font.Regular,
         color: Colors.SECONDARY_TEXT_COLOR,
         lineHeight: '1.6',
@@ -568,28 +552,24 @@ const CreateInterviewPage = () => {
     return (
         <ContentLayout>
             <div style={pageContainerStyle}>
-                {/* Debug indicator - remove this in production */}
-                {process.env.NODE_ENV === 'development' && (
-                    <div style={{
-                        position: 'fixed',
-                        top: '10px',
-                        right: '10px',
-                        background: isMobile ? '#ff4444' : '#44ff44',
-                        color: 'white',
-                        padding: '5px 10px',
-                        borderRadius: '5px',
-                        fontSize: '12px',
-                        zIndex: 9999,
-                    }}>
-                        {isMobile ? 'MOBILE' : 'DESKTOP'} - {window.innerWidth}px
-                    </div>
-                )}
-
                 <div style={headerStyle}>
-                    <h1 style={titleStyle}>Create Interview Session</h1>
-                    <p style={subtitleStyle}>
-                        Set up your interview session by providing job details and resume information
-                    </p>
+                    <div >
+                        <h1 style={titleStyle}>Create Interview Session</h1>
+                        <p style={subtitleStyle}>
+                            Set up your interview session by providing job details and resume information
+                        </p>
+                    </div>
+                    
+                    {
+                        !isMobile && (
+                            <PrimaryButton
+                                label="Create Interview Session"
+                                onClick={handleSubmit}
+                                style={submitButtonStyle}
+                                isDisabled={!isFormComplete()}
+                            />
+                        )
+                    }
                 </div>
 
                 <div style={mainContentStyle}>
@@ -614,14 +594,6 @@ const CreateInterviewPage = () => {
 
                         <div
                             style={formSectionLeftStyle}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = formSectionStyleHover.transform!;
-                                e.currentTarget.style.boxShadow = formSectionStyleHover.boxShadow!;
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'none';
-                                e.currentTarget.style.boxShadow = formSectionLeftStyle.boxShadow!;
-                            }}
                         >
                             <h2 style={sectionTitleStyle}>
                                 {resumeMode === 'upload' ? <Upload size={24} /> : <FileText size={24} />}
@@ -661,7 +633,6 @@ const CreateInterviewPage = () => {
                                         flexDirection: 'column',
                                         gap: Size.Small,
                                         overflowY: 'auto',
-                                        backgroundColor: Colors.TEXT_WHITE_COLOR,
                                         borderRadius: Size.Small,
                                         border: `1px solid ${Colors.LECTURE_CONTENT_PART_COLOR}`
                                     }}>
@@ -747,7 +718,6 @@ const CreateInterviewPage = () => {
                                         gap: Size.Small,
                                         overflowY: 'auto',
                                         padding: Size.Small,
-                                        backgroundColor: Colors.TEXT_WHITE_COLOR,
                                         borderRadius: Size.Small,
                                         border: `1px solid ${Colors.LECTURE_CONTENT_PART_COLOR}`
                                     }}>
@@ -761,16 +731,12 @@ const CreateInterviewPage = () => {
                                                 onClick={() => handleInputChange('resumeId', resume.id)}
                                                 onMouseEnter={(e) => {
                                                     if (formData.resumeId !== resume.id) {
-                                                        e.currentTarget.style.borderColor = existingResumeCardStyleHover.borderColor!;
-                                                        e.currentTarget.style.backgroundColor = existingResumeCardStyleHover.backgroundColor!;
                                                         e.currentTarget.style.transform = existingResumeCardStyleHover.transform!;
                                                         e.currentTarget.style.boxShadow = existingResumeCardStyleHover.boxShadow!;
                                                     }
                                                 }}
                                                 onMouseLeave={(e) => {
                                                     if (formData.resumeId !== resume.id) {
-                                                        e.currentTarget.style.borderColor = existingResumeCardStyle.borderColor!;
-                                                        e.currentTarget.style.backgroundColor = existingResumeCardStyle.backgroundColor!;
                                                         e.currentTarget.style.transform = 'none';
                                                         e.currentTarget.style.boxShadow = 'none';
                                                     }
@@ -818,14 +784,6 @@ const CreateInterviewPage = () => {
                     <div style={rightSideStyle}>
                         <div
                             style={formSectionRightStyle}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = formSectionStyleHover.transform!;
-                                e.currentTarget.style.boxShadow = formSectionStyleHover.boxShadow!;
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'none';
-                                e.currentTarget.style.boxShadow = formSectionRightStyle.boxShadow!;
-                            }}
                         >
                             <h2 style={sectionTitleStyle}>
                                 <Plus size={24} />
@@ -849,7 +807,7 @@ const CreateInterviewPage = () => {
                                     error={errors.company}
                                 />
                                 
-                                <div style={{display: 'flex', gap: Size.Small, flexDirection: isMobile ? 'column' : 'row'}}>
+                                <div style={{display: 'flex', gap: Size.Small, flexDirection: isMobile ? 'column' : isTablet ? 'column' : 'row'}}>
                                     <PrimaryDropdown
                                         label="Work Type"
                                         value={formData.workType}
@@ -879,12 +837,13 @@ const CreateInterviewPage = () => {
                                     error={errors.language}
                                 />
 
-                                <PrimaryTextField
+                                <PrimaryTextArea
                                     label="Job Requirements"
                                     value={formData.jobRequirements}
                                     onChange={(value) => handleInputChange('jobRequirements', value)}
                                     placeholder="Describe the job requirements, skills needed, and any specific criteria..."
                                     error={errors.jobRequirements}
+                                    rows={3}
                                 />
                                 
                             </div>
@@ -913,13 +872,24 @@ const CreateInterviewPage = () => {
                     )}
                 </div>
 
-                <div style={submitButtonContainerStyle}>
-                    <PrimaryButton
-                        label="Create Interview Session"
-                        onClick={handleSubmit}
-                        style={submitButtonStyle}
-                    />
-                </div>
+                {
+
+                    isMobile && (
+                        <div style={{
+                            width: '100%',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            marginBottom: Size.Medium,
+                        }}>
+                            <PrimaryButton
+                                label="Create Interview Session"
+                                onClick={handleSubmit}
+                                style={submitButtonStyle}
+                                isDisabled={!isFormComplete()}
+                            />
+                        </div>
+                    )
+                }
             </div>
         </ContentLayout>
     );

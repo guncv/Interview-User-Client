@@ -12,10 +12,6 @@ const RecordingListPage = () => {
         fontSize: '24px',
         fontWeight: 'bold',
         color: 'black',
-        paddingLeft: '40px',
-        paddingRight: '40px',
-        marginTop: '30px',
-        marginBottom: '20px',
         width: '100%',
         display: 'flex',
         justifyContent: 'space-between',
@@ -41,8 +37,6 @@ const RecordingListPage = () => {
     }
 
     const tableContainerStyle: CSSProperties = {
-        paddingLeft: '40px',
-        paddingRight: '40px',
         marginTop: '20px',
         width: '100%',
     }

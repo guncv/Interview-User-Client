@@ -139,7 +139,7 @@ export const PrimaryDropdown = ({
         marginBottom: showAbove ? '2px' : '0px',
         maxHeight: '200px',
         overflowY: 'auto',
-        zIndex: 1000,
+        zIndex: 10000,
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
         transform: showAbove ? 'translateY(-100%)' : 'none',
     };
@@ -202,14 +202,12 @@ export const PrimaryDropdown = ({
                                 onClick={() => handleOptionSelect(option.value)}
                                 onMouseEnter={(e) => {
                                     if (option.value !== value) {
-                                        e.currentTarget.style.backgroundColor = Colors.SECONDARY_TEXT_COLOR;
-                                        e.currentTarget.style.color = Colors.TEXT_WHITE_COLOR;
+                                        e.currentTarget.style.backgroundColor = Colors.ACCENT_COLOR_LIGHT;
                                     }
                                 }}
                                 onMouseLeave={(e) => {
                                     if (option.value !== value) {
                                         e.currentTarget.style.backgroundColor = Colors.TEXT_WHITE_COLOR;
-                                        e.currentTarget.style.color = Colors.PRIMARY_COLOR;
                                     }
                                 }}
                             >
