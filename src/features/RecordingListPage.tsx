@@ -4,9 +4,10 @@ import { PrimaryButton } from "../components/common/PrimaryButton";
 import Colors from "../assets/styles/Color";
 import Size from "../assets/styles/Size";
 import font from "../assets/styles/Font";
+import { useNavigate } from "react-router-dom";
 
 const RecordingListPage = () => {
-
+    const navigate = useNavigate();
     const titleStyle:CSSProperties = {
         fontSize: '24px',
         fontWeight: 'bold',
@@ -103,12 +104,16 @@ const RecordingListPage = () => {
         }
     ];
 
+    const handleStartNewInterviews = () => {
+        navigate('/create-interview');
+    }
+
     return (
         <ContentLayout>
             <div style={titleStyle}>
                 <div>Interview Recordings</div>
                 <div style={buttonSearchContainerStyle}>
-                    <PrimaryButton label="Start New Interviews" onClick={() => {}} />
+                    <PrimaryButton label="Start New Interviews" onClick={handleStartNewInterviews} />
                     <input
                         style={searchInputStyle}
                         placeholder="Search Recordings..."

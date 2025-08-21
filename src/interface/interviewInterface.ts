@@ -77,3 +77,59 @@ export interface InterviewRecordingStats {
     };
     recordingsByCategory: Record<string, number>;
 }
+
+// New interfaces for creating interview sessions
+export interface CreateInterviewSessionWithNewResumeRequest {
+    file: File;
+    position: string;
+    company: string;
+    workType: string;
+    jobRequirements: string;
+    interviewType: string;
+    language: string;
+    consentAt: Date;
+    consentGiven: boolean;
+}
+
+export interface CreateInterviewSessionWithExistingResumeRequest {
+    resumeId: string;
+    position: string;
+    company: string;
+    workType: string;
+    jobRequirements: string;
+    interviewType: string;
+    language: string;
+    consentAt: Date;
+    consentGiven: boolean;
+}
+
+export interface CreateInterviewSessionResponse {
+    sessionToken: string;
+}
+
+export interface Resume {
+    id: string;
+    fileName: string;
+    uploadDate: string;
+    fileSize: number;
+}
+
+export interface JobRequirement {
+    id: string;
+    requirement: string;
+    isRequired: boolean;
+}
+
+// Form validation errors
+export interface CreateInterviewFormErrors {
+    file?: string;
+    resumeId?: string;
+    position?: string;
+    company?: string;
+    workType?: string;
+    jobRequirements?: string;
+    interviewType?: string;
+    language?: string;
+    consentAt?: string;
+    consentGiven?: string;
+}
