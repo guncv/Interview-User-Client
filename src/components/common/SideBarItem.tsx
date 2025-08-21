@@ -26,7 +26,7 @@ const SideBarItem = ({ icon, text , isActive, onClick, isMenu }: SideBarItemProp
         backgroundColor: hover && !isActive ? Colors.ACCENT_COLOR : '',
         paddingTop: '15px',
         paddingBottom: '15px',
-        color: isActive && !(isMobile || isTablet) ? Colors.SECONDARY_TEXT_COLOR : Colors.TEXT_WHITE_COLOR,
+        color: Colors.PRIMARY_COLOR,
     };
 
     const iconContainerStyle: CSSProperties = {

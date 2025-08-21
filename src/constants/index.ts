@@ -40,6 +40,7 @@ export const ROUTES = {
   FORGOT_PASSWORD: '/forgot-password',
   RESET_PASSWORD: '/reset-password',
   RESET_PASSWORD_SUCCESS: '/reset-password-success',
+  INTERVIEW_LIST: '/interview-list',
 } as const;
 
 // Rating Constants

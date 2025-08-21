@@ -120,8 +120,8 @@ const SignInPage = () => {
 
     return (
         <AuthPageLayout
-            title="Welcome Back To Eval"
-            highlight="ia"
+            title="Welcome Back To "
+            highlight="Evalia"
             description="Please sign in to continue to your account."
         >
             <div style={inputContainerStyle}>

@@ -93,7 +93,8 @@ function* workerSignIn(payload: UserSignInRequest): SagaIterator {
         const response = yield call(apiSignIn, payload);
         if (response.success) {
             localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.data.access_token);
-            safeNavigate(ROUTES.SIGN_IN);
+            console.log('response.data.access_token', response.data.access_token);
+            safeNavigate(ROUTES.INTERVIEW_LIST);
         } else {
             yield call(hideSpinner);
             yield call(handleStatusUserError, response.statusCode, response.message);

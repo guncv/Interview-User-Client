@@ -278,6 +278,12 @@ export const PrimaryDatePicker = ({
         return date.getMonth() !== currentMonth;
     };
 
+    const isFutureDate = (date: Date) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+        return date > today;
+    };
+
     const getDayStyle = (date: Date, index: number) => {
         let style: CSSProperties = { ...dayStyle };
         
@@ -293,7 +299,11 @@ export const PrimaryDatePicker = ({
             style = { ...style, ...otherMonthDayStyle };
         }
         
-        if (hoveredDay === index && !isSelected(date) && !isOtherMonth(date, month)) {
+        if (isFutureDate(date)) {
+            style = { ...style, ...otherMonthDayStyle, cursor: 'not-allowed' };
+        }
+        
+        if (hoveredDay === index && !isSelected(date) && !isOtherMonth(date, month) && !isFutureDate(date)) {
             style = { ...style, ...dayHoverStyle };
         }
         
@@ -426,11 +436,13 @@ export const PrimaryDatePicker = ({
                                         style={getDayStyle(date, index)}
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            handleDateSelect(date);
+                                            if (!isFutureDate(date)) {
+                                                handleDateSelect(date);
+                                            }
                                         }}
-                                        onMouseEnter={() => setHoveredDay(index)}
+                                        onMouseEnter={() => !isFutureDate(date) && setHoveredDay(index)}
                                         onMouseLeave={() => setHoveredDay(null)}
-                                        disabled={isOtherMonth(date, month)}
+                                        disabled={isOtherMonth(date, month) || isFutureDate(date)}
                                     >
                                         {date.getDate()}
                                     </button>

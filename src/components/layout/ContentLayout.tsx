@@ -9,8 +9,6 @@ import { safeNavigate } from '../../utils/navigation';
 import { useContextProvider } from './ContextProvider';
 import { showSignOutPopup } from './AppProvider';
 
-
-
 const ContentLayout = ({ children }: { children: React.ReactNode }) => {
     const location = useLocation();
     const pathname = location.pathname;
@@ -73,7 +71,6 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
         width: Size.Large,
         height: Size.Large,
         strokeWidth: 1,
-        color: isMobile || isTablet ? Colors.TEXT_WHITE_COLOR : '',
     };
 
     const contentStyle: CSSProperties = {
@@ -91,7 +88,6 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
         left: 0,
         width: '100vw',
         height: '100vh',
-        backgroundColor: Colors.PRIMARY_COLOR,
         opacity: 0.6,
         zIndex: 998,
     };
