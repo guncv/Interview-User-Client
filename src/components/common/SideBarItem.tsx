@@ -17,16 +17,16 @@ const SideBarItem = ({ icon, text , isActive, onClick, isMenu }: SideBarItemProp
     const sideBarItemContainerStyle: CSSProperties = {
         display: 'flex',
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'start',
         width: '100%',
         justifyContent: 'center',
         gap: '5%',
-        cursor: !isActive ? 'pointer' : 'default',
+        cursor: 'pointer',
         transition: 'all 0.3s ease',
-        backgroundColor: hover && !isActive ? Colors.ACCENT_COLOR : '',
+        backgroundColor: hover ? isActive ? Colors.ACCENT_COLOR_LIGHT : Colors.CONTENT_HOVER_COLOR : '',
         paddingTop: '15px',
         paddingBottom: '15px',
-        color: Colors.PRIMARY_COLOR,
+        color: isActive ? Colors.ACCENT_COLOR : Colors.PRIMARY_COLOR,
     };
 
     const iconContainerStyle: CSSProperties = {

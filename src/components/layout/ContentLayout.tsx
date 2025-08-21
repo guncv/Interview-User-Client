@@ -1,13 +1,14 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import Colors from '../../assets/styles/Color';
 import SideBarItem from '../common/SideBarItem';
-import { LogOut, Menu, School, X } from 'lucide-react';
+import { AudioLines, LogOut, Menu, X } from 'lucide-react';
 import Size from '../../assets/styles/Size';
 import Fonts from '../../assets/styles/Font';
 import { useLocation } from 'react-router-dom';
 import { safeNavigate } from '../../utils/navigation';
 import { useContextProvider } from './ContextProvider';
 import { showSignOutPopup } from './AppProvider';
+import logo from '../../assets/images/logo.png';
 
 const ContentLayout = ({ children }: { children: React.ReactNode }) => {
     const location = useLocation();
@@ -32,7 +33,12 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
         if (!isActive(path)) safeNavigate(path);
     };
 
-
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, []);
 
     const pageStyle: CSSProperties = {
         width: '100vw',
@@ -45,8 +51,7 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
     const sideBarStyle: CSSProperties = {
         width: isMobile || isTablet ? '100%' : '200px',
         height: isMobile || isTablet ? '60px' : '100%',
-        backgroundColor: isMobile || isTablet ? 'transparent' : Colors.SIDEBAR_COLOR,
-        color: Colors.TEXT_WHITE_COLOR,
+        borderRight: `1px solid ${Colors.DISABLED_TEXT_COLOR}`,
         display: 'flex',
         flexDirection: isMobile || isTablet ? 'row' : 'column',
         justifyContent: 'space-between',
@@ -57,7 +62,6 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
     };
 
     const barContentWrapperStyle: CSSProperties = {
-        backgroundColor: Colors.SIDEBAR_COLOR,
         width: '100%',
         height: '100%',
         display: 'flex',
@@ -70,7 +74,7 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
     const sideBarItemStyle: CSSProperties = {
         width: Size.Large,
         height: Size.Large,
-        strokeWidth: 1,
+        strokeWidth: 1.5,
     };
 
     const contentStyle: CSSProperties = {
@@ -123,21 +127,26 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
     const sideBarItemContainerStyle: CSSProperties = {
         display: 'flex',
         flexDirection: 'column',
-        marginTop: '60px',
-        fontFamily: Fonts.Light,
+        marginTop: '25px',
+        fontFamily: Fonts.Regular,
+    };
+
+    const logoStyle: CSSProperties = {
+        height: '50px',
+        width: 'auto',
+        objectFit: 'contain',
     };
 
     const menuItems: { icon: React.ReactNode; text: string; path: string }[] = [
-        { icon: <School style={sideBarItemStyle} />, text: 'Courses List', path: '/courses' },
+        { icon: <AudioLines style={sideBarItemStyle} />, text: 'Recordings', path: '/recordings' },
     ];
     
-
     return (
         <div style={pageStyle}>
         <div style={sideBarStyle}>
             {isMobile || isTablet ? (
             <div style={barContentWrapperStyle}>
-                {/* <img src={logo} alt="Logo" style={logoStyle} /> */}
+                <img src={logo} alt="Logo" style={logoStyle} />
                 <SideBarItem
                 icon={<Menu style={sideBarItemStyle} />}
                 text=""
@@ -150,7 +159,7 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
             <>
                 <div>
                     <div style={{ paddingLeft: '10px', paddingTop: '15px' }}>
-                        {/* <img src={logo} alt="Logo" style={logoStyle} /> */}
+                        <img src={logo} alt="Logo" style={logoStyle} />
                     </div>
                     <div style={sideBarItemContainerStyle}>
                         {menuItems.map((item) => (

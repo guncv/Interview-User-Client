@@ -94,7 +94,7 @@ function* workerSignIn(payload: UserSignInRequest): SagaIterator {
         if (response.success) {
             localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.data.access_token);
             console.log('response.data.access_token', response.data.access_token);
-            safeNavigate(ROUTES.INTERVIEW_LIST);
+            safeNavigate(ROUTES.RECORDINGS);
         } else {
             yield call(hideSpinner);
             yield call(handleStatusUserError, response.statusCode, response.message);

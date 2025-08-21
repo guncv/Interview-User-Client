@@ -24,5 +24,5 @@ export const routes: RouteConfig[]= [
   { path: '/verify-email', component: VerifyEmail, exact: true},
   { path: '/reset-password', component: ResetPassword, exact: true},
   { path: '/reset-password-success', component: ResetPasswordSuccess, exact: true},
-  { path: '/interview-list', component: InterviewList, exact: true},
+  { path: '/recordings', component: InterviewList, exact: true},
 ];
