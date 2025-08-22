@@ -1,5 +1,4 @@
 import { AxiosError } from 'axios';
-import { config } from '../../env';
 import type { UserForgotPasswordRequest, UserSignInRequest, UserSignUpRequest, UserVerifyEmailRequest } from '../interface/userInterface';
 import { handleApiError } from './errorApi';
 import { API_ENDPOINTS, HTTP_HEADERS, ROLE } from '../constants';
@@ -8,7 +7,7 @@ import { STORAGE_KEYS } from '../constants';
 
 export const apiResetVerifyEmail = async (token: string) => {
     try {
-        const response = await axiosInstance.post(`${config.Domain}${API_ENDPOINTS.RESET_VERIFY_EMAIL}`, {
+        const response = await axiosInstance.post(API_ENDPOINTS.RESET_VERIFY_EMAIL, {
             token: token,
         });
 
@@ -21,7 +20,7 @@ export const apiResetVerifyEmail = async (token: string) => {
 
 export const apiResetPassword = async (token: string, password: string) => {
     try {
-        const response = await axiosInstance.post(`${config.Domain}${API_ENDPOINTS.RESET_PASSWORD}`, {
+        const response = await axiosInstance.post(API_ENDPOINTS.RESET_PASSWORD, {
             token: token,
             new_password: password,
         });
@@ -35,7 +34,7 @@ export const apiResetPassword = async (token: string, password: string) => {
 
 export const apiSignUp = async (payload: UserSignUpRequest) => {
     try {
-        const response = await axiosInstance.post(`${config.Domain}${API_ENDPOINTS.SIGN_UP}`, {
+        const response = await axiosInstance.post(API_ENDPOINTS.SIGN_UP, {
             email: payload.email,
             password: payload.password,
             full_name: payload.full_name,
@@ -53,7 +52,7 @@ export const apiSignUp = async (payload: UserSignUpRequest) => {
 
 export const apiVerifyEmail = async (payload: UserVerifyEmailRequest) => {
     try {
-        const response = await axiosInstance.post(`${config.Domain}${API_ENDPOINTS.VERIFY_EMAIL}`, {
+        const response = await axiosInstance.post(API_ENDPOINTS.VERIFY_EMAIL, {
             token: payload.token,
             code: payload.code,
         });
@@ -67,7 +66,7 @@ export const apiVerifyEmail = async (payload: UserVerifyEmailRequest) => {
 
 export const apiSignIn = async (payload: UserSignInRequest) => {
     try {
-        const response = await axiosInstance.post(`${config.Domain}${API_ENDPOINTS.SIGN_IN}`, {
+        const response = await axiosInstance.post(API_ENDPOINTS.SIGN_IN, {
             email: payload.email,
             password: payload.password,
         },
@@ -85,7 +84,7 @@ export const apiSignIn = async (payload: UserSignInRequest) => {
 
 export const apiForgotPassword = async (payload: UserForgotPasswordRequest) => {
     try {
-        const response = await axiosInstance.post(`${config.Domain}${API_ENDPOINTS.FORGOT_PASSWORD}`, {
+        const response = await axiosInstance.post(API_ENDPOINTS.FORGOT_PASSWORD, {
             email: payload.email,
         });
 
@@ -97,7 +96,7 @@ export const apiForgotPassword = async (payload: UserForgotPasswordRequest) => {
 
 export const apiSignOut = async () => {
     try {
-        const response = await axiosInstance.post(`${config.Domain}${API_ENDPOINTS.SIGN_OUT}`);
+        const response = await axiosInstance.post(API_ENDPOINTS.SIGN_OUT);
 
         return { success: true, data: response.data };
     } catch (error) {
@@ -112,7 +111,7 @@ export const apiRefreshToken = async () => {
             return { success: false, statusCode: 401, message: 'No refresh token available' };
         }
 
-        const response = await axiosInstance.post(`${config.Domain}${API_ENDPOINTS.REFRESH_TOKEN}`, {
+        const response = await axiosInstance.post(API_ENDPOINTS.REFRESH_TOKEN, {
             refresh_token: refreshToken,
         });
 

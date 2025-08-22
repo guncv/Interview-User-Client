@@ -107,13 +107,6 @@ export interface CreateInterviewSessionResponse {
     sessionToken: string;
 }
 
-export interface Resume {
-    id: string;
-    fileName: string;
-    uploadDate: string;
-    fileSize: number;
-}
-
 export interface JobRequirement {
     id: string;
     requirement: string;

@@ -1,4 +1,3 @@
-import { config } from "../../env";
 import { API_ENDPOINTS, HTTP_HEADERS } from "../constants";
 import { axiosInstance } from "./axiosInstance";
 import { handleApiError } from "./errorApi";
@@ -7,11 +6,11 @@ import type { ListResumeRequest } from "../interface/resumeInterface";
 
 export const apiListResume = async (payload: ListResumeRequest, token: string) => {
     try {
-        const response = await axiosInstance.get(`${config.Domain}${API_ENDPOINTS.LIST_RESUME}`, {
-            headers: {
-                [HTTP_HEADERS.AUTHORIZATION]: `Bearer ${token}`,
-            },
+        const response = await axiosInstance.get(API_ENDPOINTS.LIST_RESUME, {
             params: payload,
+            // headers: {
+            //     [HTTP_HEADERS.AUTHORIZATION]: `${HTTP_HEADERS.BEARER} ${token}`,
+            // },
         });
 
         return { success: true, data: response.data };

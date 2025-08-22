@@ -8,6 +8,7 @@ export const API_ENDPOINTS = {
   FORGOT_PASSWORD: '/api/v1/auth/forgot-password',
   SIGN_OUT: '/api/v1/auth/sign-out',
   REFRESH_TOKEN: '/api/v1/auth/refresh-token',
+  
   LIST_RESUME: '/api/v1/resumes',
 } as const;
 

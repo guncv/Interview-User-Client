@@ -18,6 +18,15 @@ export interface GetListResumeByIdResponse {
 
 export interface ResumeResponse {
     count: number;
-    resume_content: ResumeContent;
+    resume_content: ResumeContent | null;
     last_updated_at: string | null;
+}
+
+export interface Resume {
+    id: string;
+    fileName: string;
+    mimeType: string;
+    byteSize: number;
+    createdAt: string;
+    updatedAt: string;
 }

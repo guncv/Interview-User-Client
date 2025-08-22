@@ -14,10 +14,8 @@ export function* callWithTokenRefresh<T extends ApiResponse>(
     apiCall: (...args: any[]) => any,
     ...args: any[]
 ): SagaIterator<T> {
-    let token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-    let response: ApiResponse = yield call(apiCall, ...args, token);
+    let response: ApiResponse = yield call(apiCall, ...args);
     
-    // Check if we got a new access token in the response body
     if (response && response.success && response.data?.access_token) {
         localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.data.access_token);
     }
@@ -30,7 +28,7 @@ export function* callWithTokenRefresh<T extends ApiResponse>(
     );
     
     if (shouldRefreshToken) {
-        response = yield call(apiCall, ...args, token);
+        response = yield call(apiCall, ...args);
         
         // Check if we got a new access token in the retry response
         if (response && response.success && response.data?.access_token) {
