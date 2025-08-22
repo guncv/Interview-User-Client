@@ -3,17 +3,27 @@ export interface ListResumeRequest {
 }
 
 export interface ResumeContent {
-    defaultResume: GetListResumeByIdResponse;
+    default_resume: GetResumeByIdResponse;
     resumes: GetListResumeByIdResponse[];
+}
+
+export interface GetResumeByIdResponse {
+    id: string;
+	file_name: string;
+	mime_type: string;
+	byte_size: number;
+	file_url: string;
+	created_at: string;
+	updated_at: string;
 }
 
 export interface GetListResumeByIdResponse {
     id: string;
-    fileName: string;
-    mimeType: string;
-    byteSize: number;
-    createdAt: string;
-    updatedAt: string;
+    file_name: string;
+    mime_type: string;
+    byte_size: number;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface ResumeResponse {
@@ -24,9 +34,9 @@ export interface ResumeResponse {
 
 export interface Resume {
     id: string;
-    fileName: string;
-    mimeType: string;
-    byteSize: number;
-    createdAt: string;
-    updatedAt: string;
+    file_name: string;
+    mime_type: string;
+    byte_size: number;
+    created_at: string;
+    updated_at: string;
 }

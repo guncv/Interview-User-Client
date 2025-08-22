@@ -9,7 +9,8 @@ export const API_ENDPOINTS = {
   SIGN_OUT: '/api/v1/auth/sign-out',
   REFRESH_TOKEN: '/api/v1/auth/refresh-token',
 
-  LIST_RESUME: '/api/v1/resumes',
+  LIST_RESUME: '/api/v1/resumes/list',
+  GET_RESUME_BY_ID: '/api/v1/resumes',
 
   CREATE_SESSION_WITH_NEW_RESUME: '/api/v1/sessions',
   CREATE_SESSION_WITH_EXISTING_RESUME: '/api/v1/sessions/existing',

@@ -1,6 +1,6 @@
 import { all } from 'redux-saga/effects';
 import { watcherForgotPassword, watcherSignOut, watcherSignIn, watcherVerifyEmail, watcherSignUp, watcherResetVerifyEmail, watcherResetPassword } from './userSaga';
-import { watcherListResume } from './resumeSaga';
+import { watcherGetResumeById, watcherListResume } from './resumeSaga';
 
 export default function* rootSaga() {
     yield all([
@@ -12,6 +12,7 @@ export default function* rootSaga() {
         watcherResetVerifyEmail(),
         watcherResetPassword(),
         watcherListResume(),
+        watcherGetResumeById(),
     ]);
 }
 

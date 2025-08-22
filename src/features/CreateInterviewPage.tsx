@@ -19,9 +19,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { resumeSelector } from '../reducers/resumeReducer';
 import { listResume } from '../actions/resumeAction';
 import { createInterviewSessionWithExistingResume, setCreateInterviewSuccess, setCreateInterviewError } from '../actions/interviewAction';
-import { API_ENDPOINTS } from '../constants';
+import { API_ENDPOINTS, HTTP_STATUS, ROUTES } from '../constants';
 import { axiosInstance } from '../api/axiosInstance';
-import { handleAuthError } from '../utils/apiUtils';
+import { safeNavigate } from '../utils';
 
 type ResumeMode = 'upload' | 'existing';
 
@@ -43,6 +43,7 @@ const CreateInterviewPage = () => {
   const { isMobile, isTablet } = useContextProvider();
   const dispatch = useDispatch();
   const [resumeList, setResumeList] = useState<ResumeContent | null>(null);
+  const [resumeCount, setResumeCount] = useState<number>(0);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const { success, error } = useSelector(resumeSelector);
   const [resumeMode, setResumeMode] = useState<ResumeMode>('upload');
@@ -74,6 +75,7 @@ const CreateInterviewPage = () => {
       setUpdatedAt(success.last_updated_at);
       console.log(success);
       setResumeList(success.resume_content);
+      setResumeCount(success.count);
     }
   }, [success, error]);
 
@@ -109,7 +111,6 @@ const CreateInterviewPage = () => {
     value: FormDataState[K]
   ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear that field's error if any (cast to satisfy TS when indexing by dynamic key)
     setErrors(prev => ({ ...prev, [field]: undefined } as CreateInterviewFormErrors));
   };
 
@@ -181,11 +182,9 @@ const CreateInterviewPage = () => {
           dispatch(setCreateInterviewSuccess(response.data));
         } catch (error: any) {
           console.error('Failed to create interview:', error);
-          
-          // Handle authentication errors
-          if (error.response?.status === 401) {
-            const errorCode = error.response?.data?.code;
-            handleAuthError(errorCode);
+
+          if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
+            safeNavigate(ROUTES.SIGN_IN);
             return;
           }
           
@@ -459,6 +458,7 @@ const CreateInterviewPage = () => {
                 />
               ) : (
                 <ResumeList
+                  resumeCount={resumeCount}
                   resumes={resumeList || {
                     defaultResume: {
                       id: '',

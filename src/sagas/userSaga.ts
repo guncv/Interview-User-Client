@@ -6,7 +6,6 @@ import type { UserForgotPasswordRequest, UserSignInRequest, UserSignUpRequest, U
 import { apiForgotPassword, apiResetPassword, apiResetVerifyEmail, apiSignIn, apiSignOut, apiSignUp, apiVerifyEmail } from '../api/userApi';
 import { safeNavigate } from '../utils/navigation';
 import { STORAGE_KEYS, ROUTES, HTTP_STATUS, ERROR_MESSAGES } from '../constants';
-import { handleAuthError } from '../utils/apiUtils';
 
 function* workerSignUp(payload: UserSignUpRequest): SagaIterator {
     try {
@@ -93,10 +92,11 @@ function* workerSignIn(payload: UserSignInRequest): SagaIterator {
         const response = yield call(apiSignIn, payload);
         if (response.success) {
             localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.data.access_token);
+            console.log("access_token", response.data.access_token);
             safeNavigate(ROUTES.RECORDINGS);
         } else {
             yield call(hideSpinner);
-            yield call(handleStatusUserError, response.statusCode, response.message, response.code);
+            yield call(handleStatusUserError, response.statusCode, response.message);
         }
         yield call(hideSpinner);
     } catch (error) {
@@ -146,7 +146,7 @@ function* workerForgotPassword(payload: UserForgotPasswordRequest): SagaIterator
         const response = yield call(apiForgotPassword, payload);
         if (!response.success) {
             yield call(hideSpinner);
-            yield call(handleStatusUserError, response.statusCode, response.message, response.code);
+            yield call(handleStatusUserError, response.statusCode, response.message);
             return;
         }
         yield call(hideSpinner);
@@ -175,7 +175,7 @@ export function* workerSignOut(): SagaIterator {
             safeNavigate(ROUTES.SIGN_IN);
         } else {
             yield call(hideSpinner);
-            yield call(handleStatusUserError, response.statusCode, response.message, response.code);
+            yield call(handleStatusUserError, response.statusCode, response.message);
         }
         yield call(hideSpinner);
         return;
@@ -193,10 +193,9 @@ export function* watcherSignOut(): SagaIterator {
     }
 }
 
-export function* handleStatusUserError(statusCode: number, message: string, errorCode?: string) {
+export function* handleStatusUserError(statusCode: number, message: string) {
     if (statusCode === HTTP_STATUS.UNAUTHORIZED) {
-        // Use the new error handling utility
-        handleAuthError(errorCode);
+        safeNavigate(ROUTES.SIGN_IN);
         return;
     }
     yield put(setUserError(message));

@@ -1,11 +1,10 @@
 import { call, delay, put, take } from "redux-saga/effects";
 import type { SagaIterator } from "redux-saga";
-import { ERROR_MESSAGES, HTTP_STATUS } from "../constants";
+import { ERROR_MESSAGES, HTTP_STATUS, ROUTES } from "../constants";
 import { apiCreateSessionWithNewResume } from "../api/interviewApi";
 import { CREATE_SESSION_WITH_NEW_RESUME, setCreateInterviewSuccess } from "../actions/interviewAction";
 import { setCreateInterviewError } from "../actions/interviewAction";
-import { hideSpinner, showSpinner } from "..";
-import { handleAuthError } from "../utils/apiUtils";
+import { hideSpinner, safeNavigate, showSpinner } from "..";
 
 function* workerCreateSessionWithNewResume(payload: {
     position: string;
@@ -36,7 +35,7 @@ function* workerCreateSessionWithNewResume(payload: {
         } else {
             yield call(hideSpinner);
             if (response) {
-                yield call(handleStatusInterviewError, response.statusCode, response.message, response.code);
+                yield call(handleStatusInterviewError, response.statusCode, response.message);
             } else {
                 yield call(handleStatusInterviewError, 0, ERROR_MESSAGES.UNEXPECTED_ERROR);
             }
@@ -56,10 +55,9 @@ export function* watcherCreateSessionWithNewResume(): SagaIterator {
     }
 }
 
-export function* handleStatusInterviewError(statusCode: number, message: string, errorCode?: string) {
+export function* handleStatusInterviewError(statusCode: number, message: string) {
     if (statusCode === HTTP_STATUS.UNAUTHORIZED) {
-        // Use the new error handling utility
-        handleAuthError(errorCode);
+        safeNavigate(ROUTES.SIGN_IN);
         return;
     }
     yield put(setCreateInterviewError(message));

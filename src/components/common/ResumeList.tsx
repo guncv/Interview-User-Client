@@ -11,6 +11,7 @@ interface ResumeListProps {
     error?: string;
     isMobile?: boolean;
     isTablet?: boolean;
+    resumeCount: number;
 }
 
 const ResumeList = ({ 
@@ -19,7 +20,8 @@ const ResumeList = ({
     onResumeSelect, 
     error, 
     isMobile = false, 
-    isTablet = false 
+    isTablet = false,
+    resumeCount
 }: ResumeListProps) => {
     const formatFileSize = (bytes: number): string => {
         if (bytes === 0) return '0 Bytes';
@@ -124,6 +126,9 @@ const ResumeList = ({
         border: `1px solid ${Colors.LECTURE_CONTENT_PART_COLOR}`,
     };
 
+    console.log("resumes", resumes);
+    console.log("resume default", resumes.default_resume);
+
     return (
         <div style={containerStyle}>
             <div style={tipBoxStyle}>
@@ -131,7 +136,54 @@ const ResumeList = ({
                     💡 Tip: Select the resume that best matches the job requirements
                 </div>
             </div>
-            
+
+            {resumeCount > 0 && (
+                <>
+                    <div>
+                        Default Resume
+                    </div>
+                    <div style={listContainerStyle}>
+                            <div
+                                key={resumes.default_resume.id}
+                                style={{
+                                    ...existingResumeCardStyle,
+                                    ...(selectedResumeId === resumes.default_resume.id ? existingResumeCardSelectedStyle : {}),
+                                }}
+                                onClick={() => onResumeSelect(resumes.default_resume.id)}
+                                onMouseEnter={(e) => {
+                                    if (selectedResumeId !== resumes.default_resume.id) {
+                                        e.currentTarget.style.transform = existingResumeCardStyleHover.transform!;
+                                        e.currentTarget.style.boxShadow = existingResumeCardStyleHover.boxShadow!;
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (selectedResumeId !== resumes.default_resume.id) {
+                                        e.currentTarget.style.transform = 'none';
+                                        e.currentTarget.style.boxShadow = 'none';
+                                    }
+                                }}
+                            >
+                                <div style={resumeCardHeaderStyle}>
+                                    <div style={resumeCardTitleStyle}>
+                                        <FileText size={20} color={Colors.ACCENT_COLOR} />
+                                        {resumes.default_resume.file_name}
+                                    </div>
+                                    {selectedResumeId === resumes.default_resume.id && (
+                                        <div style={{ color: Colors.ACCENT_COLOR, fontSize: Size.Small }}>
+                                            ✓ Selected
+                                        </div>
+                                    )}
+                                </div>
+                                <div style={resumeCardMetaStyle}>
+                                    Uploaded: {new Date(resumes.default_resume.created_at).toLocaleDateString()} • 
+                                    Size: {formatFileSize(resumes.default_resume.byte_size)}
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {resumes.resumes.length > 0 && (
             <div style={listContainerStyle}>
                 {resumes.resumes.map((resume) => (
                     <div
@@ -157,7 +209,7 @@ const ResumeList = ({
                         <div style={resumeCardHeaderStyle}>
                             <div style={resumeCardTitleStyle}>
                                 <FileText size={20} color={Colors.ACCENT_COLOR} />
-                                {resume.fileName}
+                                {resume.file_name}
                             </div>
                             {selectedResumeId === resume.id && (
                                 <div style={{ color: Colors.ACCENT_COLOR, fontSize: Size.Small }}>
@@ -166,12 +218,13 @@ const ResumeList = ({
                             )}
                         </div>
                         <div style={resumeCardMetaStyle}>
-                            Uploaded: {new Date(resume.createdAt).toLocaleDateString()} • 
-                            Size: {formatFileSize(resume.byteSize)}
+                            Uploaded: {new Date(resume.created_at).toLocaleDateString()} • 
+                            Size: {formatFileSize(resume.byte_size)}
                         </div>
                     </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
 
             {error && (
                 <div style={errorStyle}>
