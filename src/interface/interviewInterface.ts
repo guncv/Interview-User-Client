@@ -83,28 +83,26 @@ export interface CreateInterviewSessionWithNewResumeRequest {
     file: File;
     position: string;
     company: string;
-    workType: string;
-    jobRequirements: string;
-    interviewType: string;
+    work_type: string;
+    job_requirements: string;
+    interview_type: string;
     language: string;
-    consentAt: Date;
-    consentGiven: boolean;
+    is_consent: boolean;
 }
 
 export interface CreateInterviewSessionWithExistingResumeRequest {
-    resumeId: string;
+    resume_id: string;
     position: string;
     company: string;
-    workType: string;
-    jobRequirements: string;
-    interviewType: string;
+    work_type: string;
+    job_requirements: string;
+    interview_type: string;
     language: string;
-    consentAt: Date;
-    consentGiven: boolean;
+    is_consent: boolean;
 }
 
 export interface CreateInterviewSessionResponse {
-    sessionToken: string;
+    session_token: string;
 }
 
 export interface JobRequirement {

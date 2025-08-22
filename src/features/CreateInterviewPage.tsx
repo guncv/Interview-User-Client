@@ -10,8 +10,7 @@ import Colors from "../assets/styles/Color";
 import Size from "../assets/styles/Size";
 import font from "../assets/styles/Font";
 import { useContextProvider } from "../components/layout/ContextProvider";
-import type { 
-  CreateInterviewSessionWithNewResumeRequest,
+import type {
   CreateInterviewSessionWithExistingResumeRequest,
   CreateInterviewFormErrors,
 } from "../interface/interviewInterface";
@@ -19,6 +18,9 @@ import type { ResumeContent } from '../interface/resumeInterface';
 import { useDispatch, useSelector } from 'react-redux';
 import { resumeSelector } from '../reducers/resumeReducer';
 import { listResume } from '../actions/resumeAction';
+import { createInterviewSessionWithExistingResume, setCreateInterviewSuccess, setCreateInterviewError } from '../actions/interviewAction';
+import { API_ENDPOINTS, STORAGE_KEYS } from '../constants';
+import { config } from '../../env';
 
 type ResumeMode = 'upload' | 'existing';
 
@@ -31,7 +33,6 @@ interface FormDataState {
   jobRequirements: string;
   interviewType: string;
   language: string;
-  consentAt: Date;
   consentGiven: boolean;
 }
 
@@ -53,7 +54,6 @@ const CreateInterviewPage = () => {
     jobRequirements: '',
     interviewType: '',
     language: '',
-    consentAt: new Date(),
     consentGiven: false,
   });
 
@@ -116,7 +116,6 @@ const CreateInterviewPage = () => {
     setFormData(prev => ({ 
       ...prev, 
       consentGiven: checked,
-      consentAt: checked ? new Date() : prev.consentAt
     }));
     setErrors(prev => ({ ...prev, consentGiven: undefined }));
   };
@@ -158,33 +157,50 @@ const CreateInterviewPage = () => {
 
     try {
       if (resumeMode === 'upload') {
-        const request: CreateInterviewSessionWithNewResumeRequest = {
-          file: formData.file!, // safe after validateForm
-          position: formData.position,
-          company: formData.company,
-          workType: formData.workType,
-          jobRequirements: formData.jobRequirements,
-          interviewType: formData.interviewType,
-          language: formData.language,
-          consentAt: formData.consentAt,
-          consentGiven: formData.consentGiven,
-        };
-        console.log('Creating interview with new resume:', request);
-        // TODO: Call API
+        const formDataToSend = new FormData();
+        formDataToSend.append('position', formData.position);
+        formDataToSend.append('company', formData.company);
+        formDataToSend.append('work_type', formData.workType);
+        formDataToSend.append('job_requirements', formData.jobRequirements);
+        formDataToSend.append('interview_type', formData.interviewType);
+        formDataToSend.append('language', formData.language);
+        formDataToSend.append('is_consent', formData.consentGiven.toString());
+        if (formData.file) {
+          formDataToSend.append('resume', formData.file);
+        }
+
+        console.log('Creating interview with new resume:', formDataToSend);
+        const response = await fetch(`${config.Domain}${API_ENDPOINTS.CREATE_SESSION_WITH_NEW_RESUME}`, {
+          method: 'POST',
+          body: formDataToSend,
+          credentials: 'include',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)}`,
+          },
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          console.log('Interview created successfully:', result);
+          dispatch(setCreateInterviewSuccess(result));
+        } else {
+          console.error('Failed to create interview');
+          const errorData = await response.json().catch(() => ({}));
+          dispatch(setCreateInterviewError(errorData.message || 'Failed to create interview'));
+        }
       } else {
         const request: CreateInterviewSessionWithExistingResumeRequest = {
-          resumeId: formData.resumeId,
+          resume_id: formData.resumeId,
           position: formData.position,
           company: formData.company,
-          workType: formData.workType,
-          jobRequirements: formData.jobRequirements,
-          interviewType: formData.interviewType,
+          work_type: formData.workType,
+          job_requirements: formData.jobRequirements,
+          interview_type: formData.interviewType,
           language: formData.language,
-          consentAt: formData.consentAt,
-          consentGiven: formData.consentGiven,
+          is_consent: formData.consentGiven,
         };
         console.log('Creating interview with existing resume:', request);
-        // TODO: Call API
+        dispatch(createInterviewSessionWithExistingResume(request));
       }
     } catch (error) {
       console.error('Error creating interview session:', error);
