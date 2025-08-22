@@ -1,6 +1,6 @@
 import type { SagaIterator } from 'redux-saga';
 import { call } from 'redux-saga/effects';
-import { STORAGE_KEYS, ERROR_CODES } from '../constants';
+import { STORAGE_KEYS, ERROR_CODES, ROUTES } from '../constants';
 
 export interface ApiResponse {
     success: boolean;
@@ -58,4 +58,25 @@ export function isTokenError(errorCode?: string): boolean {
 export function isRefreshTokenError(errorCode?: string): boolean {
     return errorCode === ERROR_CODES.AUTH_INVALID_REFRESH_TOKEN ||
         errorCode === ERROR_CODES.AUTH_EXPIRED_REFRESH_TOKEN;
+}
+
+export function isAnyAuthError(errorCode?: string): boolean {
+    return isTokenError(errorCode) || isRefreshTokenError(errorCode);
+}
+
+export function shouldForceSignIn(errorCode?: string): boolean {
+    // Force sign in for refresh token errors or if we've exhausted token refresh attempts
+    return isRefreshTokenError(errorCode);
+}
+
+export function handleAuthError(errorCode?: string): void {
+    if (isRefreshTokenError(errorCode)) {
+        // Clear both tokens and redirect to sign in
+        localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+        localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+        window.location.href = ROUTES.SIGN_IN;
+    } else if (isTokenError(errorCode)) {
+        // Clear access token only, let the interceptor handle refresh
+        localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+    }
 }

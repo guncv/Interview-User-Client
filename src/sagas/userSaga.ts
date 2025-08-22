@@ -1,12 +1,12 @@
-import { call, delay, put} from 'redux-saga/effects';
+import { call, delay, put, take } from 'redux-saga/effects';
 import type { SagaIterator } from 'redux-saga';
-import { take } from 'redux-saga/effects';
 import { FORGOT_PASSWORD, SIGN_IN, setUserError, SIGN_OUT, SIGN_UP, VERIFY_EMAIL, RESET_VERIFY_EMAIL, RESET_PASSWORD } from '../actions/userAction';
 import { showSpinner, hideSpinner} from '../components/layout/AppProvider';
 import type { UserForgotPasswordRequest, UserSignInRequest, UserSignUpRequest, UserVerifyEmailRequest } from '../interface/userInterface';
 import { apiForgotPassword, apiResetPassword, apiResetVerifyEmail, apiSignIn, apiSignOut, apiSignUp, apiVerifyEmail } from '../api/userApi';
 import { safeNavigate } from '../utils/navigation';
 import { STORAGE_KEYS, ROUTES, HTTP_STATUS, ERROR_MESSAGES } from '../constants';
+import { handleAuthError } from '../utils/apiUtils';
 
 function* workerSignUp(payload: UserSignUpRequest): SagaIterator {
     try {
@@ -96,7 +96,7 @@ function* workerSignIn(payload: UserSignInRequest): SagaIterator {
             safeNavigate(ROUTES.RECORDINGS);
         } else {
             yield call(hideSpinner);
-            yield call(handleStatusUserError, response.statusCode, response.message);
+            yield call(handleStatusUserError, response.statusCode, response.message, response.code);
         }
         yield call(hideSpinner);
     } catch (error) {
@@ -146,7 +146,7 @@ function* workerForgotPassword(payload: UserForgotPasswordRequest): SagaIterator
         const response = yield call(apiForgotPassword, payload);
         if (!response.success) {
             yield call(hideSpinner);
-            yield call(handleStatusUserError, response.statusCode, response.message);
+            yield call(handleStatusUserError, response.statusCode, response.message, response.code);
             return;
         }
         yield call(hideSpinner);
@@ -175,7 +175,7 @@ export function* workerSignOut(): SagaIterator {
             safeNavigate(ROUTES.SIGN_IN);
         } else {
             yield call(hideSpinner);
-            yield call(handleStatusUserError, response.statusCode, response.message);
+            yield call(handleStatusUserError, response.statusCode, response.message, response.code);
         }
         yield call(hideSpinner);
         return;
@@ -193,10 +193,11 @@ export function* watcherSignOut(): SagaIterator {
     }
 }
 
-export function* handleStatusUserError(statusCode: number, message: string) {
+export function* handleStatusUserError(statusCode: number, message: string, errorCode?: string) {
     if (statusCode === HTTP_STATUS.UNAUTHORIZED) {
-        localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-        safeNavigate(ROUTES.SIGN_IN);
+        // Use the new error handling utility
+        handleAuthError(errorCode);
+        return;
     }
     yield put(setUserError(message));
 }

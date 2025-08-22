@@ -19,8 +19,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { resumeSelector } from '../reducers/resumeReducer';
 import { listResume } from '../actions/resumeAction';
 import { createInterviewSessionWithExistingResume, setCreateInterviewSuccess, setCreateInterviewError } from '../actions/interviewAction';
-import { API_ENDPOINTS, STORAGE_KEYS } from '../constants';
-import { config } from '../../env';
+import { API_ENDPOINTS } from '../constants';
+import { axiosInstance } from '../api/axiosInstance';
+import { handleAuthError } from '../utils/apiUtils';
 
 type ResumeMode = 'upload' | 'existing';
 
@@ -158,35 +159,38 @@ const CreateInterviewPage = () => {
     try {
       if (resumeMode === 'upload') {
         const formDataToSend = new FormData();
-        formDataToSend.append('position', formData.position);
-        formDataToSend.append('company', formData.company);
-        formDataToSend.append('work_type', formData.workType);
-        formDataToSend.append('job_requirements', formData.jobRequirements);
-        formDataToSend.append('interview_type', formData.interviewType);
-        formDataToSend.append('language', formData.language);
-        formDataToSend.append('is_consent', formData.consentGiven.toString());
-        if (formData.file) {
-          formDataToSend.append('resume', formData.file);
-        }
+        formDataToSend.append('file', formData.file! as File);
+        formDataToSend.append('position', formData.position as string);
+        formDataToSend.append('company', formData.company as string);
+        formDataToSend.append('work_type', formData.workType as string);
+        formDataToSend.append('job_requirements', formData.jobRequirements as string);
+        formDataToSend.append('interview_type', formData.interviewType as string);
+        formDataToSend.append('language', formData.language as string);
+        formDataToSend.append('is_consent', formData.consentGiven.toString() as string);
 
         console.log('Creating interview with new resume:', formDataToSend);
-        const response = await fetch(`${config.Domain}${API_ENDPOINTS.CREATE_SESSION_WITH_NEW_RESUME}`, {
-          method: 'POST',
-          body: formDataToSend,
-          credentials: 'include',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)}`,
-          },
-        });
         
-        if (response.ok) {
-          const result = await response.json();
-          console.log('Interview created successfully:', result);
-          dispatch(setCreateInterviewSuccess(result));
-        } else {
-          console.error('Failed to create interview');
-          const errorData = await response.json().catch(() => ({}));
-          dispatch(setCreateInterviewError(errorData.message || 'Failed to create interview'));
+        try {
+          const response = await axiosInstance.post(API_ENDPOINTS.CREATE_SESSION_WITH_NEW_RESUME, formDataToSend, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+          
+          console.log('Interview created successfully:', response.data);
+          dispatch(setCreateInterviewSuccess(response.data));
+        } catch (error: any) {
+          console.error('Failed to create interview:', error);
+          
+          // Handle authentication errors
+          if (error.response?.status === 401) {
+            const errorCode = error.response?.data?.code;
+            handleAuthError(errorCode);
+            return;
+          }
+          
+          const errorMessage = error.response?.data?.message || 'Failed to create interview';
+          dispatch(setCreateInterviewError(errorMessage));
         }
       } else {
         const request: CreateInterviewSessionWithExistingResumeRequest = {

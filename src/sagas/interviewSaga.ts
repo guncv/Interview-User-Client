@@ -1,11 +1,11 @@
 import { call, delay, put, take } from "redux-saga/effects";
 import type { SagaIterator } from "redux-saga";
-import { ERROR_MESSAGES, HTTP_STATUS, ROUTES, STORAGE_KEYS } from "../constants";
+import { ERROR_MESSAGES, HTTP_STATUS } from "../constants";
 import { apiCreateSessionWithNewResume } from "../api/interviewApi";
-import { safeNavigate } from "../utils/navigation";
 import { CREATE_SESSION_WITH_NEW_RESUME, setCreateInterviewSuccess } from "../actions/interviewAction";
 import { setCreateInterviewError } from "../actions/interviewAction";
 import { hideSpinner, showSpinner } from "..";
+import { handleAuthError } from "../utils/apiUtils";
 
 function* workerCreateSessionWithNewResume(payload: {
     position: string;
@@ -36,7 +36,7 @@ function* workerCreateSessionWithNewResume(payload: {
         } else {
             yield call(hideSpinner);
             if (response) {
-                yield call(handleStatusInterviewError, response.statusCode, response.message);
+                yield call(handleStatusInterviewError, response.statusCode, response.message, response.code);
             } else {
                 yield call(handleStatusInterviewError, 0, ERROR_MESSAGES.UNEXPECTED_ERROR);
             }
@@ -56,10 +56,11 @@ export function* watcherCreateSessionWithNewResume(): SagaIterator {
     }
 }
 
-export function* handleStatusInterviewError(statusCode: number, message: string) {
+export function* handleStatusInterviewError(statusCode: number, message: string, errorCode?: string) {
     if (statusCode === HTTP_STATUS.UNAUTHORIZED) {
-        localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-        safeNavigate(ROUTES.SIGN_IN);
+        // Use the new error handling utility
+        handleAuthError(errorCode);
+        return;
     }
     yield put(setCreateInterviewError(message));
 }
