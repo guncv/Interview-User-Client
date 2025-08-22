@@ -7,6 +7,8 @@ export const API_ENDPOINTS = {
   RESET_PASSWORD: '/api/v1/auth/reset-password',
   FORGOT_PASSWORD: '/api/v1/auth/forgot-password',
   SIGN_OUT: '/api/v1/auth/sign-out',
+  REFRESH_TOKEN: '/api/v1/auth/refresh-token',
+  LIST_RESUME: '/api/v1/resumes',
 } as const;
 
 export const HTTP_HEADERS = {
@@ -25,6 +27,7 @@ export const ROLE = {
 // Local Storage Keys
 export const STORAGE_KEYS = {
   ACCESS_TOKEN: 'access_token',
+  REFRESH_TOKEN: 'refresh_token',
 } as const;
 
 // HTTP Status Codes
@@ -108,4 +111,13 @@ export const EVENTS = {
 // Error Messages
 export const ERROR_MESSAGES = {
   UNEXPECTED_ERROR: 'Unexpected error',
-} as const; 
+} as const;
+
+export const ERROR_CODES = {
+  AUTH_INVALID_TOKEN: 'ONX0200',
+  AUTH_EXPIRED_TOKEN: 'ONX0201',
+  AUTH_INVALID_ACCESS_TOKEN: 'ONX0202',
+  AUTH_EXPIRED_ACCESS_TOKEN: 'ONX0203',
+  AUTH_INVALID_REFRESH_TOKEN: 'ONX0204',
+  AUTH_EXPIRED_REFRESH_TOKEN: 'ONX0205',
+} as const;

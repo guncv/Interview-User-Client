@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { config } from '../../env';
-import { STORAGE_KEYS, HTTP_HEADERS } from '../constants';
+import { STORAGE_KEYS, HTTP_HEADERS, ERROR_CODES } from '../constants';
 
-const axiosInstance = axios.create({
+export const axiosInstance = axios.create({
     baseURL: config.Domain,
     withCredentials: true,
     headers: {
@@ -25,13 +25,51 @@ axiosInstance.interceptors.request.use(
 
 axiosInstance.interceptors.response.use(
     (response) => {
+
+        const newAccessToken = response.data?.access_token;
+        if (newAccessToken) {
+            localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, newAccessToken);
+        }
         return response;
     },
-    (error) => {
-        if (error.response?.status === 401) {
-            localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-            window.location.href = '/';
+    async (error) => {
+        const originalRequest = error.config;
+        
+        const errorCode = error.response?.data?.code;
+        const shouldRefreshToken = errorCode === ERROR_CODES.AUTH_INVALID_ACCESS_TOKEN || 
+                                 errorCode === ERROR_CODES.AUTH_EXPIRED_ACCESS_TOKEN ||
+                                 errorCode === ERROR_CODES.AUTH_INVALID_TOKEN ||
+                                 errorCode === ERROR_CODES.AUTH_EXPIRED_TOKEN;
+        
+        if (shouldRefreshToken && !originalRequest._retry) {
+            originalRequest._retry = true;
+            
+            try {
+                const retryResponse = await axiosInstance(originalRequest);
+                
+                
+                const newAccessToken = retryResponse.data?.access_token;
+                if (newAccessToken) {
+                    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, newAccessToken);
+                }
+                
+                return retryResponse;
+            } catch (retryError: any) {
+                const retryErrorCode = retryError.response?.data?.code;
+                const isStillTokenError = retryErrorCode === ERROR_CODES.AUTH_INVALID_ACCESS_TOKEN || 
+                                        retryErrorCode === ERROR_CODES.AUTH_EXPIRED_ACCESS_TOKEN ||
+                                        retryErrorCode === ERROR_CODES.AUTH_INVALID_TOKEN ||
+                                        retryErrorCode === ERROR_CODES.AUTH_EXPIRED_TOKEN;
+                
+                if (isStillTokenError) {
+                    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+                    window.location.href = '/';
+                }
+                
+                return Promise.reject(retryError);
+            }
         }
+        
         return Promise.reject(error);
     },
 );

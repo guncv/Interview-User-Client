@@ -3,7 +3,8 @@ import { config } from '../../env';
 import type { UserForgotPasswordRequest, UserSignInRequest, UserSignUpRequest, UserVerifyEmailRequest } from '../interface/userInterface';
 import { handleApiError } from './errorApi';
 import { API_ENDPOINTS, HTTP_HEADERS, ROLE } from '../constants';
-import axiosInstance from './axiosInstance';
+import { axiosInstance } from './axiosInstance';
+import { STORAGE_KEYS } from '../constants';
 
 export const apiResetVerifyEmail = async (token: string) => {
     try {
@@ -97,6 +98,23 @@ export const apiForgotPassword = async (payload: UserForgotPasswordRequest) => {
 export const apiSignOut = async () => {
     try {
         const response = await axiosInstance.post(`${config.Domain}${API_ENDPOINTS.SIGN_OUT}`);
+
+        return { success: true, data: response.data };
+    } catch (error) {
+        return handleApiError(error as AxiosError);
+    }
+};
+
+export const apiRefreshToken = async () => {
+    try {
+        const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+        if (!refreshToken) {
+            return { success: false, statusCode: 401, message: 'No refresh token available' };
+        }
+
+        const response = await axiosInstance.post(`${config.Domain}${API_ENDPOINTS.REFRESH_TOKEN}`, {
+            refresh_token: refreshToken,
+        });
 
         return { success: true, data: response.data };
     } catch (error) {
