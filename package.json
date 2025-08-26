@@ -24,7 +24,6 @@
     "@reduxjs/toolkit": "^2.8.2",
     "axios": "^1.10.0",
     "eventemitter3": "^5.0.1",
-    "livekit-client": "^2.15.3",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.525.0",
     "onyx-dashboard": "link:",
