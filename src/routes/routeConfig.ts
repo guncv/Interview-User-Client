@@ -6,6 +6,7 @@ import ResetPassword from '../features/ResetPassword';
 import ResetPasswordSuccess from '../features/ResetPasswordSuccess';
 import RecordingListPage from '../features/RecordingListPage';
 import CreateInterviewPage from '../features/CreateInterviewPage';
+import VADTestPage from '../features/VADTestPage';
 
 interface ComponentProps {
   title: string;
@@ -27,4 +28,5 @@ export const routes: RouteConfig[]= [
   { path: '/reset-password-success', component: ResetPasswordSuccess, exact: true},
   { path: '/recordings', component: RecordingListPage, exact: true},
   { path: '/create-interview', component: CreateInterviewPage, exact: true},
+  { path: '/vad-test', component: VADTestPage, exact: true},
 ];
