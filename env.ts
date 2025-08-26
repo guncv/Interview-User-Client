@@ -1,3 +1,3 @@
 export const config = {
-    Domain: 'http://localhost:8080',
+    Domain: 'http://ec2-43-208-255-211.ap-southeast-7.compute.amazonaws.com:8080',
 };

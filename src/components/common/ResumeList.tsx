@@ -139,22 +139,21 @@ const ResumeList = ({
 
             {resumeCount > 0 && (
                 <>
-                    <div>
+                    <div style={{ fontSize: Size.Medium, fontFamily: font.Medium, color: Colors.PRIMARY_COLOR }}>
                         Default Resume
                     </div>
-                    <div style={listContainerStyle}>
-                            <div
-                                key={resumes.default_resume.id}
-                                style={{
-                                    ...existingResumeCardStyle,
-                                    ...(selectedResumeId === resumes.default_resume.id ? existingResumeCardSelectedStyle : {}),
-                                }}
-                                onClick={() => onResumeSelect(resumes.default_resume.id)}
-                                onMouseEnter={(e) => {
-                                    if (selectedResumeId !== resumes.default_resume.id) {
-                                        e.currentTarget.style.transform = existingResumeCardStyleHover.transform!;
-                                        e.currentTarget.style.boxShadow = existingResumeCardStyleHover.boxShadow!;
-                                    }
+                    <div
+                        key={resumes.default_resume.id}
+                        style={{
+                            ...existingResumeCardStyle,
+                            ...(selectedResumeId === resumes.default_resume.id ? existingResumeCardSelectedStyle : {}),
+                        }}
+                        onClick={() => onResumeSelect(resumes.default_resume.id)}
+                        onMouseEnter={(e) => {
+                            if (selectedResumeId !== resumes.default_resume.id) {
+                            e.currentTarget.style.transform = existingResumeCardStyleHover.transform!;
+                            e.currentTarget.style.boxShadow = existingResumeCardStyleHover.boxShadow!;
+                        }
                                 }}
                                 onMouseLeave={(e) => {
                                     if (selectedResumeId !== resumes.default_resume.id) {
@@ -177,51 +176,55 @@ const ResumeList = ({
                                 <div style={resumeCardMetaStyle}>
                                     Uploaded: {new Date(resumes.default_resume.created_at).toLocaleDateString()} • 
                                     Size: {formatFileSize(resumes.default_resume.byte_size)}
+                                </div>
                             </div>
-                        </div>
-                    </div>
                 </>
             )}
 
             {resumes.resumes.length > 0 && (
             <div style={listContainerStyle}>
                 {resumes.resumes.map((resume) => (
-                    <div
-                        key={resume.id}
-                        style={{
-                            ...existingResumeCardStyle,
-                            ...(selectedResumeId === resume.id ? existingResumeCardSelectedStyle : {}),
-                        }}
-                        onClick={() => onResumeSelect(resume.id)}
-                        onMouseEnter={(e) => {
-                            if (selectedResumeId !== resume.id) {
-                                e.currentTarget.style.transform = existingResumeCardStyleHover.transform!;
-                                e.currentTarget.style.boxShadow = existingResumeCardStyleHover.boxShadow!;
-                            }
-                        }}
-                        onMouseLeave={(e) => {
-                            if (selectedResumeId !== resume.id) {
-                                e.currentTarget.style.transform = 'none';
-                                e.currentTarget.style.boxShadow = 'none';
-                            }
-                        }}
-                    >
-                        <div style={resumeCardHeaderStyle}>
-                            <div style={resumeCardTitleStyle}>
-                                <FileText size={20} color={Colors.ACCENT_COLOR} />
-                                {resume.file_name}
-                            </div>
-                            {selectedResumeId === resume.id && (
-                                <div style={{ color: Colors.ACCENT_COLOR, fontSize: Size.Small }}>
-                                    ✓ Selected
+                    <div>
+                        <div style={{ fontSize: Size.Medium, fontFamily: font.Medium, color: Colors.PRIMARY_COLOR }}>
+                            Other Resumes
+                        </div>
+                        <div
+                            key={resume.id}
+                            style={{
+                                ...existingResumeCardStyle,
+                                ...(selectedResumeId === resume.id ? existingResumeCardSelectedStyle : {}),
+                            }}
+                            onClick={() => onResumeSelect(resume.id)}
+                            onMouseEnter={(e) => {
+                                if (selectedResumeId !== resume.id) {
+                                    e.currentTarget.style.transform = existingResumeCardStyleHover.transform!;
+                                    e.currentTarget.style.boxShadow = existingResumeCardStyleHover.boxShadow!;
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (selectedResumeId !== resume.id) {
+                                    e.currentTarget.style.transform = 'none';
+                                    e.currentTarget.style.boxShadow = 'none';
+                                }
+                            }}
+                        >
+                            <div style={resumeCardHeaderStyle}>
+                                <div style={resumeCardTitleStyle}>
+                                    <FileText size={20} color={Colors.ACCENT_COLOR} />
+                                    {resume.file_name}
                                 </div>
-                            )}
+                                {selectedResumeId === resume.id && (
+                                    <div style={{ color: Colors.ACCENT_COLOR, fontSize: Size.Small }}>
+                                        ✓ Selected
+                                    </div>
+                                )}
+                            </div>
+                            <div style={resumeCardMetaStyle}>
+                                Uploaded: {new Date(resume.created_at).toLocaleDateString()} • 
+                                Size: {formatFileSize(resume.byte_size)}
+                                </div>
+                            </div>
                         </div>
-                        <div style={resumeCardMetaStyle}>
-                            Uploaded: {new Date(resume.created_at).toLocaleDateString()} • 
-                            Size: {formatFileSize(resume.byte_size)}
-                        </div>
-                    </div>
                     ))}
                 </div>
             )}

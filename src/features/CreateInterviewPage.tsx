@@ -460,13 +460,14 @@ const CreateInterviewPage = () => {
                 <ResumeList
                   resumeCount={resumeCount}
                   resumes={resumeList || {
-                    defaultResume: {
+                    default_resume: {
                       id: '',
-                      fileName: '',
-                      mimeType: '',
-                      byteSize: 0,
-                      createdAt: '',
-                      updatedAt: '',
+                      file_name: '',
+                      mime_type: '',
+                      byte_size: 0,
+                      file_url: '',
+                      created_at: '',
+                      updated_at: '',
                     },
                     resumes: [],
                   }}
