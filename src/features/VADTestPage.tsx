@@ -6,36 +6,8 @@ import font from '../assets/styles/Font';
 import type { AudioChunk } from '../components/common/VADRecorder';
 
 const VADTestPage: React.FC = () => {
-    const [websocketUrl, setWebsocketUrl] = useState('ws://localhost:8080/api/v1/ws/connect/70b5ac86-0ab6-4d8a-b1aa-0dc9d4de2e4e');
-    const [receivedChunks, setReceivedChunks] = useState<AudioChunk[]>([]);
     const [isMobile, setIsMobile] = useState(false);
     const [isTablet, setIsTablet] = useState(false);
-    
-    React.useEffect(() => {
-        const checkScreenSize = () => {
-            const width = window.innerWidth;
-            setIsMobile(width < 768);
-            setIsTablet(width >= 768 && width < 1024);
-        };
-
-        checkScreenSize();
-        window.addEventListener('resize', checkScreenSize);
-        return () => window.removeEventListener('resize', checkScreenSize);
-    }, []);
-
-    const handleRecordingStart = () => {
-        console.log('Recording started');
-        setReceivedChunks([]);
-    };
-
-    const handleRecordingStop = () => {
-        console.log('Recording stopped');
-    };
-
-    const handleDataSent = (chunk: AudioChunk) => {
-        console.log('Audio chunk sent:', chunk);
-        setReceivedChunks(prev => [...prev, chunk]);
-    };
 
     const containerStyle: React.CSSProperties = {
         padding: isMobile ? Size.Small : isTablet ? Size.Medium : Size.Large,
@@ -169,6 +141,35 @@ const VADTestPage: React.FC = () => {
     const clearButtonHoverStyle: React.CSSProperties = {
         backgroundColor: '#c82333',
         transform: 'translateY(-1px)',
+    };
+
+    const [websocketUrl, setWebsocketUrl] = useState('ws://localhost:8080/api/v1/ws/connect/e7504d16-b7ec-4e1b-a026-1cc29d74f5e1');
+    const [receivedChunks, setReceivedChunks] = useState<AudioChunk[]>([]);
+    
+    React.useEffect(() => {
+        const checkScreenSize = () => {
+            const width = window.innerWidth;
+            setIsMobile(width < 768);
+            setIsTablet(width >= 768 && width < 1024);
+        };
+
+        checkScreenSize();
+        window.addEventListener('resize', checkScreenSize);
+        return () => window.removeEventListener('resize', checkScreenSize);
+    }, []);
+
+    const handleRecordingStart = () => {
+        console.log('Recording started');
+        setReceivedChunks([]);
+    };
+
+    const handleRecordingStop = () => {
+        console.log('Recording stopped');
+    };
+
+    const handleDataSent = (chunk: AudioChunk) => {
+        console.log('Audio chunk sent:', chunk);
+        setReceivedChunks(prev => [...prev, chunk]);
     };
 
     const clearChunks = () => {

@@ -5,6 +5,7 @@ import Size from '../../assets/styles/Size';
 import font from '../../assets/styles/Font';
 import { STORAGE_KEYS } from '../../constants';
 
+// Types
 interface VADRecorderProps {
     websocketUrl?: string;
     onRecordingStart?: () => void;
@@ -31,8 +32,351 @@ interface VADRecorderState {
     audioLevel: number;
     chunksSent: number;
     connectionStatus: 'connecting' | 'connected' | 'disconnected' | 'error';
+    sessionId: string | null;
+    serverResponses: ServerResponse[];
 }
 
+interface ServerResponse {
+    id: string;
+    timestamp: number;
+    message: any;
+    type: 'success' | 'error' | 'info' | 'warning';
+}
+
+// Constants
+const VAD_THRESHOLD = 0.1;
+const CHUNK_INTERVAL = 1000;
+const MAX_RESPONSES = 20;
+const AUDIO_CONFIG = {
+    sampleRate: 16000,
+    channelCount: 1,
+    echoCancellation: true,
+    noiseSuppression: true,
+    autoGainControl: true
+};
+
+// Helper Components
+const ConnectionStatus: React.FC<{ status: string; isConnected: boolean; sessionId: string | null }> = ({ 
+    status, 
+    isConnected, 
+    sessionId 
+}) => {
+    const getStatusColor = () => {
+        switch (status) {
+            case 'connected': return Colors.ACCENT_COLOR;
+            case 'connecting': return Colors.SECONDARY_TEXT_COLOR;
+            case 'error': return Colors.TEXT_ERROR_COLOR;
+            default: return Colors.DISABLED_TEXT_COLOR;
+        }
+    };
+
+    const getStatusIcon = () => {
+        switch (status) {
+            case 'connected': return <Wifi size={16} color={Colors.ACCENT_COLOR} />;
+            case 'connecting': return <Wifi size={16} color={Colors.SECONDARY_TEXT_COLOR} />;
+            case 'error': return <WifiOff size={16} color={Colors.TEXT_ERROR_COLOR} />;
+            default: return <WifiOff size={16} color={Colors.DISABLED_TEXT_COLOR} />;
+        }
+    };
+
+    return (
+        <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: Size.Small,
+            fontSize: Size.Small,
+            fontFamily: font.Regular,
+        }}>
+            {getStatusIcon()}
+            <span style={{ color: getStatusColor() }}>{status}</span>
+            
+            {isConnected && !sessionId && (
+                <span style={{
+                    fontSize: '10px',
+                    color: Colors.SECONDARY_TEXT_COLOR,
+                    fontStyle: 'italic',
+                    marginLeft: Size.Small
+                }}>
+                    Waiting for session...
+                </span>
+            )}
+        </div>
+    );
+};
+
+const ControlButtons: React.FC<{
+    isRecording: boolean;
+    isPaused: boolean;
+    isConnected: boolean;
+    onStart: () => void;
+    onStop: () => void;
+    onTogglePause: () => void;
+    isMobile: boolean;
+    isTablet: boolean;
+}> = ({ isRecording, isPaused, isConnected, onStart, onStop, onTogglePause, isMobile, isTablet }) => {
+    const buttonSize = isMobile ? '40px' : '50px';
+    const recordButtonSize = isMobile ? '60px' : '70px';
+
+    const baseButtonStyle: React.CSSProperties = {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: Size.Small,
+        borderRadius: '50%',
+        border: 'none',
+        cursor: 'pointer',
+        transition: 'all 0.3s ease',
+        width: buttonSize,
+        height: buttonSize,
+    };
+
+    const recordButtonStyle: React.CSSProperties = {
+        ...baseButtonStyle,
+        backgroundColor: isRecording ? Colors.TEXT_ERROR_COLOR : Colors.ACCENT_COLOR,
+        color: Colors.TEXT_WHITE_COLOR,
+        width: recordButtonSize,
+        height: recordButtonSize,
+    };
+
+    return (
+        <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: Size.Medium,
+            padding: Size.Medium,
+        }}>
+            {!isRecording ? (
+                <button
+                    style={recordButtonStyle}
+                    onClick={onStart}
+                    disabled={!isConnected}
+                    title="Start Recording"
+                >
+                    <Mic size={24} />
+                </button>
+            ) : (
+                <>
+                    <button
+                        style={baseButtonStyle}
+                        onClick={onTogglePause}
+                        title={isPaused ? "Resume" : "Pause"}
+                    >
+                        {isPaused ? <Play size={20} /> : <Pause size={20} />}
+                    </button>
+                    <button
+                        style={recordButtonStyle}
+                        onClick={onStop}
+                        title="Stop Recording"
+                    >
+                        <Square size={24} />
+                    </button>
+                </>
+            )}
+        </div>
+    );
+};
+
+const InfoPanel: React.FC<{
+    recordingTime: number;
+    audioLevel: number;
+    chunksSent: number;
+    sessionId: string | null;
+    vadThreshold: number;
+}> = ({ recordingTime, audioLevel, chunksSent, sessionId, vadThreshold }) => {
+    const formatTime = (seconds: number): string => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const infoRowStyle: React.CSSProperties = {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        fontSize: Size.Small,
+        fontFamily: font.Regular,
+    };
+
+    const audioLevelBarStyle: React.CSSProperties = {
+        width: '100%',
+        height: '8px',
+        backgroundColor: Colors.LECTURE_CONTENT_PART_COLOR,
+        borderRadius: '4px',
+        overflow: 'hidden',
+    };
+
+    const audioLevelFillStyle: React.CSSProperties = {
+        height: '100%',
+        backgroundColor: audioLevel > vadThreshold ? Colors.ACCENT_COLOR : Colors.SECONDARY_TEXT_COLOR,
+        width: `${Math.min(audioLevel * 100, 100)}%`,
+        transition: 'width 0.1s ease',
+    };
+
+    return (
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: Size.Small,
+            padding: Size.Medium,
+            backgroundColor: Colors.ACCENT_COLOR_LIGHT + '20',
+            borderRadius: Size.Small,
+            border: `1px solid ${Colors.ACCENT_COLOR_LIGHT}`,
+        }}>
+            <div style={infoRowStyle}>
+                <span>Recording Time:</span>
+                <span style={{ fontFamily: font.Medium }}>{formatTime(recordingTime)}</span>
+            </div>
+            
+            <div style={infoRowStyle}>
+                <span>Audio Level:</span>
+                <div style={{ width: '100px' }}>
+                    <div style={audioLevelBarStyle}>
+                        <div style={audioLevelFillStyle} />
+                    </div>
+                </div>
+            </div>
+            
+            <div style={infoRowStyle}>
+                <span>Chunks Sent:</span>
+                <span style={{ fontFamily: font.Medium }}>{chunksSent}</span>
+            </div>
+            
+            <div style={infoRowStyle}>
+                <span>VAD Status:</span>
+                <span style={{ 
+                    color: audioLevel > vadThreshold ? Colors.ACCENT_COLOR : Colors.SECONDARY_TEXT_COLOR,
+                    fontFamily: font.Medium 
+                }}>
+                    {audioLevel > vadThreshold ? 'Voice Detected' : 'Silence'}
+                </span>
+            </div>
+            
+            {sessionId && (
+                <div style={infoRowStyle}>
+                    <span>Session ID:</span>
+                    <span style={{ 
+                        color: Colors.ACCENT_COLOR,
+                        fontSize: '10px',
+                        backgroundColor: Colors.ACCENT_COLOR + '20',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        fontFamily: 'monospace'
+                    }}>
+                        {sessionId}
+                    </span>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const ServerResponses: React.FC<{
+    responses: ServerResponse[];
+    onClear: () => void;
+}> = ({ responses, onClear }) => {
+    const getResponseTypeColor = (type: 'success' | 'error' | 'info' | 'warning') => {
+        switch (type) {
+            case 'success': return Colors.ACCENT_COLOR;
+            case 'error': return Colors.TEXT_ERROR_COLOR;
+            case 'warning': return Colors.SECONDARY_TEXT_COLOR;
+            case 'info':
+            default: return Colors.PRIMARY_COLOR;
+        }
+    };
+
+    if (responses.length === 0) return null;
+
+    return (
+        <div style={{
+            padding: Size.Medium,
+            backgroundColor: Colors.ACCENT_COLOR_LIGHT + '10',
+            borderRadius: Size.Small,
+            border: `1px solid ${Colors.ACCENT_COLOR_LIGHT}`,
+            maxHeight: '200px',
+            overflowY: 'auto'
+        }}>
+            <div style={{
+                fontSize: Size.Medium,
+                fontFamily: font.Medium,
+                color: Colors.PRIMARY_COLOR,
+                marginBottom: Size.Small,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: Size.Small }}>
+                    <span>📡</span>
+                    Server Responses ({responses.length})
+                </div>
+                <button
+                    onClick={onClear}
+                    style={{
+                        padding: '4px 8px',
+                        fontSize: '10px',
+                        backgroundColor: Colors.SECONDARY_TEXT_COLOR + '20',
+                        border: `1px solid ${Colors.SECONDARY_TEXT_COLOR}`,
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        color: Colors.SECONDARY_TEXT_COLOR,
+                        fontFamily: font.Regular
+                    }}
+                    title="Clear all responses"
+                >
+                    Clear
+                </button>
+            </div>
+            
+            {responses.slice(-5).reverse().map((response) => (
+                <div key={response.id} style={{
+                    padding: Size.Small,
+                    marginBottom: Size.Small,
+                    backgroundColor: Colors.TEXT_WHITE_COLOR,
+                    borderRadius: Size.Small,
+                    border: `1px solid ${getResponseTypeColor(response.type)}`,
+                    borderLeft: `4px solid ${getResponseTypeColor(response.type)}`
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: Size.Small,
+                        fontSize: Size.Small,
+                        fontFamily: font.Regular
+                    }}>
+                        <span style={{
+                            color: getResponseTypeColor(response.type),
+                            fontFamily: font.Medium,
+                            textTransform: 'uppercase',
+                            fontSize: '10px'
+                        }}>
+                            {response.type}
+                        </span>
+                        <span style={{
+                            color: Colors.SECONDARY_TEXT_COLOR,
+                            fontSize: '10px'
+                        }}>
+                            {new Date(response.timestamp).toLocaleTimeString()}
+                        </span>
+                    </div>
+                    <div style={{
+                        fontSize: Size.Small,
+                        fontFamily: font.Regular,
+                        color: Colors.PRIMARY_COLOR,
+                        wordBreak: 'break-word'
+                    }}>
+                        {typeof response.message === 'object' 
+                            ? JSON.stringify(response.message, null, 2)
+                            : String(response.message)
+                        }
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+// Main Component
 const VADRecorder: React.FC<VADRecorderProps> = ({
     websocketUrl = 'ws://localhost:8080/audio',
     onRecordingStart,
@@ -41,6 +385,7 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
     isMobile = false,
     isTablet = false,
 }) => {
+    // State
     const [state, setState] = useState<VADRecorderState>({
         isRecording: false,
         isPaused: false,
@@ -48,45 +393,35 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
         recordingTime: 0,
         audioLevel: 0,
         chunksSent: 0,
-        connectionStatus: 'disconnected'
+        connectionStatus: 'disconnected',
+        sessionId: null,
+        serverResponses: []
     });
 
+    // Refs
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
     const websocketRef = useRef<WebSocket | null>(null);
     const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
-    const vadThreshold = 0.1;
 
+    // WebSocket Management
     const initializeWebSocket = useCallback(() => {
         try {
             setState(prev => ({ ...prev, connectionStatus: 'connecting' }));
             
             const accessToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+            const wsUrl = accessToken ? `${websocketUrl}?access_token=${accessToken}` : websocketUrl;
             
-            // For initial connection, we can only use the base URL
-            // Authentication will be sent as first message after connection
-            websocketRef.current = new WebSocket(websocketUrl);
+            websocketRef.current = new WebSocket(wsUrl);
             
             websocketRef.current.onopen = () => {
-                setState(prev => ({ 
-                    ...prev, 
-                    isConnected: true, 
-                    connectionStatus: 'connected' 
+                setState(prev => ({
+                    ...prev,
+                    isConnected: true,
+                    connectionStatus: 'connected'
                 }));
-                console.log('WebSocket connected');
-                
-                // Send authentication as first message after connection
-                if (accessToken && websocketRef.current) {
-                    const authMessage = {
-                        type: 'authentication',
-                        access_token: accessToken,
-                        timestamp: Date.now()
-                    };
-                    websocketRef.current.send(JSON.stringify(authMessage));
-                    console.log('Authentication message sent');
-                }
             };
             
             websocketRef.current.onclose = () => {
@@ -95,23 +430,44 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
                     isConnected: false, 
                     connectionStatus: 'disconnected' 
                 }));
-                console.log('WebSocket disconnected');
             };
             
-            websocketRef.current.onerror = (error) => {
-                setState(prev => ({ 
-                    ...prev, 
-                    connectionStatus: 'error' 
-                }));
-                console.error('WebSocket error:', error);
+            websocketRef.current.onerror = () => {
+                setState(prev => ({ ...prev, connectionStatus: 'error' }));
             };
             
             websocketRef.current.onmessage = (event) => {
                 try {
                     const response = JSON.parse(event.data);
-                    console.log('Received from server:', response);
+                    
+                    const serverResponse: ServerResponse = {
+                        id: `response_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                        timestamp: Date.now(),
+                        message: response,
+                        type: response.type || 'info'
+                    };
+                    
+                    setState(prev => ({
+                        ...prev,
+                        serverResponses: [...prev.serverResponses, serverResponse]
+                    }));
+
+                    if (response.type === 'connection_established' && response.session_id) {
+                        setState(prev => ({ ...prev, sessionId: response.session_id }));
+                    }
+                    
                 } catch (error) {
-                    console.log('Raw message from server:', event.data);
+                    const serverResponse: ServerResponse = {
+                        id: `response_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                        timestamp: Date.now(),
+                        message: event.data,
+                        type: 'info'
+                    };
+                    
+                    setState(prev => ({
+                        ...prev,
+                        serverResponses: [...prev.serverResponses, serverResponse]
+                    }));
                 }
             };
         } catch (error) {
@@ -120,17 +476,10 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
         }
     }, [websocketUrl]);
 
+    // Audio Management
     const initializeAudio = useCallback(async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: {
-                    sampleRate: 16000,
-                    channelCount: 1,
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: true
-                } 
-            });
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: AUDIO_CONFIG });
             
             audioContextRef.current = new AudioContext({ sampleRate: 16000 });
             const source = audioContextRef.current.createMediaStreamSource(stream);
@@ -141,7 +490,6 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
             
             source.connect(analyserRef.current);
             
-            // Start audio level monitoring
             const updateAudioLevel = () => {
                 if (analyserRef.current && state.isRecording) {
                     const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
@@ -151,12 +499,6 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
                     const normalizedLevel = average / 255;
                     
                     setState(prev => ({ ...prev, audioLevel: normalizedLevel }));
-                    
-                    if (normalizedLevel > vadThreshold) {
-                        // Voice detected - could trigger additional processing
-                        console.log('Voice activity detected');
-                    }
-                    
                     requestAnimationFrame(updateAudioLevel);
                 }
             };
@@ -172,7 +514,7 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
         }
     }, [state.isRecording]);
 
-    // Start recording
+    // Recording Controls
     const startRecording = useCallback(async () => {
         try {
             const stream = await initializeAudio();
@@ -186,7 +528,7 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
             
             mediaRecorderRef.current.ondataavailable = (event) => {
                 if (event.data.size > 0) {
-                    audioChunksRef.current.push(event.data);
+                    audioChunksRef.current.push(event.data); 
                 }
             };
             
@@ -194,7 +536,6 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
                 setState(prev => ({ ...prev, isRecording: true, recordingTime: 0 }));
                 onRecordingStart?.();
                 
-                // Start recording timer
                 recordingIntervalRef.current = setInterval(() => {
                     setState(prev => ({ ...prev, recordingTime: prev.recordingTime + 1 }));
                 }, 1000);
@@ -209,7 +550,6 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
                 }
             };
             
-            // Start recording with 100ms chunks for real-time processing
             mediaRecorderRef.current.start(100);
             
         } catch (error) {
@@ -217,19 +557,16 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
         }
     }, [initializeAudio, onRecordingStart, onRecordingStop]);
 
-    // Stop recording
     const stopRecording = useCallback(() => {
         if (mediaRecorderRef.current && state.isRecording) {
             mediaRecorderRef.current.stop();
             
-            // Stop all tracks
             if (mediaRecorderRef.current.stream) {
                 mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
             }
         }
     }, [state.isRecording]);
 
-    // Pause/Resume recording
     const togglePause = useCallback(() => {
         if (mediaRecorderRef.current) {
             if (state.isPaused) {
@@ -242,24 +579,22 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
         }
     }, [state.isPaused]);
 
-    // Send audio chunk via WebSocket
+    // Audio Chunk Management
     const sendAudioChunk = useCallback(async (chunk: Blob) => {
-        if (websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
+        if (websocketRef.current?.readyState === WebSocket.OPEN) {
             try {
                 const arrayBuffer = await chunk.arrayBuffer();
                 const audioChunk: AudioChunk = {
                     id: `chunk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                     timestamp: Date.now(),
                     data: arrayBuffer,
-                    isVoice: state.audioLevel > vadThreshold,
-                    duration: 0.1, // 100ms chunks
+                    isVoice: state.audioLevel > VAD_THRESHOLD,
+                    duration: 0.1,
                     sampleRate: 16000
                 };
                 
-                // Send as binary data
                 websocketRef.current.send(arrayBuffer);
                 
-                // Also send metadata as JSON
                 const metadata = {
                     type: 'audio_chunk',
                     id: audioChunk.id,
@@ -267,7 +602,8 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
                     isVoice: audioChunk.isVoice,
                     duration: audioChunk.duration,
                     sampleRate: audioChunk.sampleRate,
-                    size: arrayBuffer.byteLength
+                    size: arrayBuffer.byteLength,
+                    session_id: state.sessionId
                 };
                 
                 websocketRef.current.send(JSON.stringify(metadata));
@@ -279,46 +615,39 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
                 console.error('Failed to send audio chunk:', error);
             }
         }
-    }, [state.audioLevel, onDataSent]);
+    }, [state.audioLevel, onDataSent, state.sessionId]);
 
-    // Send accumulated chunks
     const sendAccumulatedChunks = useCallback(() => {
-        if (audioChunksRef.current.length > 0 && websocketRef.current) {
-            audioChunksRef.current.forEach(chunk => {
-                sendAudioChunk(chunk);
-            });
+        if (audioChunksRef.current.length > 0) {
+            audioChunksRef.current.forEach(chunk => sendAudioChunk(chunk));
             audioChunksRef.current = [];
         }
     }, [sendAudioChunk]);
 
-    // Format time display
-    const formatTime = (seconds: number): string => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    // Initialize WebSocket on component mount
+    // Effects
     useEffect(() => {
         initializeWebSocket();
         
         return () => {
-            if (websocketRef.current) {
-                websocketRef.current.close();
-            }
+            websocketRef.current?.close();
             if (recordingIntervalRef.current) {
                 clearInterval(recordingIntervalRef.current);
             }
         };
     }, [initializeWebSocket]);
 
-    // Send chunks periodically while recording
+    useEffect(() => {
+        if (state.serverResponses.length > MAX_RESPONSES) {
+            setState(prev => ({
+                ...prev,
+                serverResponses: prev.serverResponses.slice(-MAX_RESPONSES)
+            }));
+        }
+    }, [state.serverResponses.length]);
+
     useEffect(() => {
         if (state.isRecording && !state.isPaused) {
-            const chunkInterval = setInterval(() => {
-                sendAccumulatedChunks();
-            }, 1000); // Send accumulated chunks every second
-            
+            const chunkInterval = setInterval(sendAccumulatedChunks, CHUNK_INTERVAL);
             return () => clearInterval(chunkInterval);
         }
     }, [state.isRecording, state.isPaused, sendAccumulatedChunks]);
@@ -352,94 +681,6 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
         gap: Size.Small,
     };
 
-    const statusStyle: React.CSSProperties = {
-        display: 'flex',
-        alignItems: 'center',
-        gap: Size.Small,
-        fontSize: Size.Small,
-        fontFamily: font.Regular,
-    };
-
-    const controlsStyle: React.CSSProperties = {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: Size.Medium,
-        padding: Size.Medium,
-    };
-
-    const buttonStyle: React.CSSProperties = {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: Size.Small,
-        borderRadius: '50%',
-        border: 'none',
-        cursor: 'pointer',
-        transition: 'all 0.3s ease',
-        width: isMobile ? '40px' : '50px',
-        height: isMobile ? '40px' : '50px',
-    };
-
-    const recordButtonStyle: React.CSSProperties = {
-        ...buttonStyle,
-        backgroundColor: state.isRecording ? Colors.TEXT_ERROR_COLOR : Colors.ACCENT_COLOR,
-        color: Colors.TEXT_WHITE_COLOR,
-        width: isMobile ? '60px' : '70px',
-        height: isMobile ? '60px' : '70px',
-    };
-
-    const infoStyle: React.CSSProperties = {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: Size.Small,
-        padding: Size.Medium,
-        backgroundColor: Colors.ACCENT_COLOR_LIGHT + '20',
-        borderRadius: Size.Small,
-        border: `1px solid ${Colors.ACCENT_COLOR_LIGHT}`,
-    };
-
-    const infoRowStyle: React.CSSProperties = {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        fontSize: Size.Small,
-        fontFamily: font.Regular,
-    };
-
-    const audioLevelBarStyle: React.CSSProperties = {
-        width: '100%',
-        height: '8px',
-        backgroundColor: Colors.LECTURE_CONTENT_PART_COLOR,
-        borderRadius: '4px',
-        overflow: 'hidden',
-    };
-
-    const audioLevelFillStyle: React.CSSProperties = {
-        height: '100%',
-        backgroundColor: state.audioLevel > vadThreshold ? Colors.ACCENT_COLOR : Colors.SECONDARY_TEXT_COLOR,
-        width: `${Math.min(state.audioLevel * 100, 100)}%`,
-        transition: 'width 0.1s ease',
-    };
-
-    const getConnectionStatusColor = () => {
-        switch (state.connectionStatus) {
-            case 'connected': return Colors.ACCENT_COLOR;
-            case 'connecting': return Colors.SECONDARY_TEXT_COLOR;
-            case 'error': return Colors.TEXT_ERROR_COLOR;
-            default: return Colors.DISABLED_TEXT_COLOR;
-        }
-    };
-
-    const getConnectionStatusIcon = () => {
-        switch (state.connectionStatus) {
-            case 'connected': return <Wifi size={16} color={Colors.ACCENT_COLOR} />;
-            case 'connecting': return <Wifi size={16} color={Colors.SECONDARY_TEXT_COLOR} />;
-            case 'error': return <WifiOff size={16} color={Colors.TEXT_ERROR_COLOR} />;
-            default: return <WifiOff size={16} color={Colors.DISABLED_TEXT_COLOR} />;
-        }
-    };
-
     return (
         <div style={containerStyle}>
             <div style={headerStyle}>
@@ -447,78 +688,36 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
                     <Mic size={20} color={Colors.ACCENT_COLOR} />
                     VAD Audio Recorder
                 </div>
-                <div style={statusStyle}>
-                    {getConnectionStatusIcon()}
-                    <span style={{ color: getConnectionStatusColor() }}>
-                        {state.connectionStatus}
-                    </span>
-                </div>
+                <ConnectionStatus 
+                    status={state.connectionStatus}
+                    isConnected={state.isConnected}
+                    sessionId={state.sessionId}
+                />
             </div>
 
-            <div style={controlsStyle}>
-                {!state.isRecording ? (
-                    <button
-                        style={recordButtonStyle}
-                        onClick={startRecording}
-                        disabled={!state.isConnected}
-                        title="Start Recording"
-                    >
-                        <Mic size={24} />
-                    </button>
-                ) : (
-                    <>
-                        <button
-                            style={buttonStyle}
-                            onClick={togglePause}
-                            title={state.isPaused ? "Resume" : "Pause"}
-                        >
-                            {state.isPaused ? <Play size={20} /> : <Pause size={20} />}
-                        </button>
-                        <button
-                            style={recordButtonStyle}
-                            onClick={stopRecording}
-                            title="Stop Recording"
-                        >
-                            <Square size={24} />
-                        </button>
-                    </>
-                )}
-            </div>
+            <ControlButtons
+                isRecording={state.isRecording}
+                isPaused={state.isPaused}
+                isConnected={state.isConnected}
+                onStart={startRecording}
+                onStop={stopRecording}
+                onTogglePause={togglePause}
+                isMobile={isMobile}
+                isTablet={isTablet}
+            />
 
-            <div style={infoStyle}>
-                <div style={infoRowStyle}>
-                    <span>Recording Time:</span>
-                    <span style={{ fontFamily: font.Medium }}>
-                        {formatTime(state.recordingTime)}
-                    </span>
-                </div>
-                
-                <div style={infoRowStyle}>
-                    <span>Audio Level:</span>
-                    <div style={{ width: '100px' }}>
-                        <div style={audioLevelBarStyle}>
-                            <div style={audioLevelFillStyle} />
-                        </div>
-                    </div>
-                </div>
-                
-                <div style={infoRowStyle}>
-                    <span>Chunks Sent:</span>
-                    <span style={{ fontFamily: font.Medium }}>
-                        {state.chunksSent}
-                    </span>
-                </div>
-                
-                <div style={infoRowStyle}>
-                    <span>VAD Status:</span>
-                    <span style={{ 
-                        color: state.audioLevel > vadThreshold ? Colors.ACCENT_COLOR : Colors.SECONDARY_TEXT_COLOR,
-                        fontFamily: font.Medium 
-                    }}>
-                        {state.audioLevel > vadThreshold ? 'Voice Detected' : 'Silence'}
-                    </span>
-                </div>
-            </div>
+            <InfoPanel
+                recordingTime={state.recordingTime}
+                audioLevel={state.audioLevel}
+                chunksSent={state.chunksSent}
+                sessionId={state.sessionId}
+                vadThreshold={VAD_THRESHOLD}
+            />
+
+            <ServerResponses
+                responses={state.serverResponses}
+                onClear={() => setState(prev => ({ ...prev, serverResponses: [] }))}
+            />
 
             {!state.isConnected && (
                 <div style={{
