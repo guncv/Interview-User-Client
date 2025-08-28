@@ -34,6 +34,8 @@ interface VADRecorderState {
     connectionStatus: 'connecting' | 'connected' | 'disconnected' | 'error';
     sessionId: string | null;
     serverResponses: ServerResponse[];
+    currentSegmentId: string | null;
+    isSegmentActive: boolean;
 }
 
 interface ServerResponse {
@@ -45,7 +47,7 @@ interface ServerResponse {
 
 // Constants
 const VAD_THRESHOLD = 0.1;
-const CHUNK_INTERVAL = 1000;
+const CHUNK_INTERVAL = 2000;
 const MAX_RESPONSES = 20;
 const AUDIO_CONFIG = {
     sampleRate: 16000,
@@ -113,7 +115,10 @@ const ControlButtons: React.FC<{
     onTogglePause: () => void;
     isMobile: boolean;
     isTablet: boolean;
-}> = ({ isRecording, isPaused, isConnected, onStart, onStop, onTogglePause, isMobile, isTablet }) => {
+    isSegmentActive: boolean;
+    onManualStartSegment: () => void;
+    onManualEndSegment: () => void;
+}> = ({ isRecording, isPaused, isConnected, onStart, onStop, onTogglePause, isMobile, isSegmentActive, onManualStartSegment, onManualEndSegment }) => {
     const buttonSize = isMobile ? '40px' : '50px';
     const recordButtonSize = isMobile ? '60px' : '70px';
 
@@ -138,40 +143,98 @@ const ControlButtons: React.FC<{
         height: recordButtonSize,
     };
 
+    const segmentButtonStyle: React.CSSProperties = {
+        ...baseButtonStyle,
+        backgroundColor: isSegmentActive ? Colors.ACCENT_COLOR : Colors.SECONDARY_TEXT_COLOR,
+        color: Colors.TEXT_WHITE_COLOR,
+        fontSize: '10px',
+        width: 'auto',
+        borderRadius: '20px',
+        padding: '8px 16px',
+    };
+
     return (
         <div style={{
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
             gap: Size.Medium,
             padding: Size.Medium,
         }}>
-            {!isRecording ? (
-                <button
-                    style={recordButtonStyle}
-                    onClick={onStart}
-                    disabled={!isConnected}
-                    title="Start Recording"
-                >
-                    <Mic size={24} />
-                </button>
-            ) : (
-                <>
-                    <button
-                        style={baseButtonStyle}
-                        onClick={onTogglePause}
-                        title={isPaused ? "Resume" : "Pause"}
-                    >
-                        {isPaused ? <Play size={20} /> : <Pause size={20} />}
-                    </button>
+            {/* Main Recording Controls */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: Size.Medium,
+            }}>
+                {!isRecording ? (
                     <button
                         style={recordButtonStyle}
-                        onClick={onStop}
-                        title="Stop Recording"
+                        onClick={onStart}
+                        disabled={!isConnected}
+                        title="Start Recording"
                     >
-                        <Square size={24} />
+                        <Mic size={24} />
                     </button>
-                </>
+                ) : (
+                    <>
+                        <button
+                            style={baseButtonStyle}
+                            onClick={onTogglePause}
+                            title={isPaused ? "Resume" : "Pause"}
+                        >
+                            {isPaused ? <Play size={20} /> : <Pause size={20} />}
+                        </button>
+                        <button
+                            style={recordButtonStyle}
+                            onClick={onStop}
+                            title="Stop Recording"
+                        >
+                            <Square size={24} />
+                        </button>
+                    </>
+                )}
+            </div>
+
+            {/* Manual Segment Controls */}
+            {isRecording && (
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: Size.Small,
+                    padding: Size.Small,
+                    backgroundColor: Colors.ACCENT_COLOR_LIGHT + '20',
+                    borderRadius: Size.Small,
+                    border: `1px solid ${Colors.ACCENT_COLOR_LIGHT}`,
+                }}>
+                    <span style={{
+                        fontSize: Size.Small,
+                        fontFamily: font.Regular,
+                        color: Colors.PRIMARY_COLOR,
+                    }}>
+                        Manual Segment Control:
+                    </span>
+                    <button
+                        style={segmentButtonStyle}
+                        onClick={onManualStartSegment}
+                        disabled={isSegmentActive}
+                        title="Manually start a new segment"
+                    >
+                        Start Segment
+                    </button>
+                    <button
+                        style={{
+                            ...segmentButtonStyle,
+                            backgroundColor: isSegmentActive ? Colors.TEXT_ERROR_COLOR : Colors.DISABLED_TEXT_COLOR,
+                        }}
+                        onClick={onManualEndSegment}
+                        disabled={!isSegmentActive}
+                        title="Manually end current segment"
+                    >
+                        End Segment
+                    </button>
+                </div>
             )}
         </div>
     );
@@ -183,7 +246,9 @@ const InfoPanel: React.FC<{
     chunksSent: number;
     sessionId: string | null;
     vadThreshold: number;
-}> = ({ recordingTime, audioLevel, chunksSent, sessionId, vadThreshold }) => {
+    isSegmentActive: boolean;
+    currentSegmentId: string | null;
+}> = ({ recordingTime, audioLevel, chunksSent, sessionId, vadThreshold, isSegmentActive, currentSegmentId }) => {
     const formatTime = (seconds: number): string => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
@@ -252,6 +317,16 @@ const InfoPanel: React.FC<{
                 </span>
             </div>
             
+            <div style={infoRowStyle}>
+                <span>Segment Status:</span>
+                <span style={{ 
+                    color: isSegmentActive ? Colors.ACCENT_COLOR : Colors.SECONDARY_TEXT_COLOR,
+                    fontFamily: font.Medium 
+                }}>
+                    {isSegmentActive ? 'Active' : 'Inactive'}
+                </span>
+            </div>
+            
             {sessionId && (
                 <div style={infoRowStyle}>
                     <span>Session ID:</span>
@@ -264,6 +339,22 @@ const InfoPanel: React.FC<{
                         fontFamily: 'monospace'
                     }}>
                         {sessionId}
+                    </span>
+                </div>
+            )}
+            
+            {currentSegmentId && (
+                <div style={infoRowStyle}>
+                    <span>Current Segment:</span>
+                    <span style={{ 
+                        color: Colors.ACCENT_COLOR,
+                        fontSize: '10px',
+                        backgroundColor: Colors.ACCENT_COLOR + '20',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        fontFamily: 'monospace'
+                    }}>
+                        {currentSegmentId.substring(0, 12)}...
                     </span>
                 </div>
             )}
@@ -381,7 +472,6 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
     websocketUrl = 'ws://localhost:8080/audio',
     onRecordingStart,
     onRecordingStop,
-    onDataSent,
     isMobile = false,
     isTablet = false,
 }) => {
@@ -395,7 +485,9 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
         chunksSent: 0,
         connectionStatus: 'disconnected',
         sessionId: null,
-        serverResponses: []
+        serverResponses: [],
+        currentSegmentId: null,
+        isSegmentActive: false
     });
 
     // Refs
@@ -436,7 +528,12 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
                 setState(prev => ({ ...prev, connectionStatus: 'error' }));
             };
             
+            // Note: WebSocket ping/pong is handled automatically by the browser
+            // The Go server sends ping control frames using websocket.PingMessage
+            // and the browser automatically responds with pong
             websocketRef.current.onmessage = (event) => {
+                console.log('WebSocket message received from server:', event.data);
+                
                 try {
                     const response = JSON.parse(event.data);
                     
@@ -475,6 +572,69 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
             setState(prev => ({ ...prev, connectionStatus: 'error' }));
         }
     }, [websocketUrl]);
+
+    // Segment Management
+    const startSegment = useCallback(() => {
+        console.log('startSegment called');
+        
+        if (!websocketRef.current || websocketRef.current.readyState !== WebSocket.OPEN) {
+            console.error('WebSocket not open, cannot start segment.');
+            return;
+        }
+
+        const segmentId = `segment${Date.now()}${state.sessionId}`;
+        
+        const segmentStartMessage = {
+            type: 'segment_start',
+            session_id: state.sessionId,
+            segment_id: segmentId,
+        };
+
+        try {
+            websocketRef.current.send(JSON.stringify(segmentStartMessage));
+            setState(prev => ({ 
+                ...prev, 
+                currentSegmentId: segmentId,
+                isSegmentActive: true 
+            }));
+            
+            console.log('Segment started successfully:', {
+                segmentId,
+                sessionId: state.sessionId,
+                message: segmentStartMessage
+            });
+        } catch (error) {
+            console.error('Failed to start segment:', error);
+        }
+    }, [state.sessionId]);
+
+    const endSegment = useCallback(() => {
+        if (!websocketRef.current ||
+            websocketRef.current.readyState !== WebSocket.OPEN ||
+            !state.currentSegmentId) {
+            console.error('WebSocket not open or no active segment, cannot end segment.');
+            return;
+        }
+
+        const segmentEndMessage = {
+            type: 'segment_end',
+            session_id: state.sessionId,
+            segment_id: state.currentSegmentId
+        };
+
+        try {
+            websocketRef.current.send(JSON.stringify(segmentEndMessage));
+            setState(prev => ({ 
+                ...prev, 
+                currentSegmentId: null,
+                isSegmentActive: false 
+            }));
+            
+            console.log('Segment ended:', state.currentSegmentId);
+        } catch (error) {
+            console.error('Failed to end segment:', error);
+        }
+    }, [state.sessionId, state.currentSegmentId]);
 
     // Audio Management
     const initializeAudio = useCallback(async () => {
@@ -519,6 +679,9 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
         try {
             const stream = await initializeAudio();
             
+            // Start segment BEFORE starting MediaRecorder
+            startSegment();
+            
             mediaRecorderRef.current = new MediaRecorder(stream, {
                 mimeType: 'audio/webm;codecs=opus',
                 audioBitsPerSecond: 16000
@@ -527,8 +690,16 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
             audioChunksRef.current = [];
             
             mediaRecorderRef.current.ondataavailable = (event) => {
+                console.log('MediaRecorder data available:', {
+                    dataSize: event.data.size,
+                    timestamp: Date.now()
+                });
+
                 if (event.data.size > 0) {
-                    audioChunksRef.current.push(event.data); 
+                    // Replace the current chunk instead of accumulating
+                    // This ensures we only keep the most recent 2-second chunk
+                    audioChunksRef.current = [event.data];
+                    console.log('Audio chunk updated in buffer, current chunks:', audioChunksRef.current.length);
                 }
             };
             
@@ -542,87 +713,131 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
             };
             
             mediaRecorderRef.current.onstop = () => {
+                // Segment ending is now handled in stopRecording function
                 setState(prev => ({ ...prev, isRecording: false }));
                 onRecordingStop?.();
-                
+
                 if (recordingIntervalRef.current) {
                     clearInterval(recordingIntervalRef.current);
                 }
             };
             
-            mediaRecorderRef.current.start(100);
+            mediaRecorderRef.current.start(CHUNK_INTERVAL);
             
         } catch (error) {
             console.error('Failed to start recording:', error);
         }
-    }, [initializeAudio, onRecordingStart, onRecordingStop]);
-
-    const stopRecording = useCallback(() => {
-        if (mediaRecorderRef.current && state.isRecording) {
-            mediaRecorderRef.current.stop();
-            
-            if (mediaRecorderRef.current.stream) {
-                mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-            }
-        }
-    }, [state.isRecording]);
+    }, [initializeAudio, onRecordingStart, onRecordingStop, startSegment]);
 
     const togglePause = useCallback(() => {
         if (mediaRecorderRef.current) {
             if (state.isPaused) {
                 mediaRecorderRef.current.resume();
                 setState(prev => ({ ...prev, isPaused: false }));
+                
+                // Start a new segment when resuming
+                startSegment();
             } else {
                 mediaRecorderRef.current.pause();
                 setState(prev => ({ ...prev, isPaused: true }));
+                
+                // End segment when pausing
+                if (state.isSegmentActive) {
+                    endSegment();
+                }
             }
         }
-    }, [state.isPaused]);
+    }, [state.isPaused, state.isSegmentActive, startSegment, endSegment]);
 
-    // Audio Chunk Management
     const sendAudioChunk = useCallback(async (chunk: Blob) => {
-        if (websocketRef.current?.readyState === WebSocket.OPEN) {
+        console.log('sendAudioChunk called:', {
+            websocketOpen: websocketRef.current?.readyState === WebSocket.OPEN,
+            isSegmentActive: state.isSegmentActive,
+            currentSegmentId: state.currentSegmentId,
+            chunkSize: chunk.size
+        });
+        
+        if (websocketRef.current?.readyState === WebSocket.OPEN && state.isSegmentActive && state.currentSegmentId) {
             try {
                 const arrayBuffer = await chunk.arrayBuffer();
-                const audioChunk: AudioChunk = {
-                    id: `chunk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                    timestamp: Date.now(),
-                    data: arrayBuffer,
-                    isVoice: state.audioLevel > VAD_THRESHOLD,
-                    duration: 0.1,
-                    sampleRate: 16000
-                };
-                
-                websocketRef.current.send(arrayBuffer);
-                
-                const metadata = {
+    
+                const headerObj = {
                     type: 'audio_chunk',
-                    id: audioChunk.id,
-                    timestamp: audioChunk.timestamp,
-                    isVoice: audioChunk.isVoice,
-                    duration: audioChunk.duration,
-                    sampleRate: audioChunk.sampleRate,
-                    size: arrayBuffer.byteLength,
-                    session_id: state.sessionId
+                    session_id: state.sessionId || '',
+                    segment_id: state.currentSegmentId,
                 };
-                
-                websocketRef.current.send(JSON.stringify(metadata));
-                
+    
+                const headerStr = JSON.stringify(headerObj);
+                const headerBytes = new TextEncoder().encode(headerStr);
+    
+                const headerLengthBuffer = new Uint8Array(4);
+                const view = new DataView(headerLengthBuffer.buffer);
+                view.setUint32(0, headerBytes.length, false);
+    
+                const framedBuffer = new Uint8Array(
+                    headerLengthBuffer.length + headerBytes.length + arrayBuffer.byteLength
+                );
+                framedBuffer.set(headerLengthBuffer, 0);
+                framedBuffer.set(headerBytes, headerLengthBuffer.length);
+                framedBuffer.set(new Uint8Array(arrayBuffer), headerLengthBuffer.length + headerBytes.length);
+    
+                websocketRef.current.send(framedBuffer);
+                console.log('Audio chunk sent successfully:', {
+                    segmentId: state.currentSegmentId,
+                    chunkSize: arrayBuffer.byteLength
+                });
+    
                 setState(prev => ({ ...prev, chunksSent: prev.chunksSent + 1 }));
-                onDataSent?.(audioChunk);
-                
             } catch (error) {
                 console.error('Failed to send audio chunk:', error);
             }
+        } else {
+            console.log('Cannot send audio chunk - conditions not met');
         }
-    }, [state.audioLevel, onDataSent, state.sessionId]);
+    }, [state.sessionId, state.currentSegmentId, state.isSegmentActive]);
+    
 
     const sendAccumulatedChunks = useCallback(() => {
+        console.log('sendAccumulatedChunks called:', {
+            chunksCount: audioChunksRef.current.length,
+            isRecording: state.isRecording,
+            isPaused: state.isPaused,
+            isSegmentActive: state.isSegmentActive
+        });
+
         if (audioChunksRef.current.length > 0) {
-            audioChunksRef.current.forEach(chunk => sendAudioChunk(chunk));
-            audioChunksRef.current = [];
+            // Send the most recent chunk (should be only one with our new logic)
+            const chunkToSend = audioChunksRef.current[0];
+            sendAudioChunk(chunkToSend);
+            audioChunksRef.current = []; // Clear after sending
         }
-    }, [sendAudioChunk]);
+    }, [sendAudioChunk, state.isRecording, state.isPaused, state.isSegmentActive]);
+
+    const stopRecording = useCallback(async () => {
+        if (mediaRecorderRef.current && state.isRecording) {
+            // Send any remaining accumulated chunks before stopping
+            if (audioChunksRef.current.length > 0 && state.isSegmentActive) {
+                console.log('Sending remaining audio chunks before stopping recording');
+                sendAccumulatedChunks();
+
+                // Add a small delay to ensure audio chunk is processed before ending segment
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            // End the segment after sending all remaining audio chunks
+            if (state.isSegmentActive) {
+                console.log('Ending segment after sending all audio chunks');
+                endSegment();
+            }
+
+            mediaRecorderRef.current.stop();
+
+            if (mediaRecorderRef.current.stream) {
+                mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+            }
+        }
+    }, [state.isRecording, state.isSegmentActive, sendAccumulatedChunks, endSegment]);
+    
 
     // Effects
     useEffect(() => {
@@ -646,11 +861,14 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
     }, [state.serverResponses.length]);
 
     useEffect(() => {
-        if (state.isRecording && !state.isPaused) {
-            const chunkInterval = setInterval(sendAccumulatedChunks, CHUNK_INTERVAL);
-            return () => clearInterval(chunkInterval);
+        if (state.isRecording && !state.isPaused && state.isSegmentActive) {
+            const timeoutId = setTimeout(() => {
+                sendAccumulatedChunks();
+            }, CHUNK_INTERVAL);
+    
+            return () => clearTimeout(timeoutId);
         }
-    }, [state.isRecording, state.isPaused, sendAccumulatedChunks]);
+    }, [state.isRecording, state.isPaused, state.isSegmentActive, sendAccumulatedChunks]);
 
     // Styles
     const containerStyle: React.CSSProperties = {
@@ -704,6 +922,9 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
                 onTogglePause={togglePause}
                 isMobile={isMobile}
                 isTablet={isTablet}
+                isSegmentActive={state.isSegmentActive}
+                onManualStartSegment={startSegment}
+                onManualEndSegment={endSegment}
             />
 
             <InfoPanel
@@ -712,7 +933,31 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
                 chunksSent={state.chunksSent}
                 sessionId={state.sessionId}
                 vadThreshold={VAD_THRESHOLD}
+                isSegmentActive={state.isSegmentActive}
+                currentSegmentId={state.currentSegmentId}
             />
+
+            {/* Add segment status display */}
+            <div style={{
+                padding: Size.Small,
+                backgroundColor: state.isSegmentActive ? Colors.ACCENT_COLOR + '20' : Colors.SECONDARY_TEXT_COLOR + '20',
+                borderRadius: Size.Small,
+                border: `1px solid ${state.isSegmentActive ? Colors.ACCENT_COLOR : Colors.SECONDARY_TEXT_COLOR}`,
+                fontSize: Size.Small,
+                fontFamily: font.Regular,
+                textAlign: 'center',
+                color: state.isSegmentActive ? Colors.ACCENT_COLOR : Colors.SECONDARY_TEXT_COLOR,
+            }}>
+                {state.isSegmentActive ? (
+                    <span>
+                        🎤 Recording Segment: {state.currentSegmentId?.substring(0, 8)}...
+                    </span>
+                ) : (
+                    <span>
+                        🔇 Waiting for voice activity...
+                    </span>
+                )}
+            </div>
 
             <ServerResponses
                 responses={state.serverResponses}

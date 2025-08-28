@@ -143,9 +143,8 @@ const VADTestPage: React.FC = () => {
         transform: 'translateY(-1px)',
     };
 
-    const [websocketUrl, setWebsocketUrl] = useState('ws://localhost:8080/api/v1/ws/connect/e7504d16-b7ec-4e1b-a026-1cc29d74f5e1');
+    const [websocketUrl, setWebsocketUrl] = useState('ws://localhost:8080/api/v1/ws/connect/868b1859-93e2-4bac-a9a9-42759dacb002');
     const [receivedChunks, setReceivedChunks] = useState<AudioChunk[]>([]);
-    
     React.useEffect(() => {
         const checkScreenSize = () => {
             const width = window.innerWidth;
@@ -171,6 +170,7 @@ const VADTestPage: React.FC = () => {
         console.log('Audio chunk sent:', chunk);
         setReceivedChunks(prev => [...prev, chunk]);
     };
+    
 
     const clearChunks = () => {
         setReceivedChunks([]);
