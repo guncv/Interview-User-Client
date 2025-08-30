@@ -50,12 +50,13 @@ const VAD_THRESHOLD = 0.1;
 const CHUNK_INTERVAL = 2000;
 const MAX_RESPONSES = 20;
 const AUDIO_CONFIG = {
-    sampleRate: 16000,
+    sampleRate: 48000,
     channelCount: 1,
     echoCancellation: true,
     noiseSuppression: true,
     autoGainControl: true
 };
+const INPUT_GAIN_MULTIPLIER = 1.6; // Boost mic level before quantization
 
 // Helper Components
 const ConnectionStatus: React.FC<{ status: string; isConnected: boolean; sessionId: string | null }> = ({ 
@@ -472,6 +473,7 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
     websocketUrl = 'ws://localhost:8080/audio',
     onRecordingStart,
     onRecordingStop,
+    onDataSent,
     isMobile = false,
     isTablet = false,
 }) => {
@@ -491,12 +493,67 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
     });
 
     // Refs
-    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    // MediaRecorder no longer used; kept removed to avoid lints
     const audioContextRef = useRef<AudioContext | null>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
     const websocketRef = useRef<WebSocket | null>(null);
     const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-    const audioChunksRef = useRef<Blob[]>([]);
+    const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
+    const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
+    const mediaStreamRef = useRef<MediaStream | null>(null);
+    const pcmChunksRef = useRef<Int16Array[]>([]);
+    const pcmTotalSamplesRef = useRef<number>(0);
+    const isRecordingRef = useRef<boolean>(false);
+    const isPausedRef = useRef<boolean>(false);
+    const isSegmentActiveRef = useRef<boolean>(false);
+
+    // PCM helpers
+    const floatTo16BitPCM = useCallback((input: Float32Array): Int16Array => {
+        const output = new Int16Array(input.length);
+        for (let i = 0; i < input.length; i++) {
+            let s = input[i];
+            if (s < -1) s = -1;
+            if (s > 1) s = 1;
+            output[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+        }
+        return output;
+    }, []);
+
+    const resampleFloat32 = useCallback((input: Float32Array, fromRate: number, toRate: number): Float32Array => {
+        if (fromRate === toRate) return input.slice(0);
+        const ratio = fromRate / toRate;
+        const newLength = Math.round(input.length / ratio);
+        const result = new Float32Array(newLength);
+        for (let i = 0; i < newLength; i++) {
+            const origin = i * ratio;
+            const index = Math.floor(origin);
+            const frac = origin - index;
+            const s1 = input[index] ?? 0;
+            const s2 = input[index + 1] ?? s1;
+            result[i] = s1 + (s2 - s1) * frac;
+        }
+        return result;
+    }, []);
+
+    const appendPcmChunk = useCallback((chunk: Int16Array) => {
+        if (chunk.length === 0) return;
+        pcmChunksRef.current.push(chunk);
+        pcmTotalSamplesRef.current += chunk.length;
+    }, []);
+
+    const takePcmBuffer = useCallback((): { buffer: ArrayBuffer; samples: number } | null => {
+        const total = pcmTotalSamplesRef.current;
+        if (total === 0) return null;
+        const merged = new Int16Array(total);
+        let offset = 0;
+        for (const c of pcmChunksRef.current) {
+            merged.set(c, offset);
+            offset += c.length;
+        }
+        pcmChunksRef.current = [];
+        pcmTotalSamplesRef.current = 0;
+        return { buffer: merged.buffer, samples: merged.length };
+    }, []);
 
     // WebSocket Management
     const initializeWebSocket = useCallback(() => {
@@ -636,13 +693,14 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
         }
     }, [state.sessionId, state.currentSegmentId]);
 
-    // Audio Management
     const initializeAudio = useCallback(async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: AUDIO_CONFIG });
             
             audioContextRef.current = new AudioContext({ sampleRate: 16000 });
             const source = audioContextRef.current.createMediaStreamSource(stream);
+            sourceNodeRef.current = source;
+            mediaStreamRef.current = stream;
             
             analyserRef.current = audioContextRef.current.createAnalyser();
             analyserRef.current.fftSize = 256;
@@ -677,166 +735,173 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
     // Recording Controls
     const startRecording = useCallback(async () => {
         try {
-            const stream = await initializeAudio();
-            
-            // Start segment BEFORE starting MediaRecorder
+            await initializeAudio();
+
+            // Start segment BEFORE capturing
             startSegment();
-            
-            mediaRecorderRef.current = new MediaRecorder(stream, {
-                mimeType: 'audio/webm;codecs=opus',
-                audioBitsPerSecond: 16000
-            });
-            
-            audioChunksRef.current = [];
-            
-            mediaRecorderRef.current.ondataavailable = (event) => {
-                console.log('MediaRecorder data available:', {
-                    dataSize: event.data.size,
-                    timestamp: Date.now()
-                });
 
-                if (event.data.size > 0) {
-                    // Replace the current chunk instead of accumulating
-                    // This ensures we only keep the most recent 2-second chunk
-                    audioChunksRef.current = [event.data];
-                    console.log('Audio chunk updated in buffer, current chunks:', audioChunksRef.current.length);
-                }
-            };
-            
-            mediaRecorderRef.current.onstart = () => {
-                setState(prev => ({ ...prev, isRecording: true, recordingTime: 0 }));
-                onRecordingStart?.();
-                
-                recordingIntervalRef.current = setInterval(() => {
-                    setState(prev => ({ ...prev, recordingTime: prev.recordingTime + 1 }));
-                }, 1000);
-            };
-            
-            mediaRecorderRef.current.onstop = () => {
-                // Segment ending is now handled in stopRecording function
-                setState(prev => ({ ...prev, isRecording: false }));
-                onRecordingStop?.();
+            // Reset counters and timers
+            setState(prev => ({ ...prev, isRecording: true, recordingTime: 0 }));
+            isRecordingRef.current = true;
+            isPausedRef.current = false;
+            onRecordingStart?.();
+            if (recordingIntervalRef.current) clearInterval(recordingIntervalRef.current);
+            recordingIntervalRef.current = setInterval(() => {
+                setState(prev => ({ ...prev, recordingTime: prev.recordingTime + 1 }));
+            }, 1000);
 
-                if (recordingIntervalRef.current) {
-                    clearInterval(recordingIntervalRef.current);
-                }
-            };
-            
-            mediaRecorderRef.current.start(CHUNK_INTERVAL);
-            
+            // Create processor for PCM capture
+            if (audioContextRef.current && sourceNodeRef.current) {
+                try { await audioContextRef.current.resume(); } catch {}
+                scriptProcessorRef.current = audioContextRef.current.createScriptProcessor(4096, 1, 1);
+                scriptProcessorRef.current.onaudioprocess = (e) => {
+                    if (!isRecordingRef.current || isPausedRef.current || !isSegmentActiveRef.current) return;
+                    const input = e.inputBuffer.getChannelData(0);
+                    // Apply a gentle gain to improve STT detectability
+                    const gained = new Float32Array(input.length);
+                    for (let i = 0; i < input.length; i++) {
+                        let s = input[i] * INPUT_GAIN_MULTIPLIER;
+                        if (s < -1) s = -1;
+                        if (s > 1) s = 1;
+                        gained[i] = s;
+                    }
+                    const ac = audioContextRef.current!;
+                    const targetRate = 16000;
+                    const fromRate = ac.sampleRate;
+                    const floatData = fromRate === targetRate ? gained : resampleFloat32(gained, fromRate, targetRate);
+                    const pcm = floatTo16BitPCM(floatData);
+                    appendPcmChunk(pcm);
+                };
+                // Ensure processor runs by connecting to destination (silence)
+                sourceNodeRef.current.connect(scriptProcessorRef.current);
+                scriptProcessorRef.current.connect(audioContextRef.current.destination);
+            }
         } catch (error) {
             console.error('Failed to start recording:', error);
         }
-    }, [initializeAudio, onRecordingStart, onRecordingStop, startSegment]);
+    }, [initializeAudio, onRecordingStart, startSegment, appendPcmChunk, floatTo16BitPCM, resampleFloat32, state.isRecording, state.isPaused, state.isSegmentActive]);
 
     const togglePause = useCallback(() => {
-        if (mediaRecorderRef.current) {
-            if (state.isPaused) {
-                mediaRecorderRef.current.resume();
-                setState(prev => ({ ...prev, isPaused: false }));
-                
-                // Start a new segment when resuming
-                startSegment();
-            } else {
-                mediaRecorderRef.current.pause();
-                setState(prev => ({ ...prev, isPaused: true }));
-                
-                // End segment when pausing
-                if (state.isSegmentActive) {
-                    endSegment();
-                }
+        if (state.isPaused) {
+            setState(prev => ({ ...prev, isPaused: false }));
+            isPausedRef.current = false;
+            // Start a new segment when resuming
+            startSegment();
+        } else {
+            setState(prev => ({ ...prev, isPaused: true }));
+            isPausedRef.current = true;
+            // End segment when pausing
+            if (state.isSegmentActive) {
+                endSegment();
             }
         }
     }, [state.isPaused, state.isSegmentActive, startSegment, endSegment]);
 
-    const sendAudioChunk = useCallback(async (chunk: Blob) => {
-        console.log('sendAudioChunk called:', {
+    const sendPcmBuffer = useCallback(async (arrayBuffer: ArrayBuffer, durationSeconds: number) => {
+        console.log('sendPcmBuffer called:', {
             websocketOpen: websocketRef.current?.readyState === WebSocket.OPEN,
             isSegmentActive: state.isSegmentActive,
             currentSegmentId: state.currentSegmentId,
-            chunkSize: chunk.size
+            byteLength: arrayBuffer.byteLength
         });
-        
         if (websocketRef.current?.readyState === WebSocket.OPEN && state.isSegmentActive && state.currentSegmentId) {
             try {
-                const arrayBuffer = await chunk.arrayBuffer();
-    
                 const headerObj = {
                     type: 'audio_chunk',
                     session_id: state.sessionId || '',
                     segment_id: state.currentSegmentId,
+                    encoding: 'LINEAR16',
+                    sample_rate_hz: 16000,
+                    num_channels: 1
                 };
-    
+
                 const headerStr = JSON.stringify(headerObj);
                 const headerBytes = new TextEncoder().encode(headerStr);
-    
+
                 const headerLengthBuffer = new Uint8Array(4);
                 const view = new DataView(headerLengthBuffer.buffer);
                 view.setUint32(0, headerBytes.length, false);
-    
-                const framedBuffer = new Uint8Array(
-                    headerLengthBuffer.length + headerBytes.length + arrayBuffer.byteLength
-                );
+
+                const framedBuffer = new Uint8Array(headerLengthBuffer.length + headerBytes.length + arrayBuffer.byteLength);
                 framedBuffer.set(headerLengthBuffer, 0);
                 framedBuffer.set(headerBytes, headerLengthBuffer.length);
                 framedBuffer.set(new Uint8Array(arrayBuffer), headerLengthBuffer.length + headerBytes.length);
-    
+
                 websocketRef.current.send(framedBuffer);
-                console.log('Audio chunk sent successfully:', {
-                    segmentId: state.currentSegmentId,
-                    chunkSize: arrayBuffer.byteLength
-                });
-    
                 setState(prev => ({ ...prev, chunksSent: prev.chunksSent + 1 }));
+
+                // Emit callback for UI consumers
+                const chunkInfo: AudioChunk = {
+                    id: `chunk_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+                    timestamp: Date.now(),
+                    data: arrayBuffer,
+                    isVoice: state.audioLevel > VAD_THRESHOLD,
+                    duration: durationSeconds,
+                    sampleRate: 16000
+                };
+                onDataSent?.(chunkInfo);
             } catch (error) {
-                console.error('Failed to send audio chunk:', error);
+                console.error('Failed to send PCM buffer:', error);
             }
         } else {
-            console.log('Cannot send audio chunk - conditions not met');
+            console.log('Cannot send PCM buffer - conditions not met');
         }
-    }, [state.sessionId, state.currentSegmentId, state.isSegmentActive]);
+    }, [state.sessionId, state.currentSegmentId, state.isSegmentActive, state.audioLevel, onDataSent]);
     
 
     const sendAccumulatedChunks = useCallback(() => {
-        console.log('sendAccumulatedChunks called:', {
-            chunksCount: audioChunksRef.current.length,
-            isRecording: state.isRecording,
-            isPaused: state.isPaused,
-            isSegmentActive: state.isSegmentActive
-        });
-
-        if (audioChunksRef.current.length > 0) {
-            // Send the most recent chunk (should be only one with our new logic)
-            const chunkToSend = audioChunksRef.current[0];
-            sendAudioChunk(chunkToSend);
-            audioChunksRef.current = []; // Clear after sending
-        }
-    }, [sendAudioChunk, state.isRecording, state.isPaused, state.isSegmentActive]);
+        const taken = takePcmBuffer();
+        if (!taken) return;
+        const duration = taken.samples / 16000;
+        sendPcmBuffer(taken.buffer, duration);
+    }, [sendPcmBuffer, takePcmBuffer]);
 
     const stopRecording = useCallback(async () => {
-        if (mediaRecorderRef.current && state.isRecording) {
-            // Send any remaining accumulated chunks before stopping
-            if (audioChunksRef.current.length > 0 && state.isSegmentActive) {
-                console.log('Sending remaining audio chunks before stopping recording');
-                sendAccumulatedChunks();
-
-                // Add a small delay to ensure audio chunk is processed before ending segment
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }
-
-            // End the segment after sending all remaining audio chunks
-            if (state.isSegmentActive) {
-                console.log('Ending segment after sending all audio chunks');
-                endSegment();
-            }
-
-            mediaRecorderRef.current.stop();
-
-            if (mediaRecorderRef.current.stream) {
-                mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-            }
+        if (!state.isRecording) return;
+        isRecordingRef.current = false;
+        // Send any remaining accumulated samples before stopping
+        if (state.isSegmentActive) {
+            sendAccumulatedChunks();
+            await new Promise(resolve => setTimeout(resolve, 100));
+            endSegment();
         }
-    }, [state.isRecording, state.isSegmentActive, sendAccumulatedChunks, endSegment]);
+
+        // Disconnect processor
+        try {
+            if (scriptProcessorRef.current && sourceNodeRef.current) {
+                sourceNodeRef.current.disconnect(scriptProcessorRef.current);
+                scriptProcessorRef.current.disconnect();
+            }
+        } catch {}
+        scriptProcessorRef.current = null;
+
+        // Stop media tracks
+        if (mediaStreamRef.current) {
+            mediaStreamRef.current.getTracks().forEach(t => t.stop());
+            mediaStreamRef.current = null;
+        }
+
+        // Close audio context
+        try {
+            await audioContextRef.current?.close();
+        } catch {}
+        audioContextRef.current = null;
+        analyserRef.current = null;
+        sourceNodeRef.current = null;
+
+        // Update state and timers
+        setState(prev => ({ ...prev, isRecording: false }));
+        onRecordingStop?.();
+        if (recordingIntervalRef.current) {
+            clearInterval(recordingIntervalRef.current);
+            recordingIntervalRef.current = null;
+        }
+    }, [state.isRecording, state.isSegmentActive, sendAccumulatedChunks, endSegment, onRecordingStop]);
+
+    // Keep refs in sync with state changes relevant to processing
+    useEffect(() => { isRecordingRef.current = state.isRecording; }, [state.isRecording]);
+    useEffect(() => { isPausedRef.current = state.isPaused; }, [state.isPaused]);
+    useEffect(() => { isSegmentActiveRef.current = state.isSegmentActive; }, [state.isSegmentActive]);
     
 
     // Effects
@@ -862,11 +927,10 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
 
     useEffect(() => {
         if (state.isRecording && !state.isPaused && state.isSegmentActive) {
-            const timeoutId = setTimeout(() => {
+            const intervalId = setInterval(() => {
                 sendAccumulatedChunks();
             }, CHUNK_INTERVAL);
-    
-            return () => clearTimeout(timeoutId);
+            return () => clearInterval(intervalId);
         }
     }, [state.isRecording, state.isPaused, state.isSegmentActive, sendAccumulatedChunks]);
 

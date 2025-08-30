@@ -143,7 +143,7 @@ const VADTestPage: React.FC = () => {
         transform: 'translateY(-1px)',
     };
 
-    const [websocketUrl, setWebsocketUrl] = useState('ws://localhost:8080/api/v1/ws/connect/868b1859-93e2-4bac-a9a9-42759dacb002');
+    const [websocketUrl, setWebsocketUrl] = useState('ws://localhost:8080/api/v1/ws/connect/78db6166-d760-4634-8787-16c0335b36a2');
     const [receivedChunks, setReceivedChunks] = useState<AudioChunk[]>([]);
     React.useEffect(() => {
         const checkScreenSize = () => {
