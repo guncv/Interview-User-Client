@@ -11,6 +11,8 @@ interface VADRecorderProps {
     onRecordingStart?: () => void;
     onRecordingStop?: () => void;
     onDataSent?: (chunk: AudioChunk) => void;
+    onSegmentStart?: (segmentId: string) => void;
+    onSegmentEnd?: (segmentId: string) => void;
     isMobile?: boolean;
     isTablet?: boolean;
 }
@@ -22,6 +24,7 @@ export interface AudioChunk {
     isVoice: boolean;
     duration: number;
     sampleRate: number;
+    segmentId: string;
 }
 
 interface VADRecorderState {
@@ -474,6 +477,8 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
     onRecordingStart,
     onRecordingStop,
     onDataSent,
+    onSegmentStart,
+    onSegmentEnd,
     isMobile = false,
     isTablet = false,
 }) => {
@@ -654,6 +659,7 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
                 currentSegmentId: segmentId,
                 isSegmentActive: true 
             }));
+            onSegmentStart?.(segmentId);
             
             console.log('Segment started successfully:', {
                 segmentId,
@@ -663,7 +669,7 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
         } catch (error) {
             console.error('Failed to start segment:', error);
         }
-    }, [state.sessionId]);
+    }, [state.sessionId, onSegmentStart]);
 
     const endSegment = useCallback(() => {
         if (!websocketRef.current ||
@@ -681,17 +687,21 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
 
         try {
             websocketRef.current.send(JSON.stringify(segmentEndMessage));
+            const endedId = state.currentSegmentId;
             setState(prev => ({ 
                 ...prev, 
                 currentSegmentId: null,
                 isSegmentActive: false 
             }));
+            if (endedId) {
+                onSegmentEnd?.(endedId);
+            }
             
             console.log('Segment ended:', state.currentSegmentId);
         } catch (error) {
             console.error('Failed to end segment:', error);
         }
-    }, [state.sessionId, state.currentSegmentId]);
+    }, [state.sessionId, state.currentSegmentId, onSegmentEnd]);
 
     const initializeAudio = useCallback(async () => {
         try {
@@ -837,7 +847,8 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
                     data: arrayBuffer,
                     isVoice: state.audioLevel > VAD_THRESHOLD,
                     duration: durationSeconds,
-                    sampleRate: 16000
+                    sampleRate: 16000,
+                    segmentId: state.currentSegmentId!
                 };
                 onDataSent?.(chunkInfo);
             } catch (error) {

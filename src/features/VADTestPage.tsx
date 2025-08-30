@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { VADRecorder } from '../components/common';
 import Colors from '../assets/styles/Color';
 import Size from '../assets/styles/Size';
@@ -145,7 +145,9 @@ const VADTestPage: React.FC = () => {
 
     const [websocketUrl, setWebsocketUrl] = useState('ws://localhost:8080/api/v1/ws/connect/78db6166-d760-4634-8787-16c0335b36a2');
     const [receivedChunks, setReceivedChunks] = useState<AudioChunk[]>([]);
-    React.useEffect(() => {
+    const [segments, setSegments] = useState<Record<string, { id: string; chunks: AudioChunk[]; wavUrl?: string; durationSeconds?: number }>>({});
+    const [segmentOrder, setSegmentOrder] = useState<string[]>([]);
+    useEffect(() => {
         const checkScreenSize = () => {
             const width = window.innerWidth;
             setIsMobile(width < 768);
@@ -160,6 +162,13 @@ const VADTestPage: React.FC = () => {
     const handleRecordingStart = () => {
         console.log('Recording started');
         setReceivedChunks([]);
+        // Clear previous segments and URLs
+        setSegmentOrder([]);
+        setSegments(prev => {
+            // Revoke any existing object URLs
+            Object.values(prev).forEach(s => { if (s.wavUrl) URL.revokeObjectURL(s.wavUrl); });
+            return {};
+        });
     };
 
     const handleRecordingStop = () => {
@@ -169,11 +178,87 @@ const VADTestPage: React.FC = () => {
     const handleDataSent = (chunk: AudioChunk) => {
         console.log('Audio chunk sent:', chunk);
         setReceivedChunks(prev => [...prev, chunk]);
+        if (chunk.segmentId) {
+            setSegments(prev => {
+                const existing = prev[chunk.segmentId] || { id: chunk.segmentId, chunks: [] as AudioChunk[] };
+                const updated = { ...prev, [chunk.segmentId]: { ...existing, chunks: [...existing.chunks, chunk] } };
+                if (!prev[chunk.segmentId]) {
+                    setSegmentOrder(o => [...o, chunk.segmentId]);
+                }
+                return updated;
+            });
+        }
     };
     
+    const handleSegmentStart = (segmentId: string) => {
+        setSegments(prev => {
+            if (prev[segmentId]) return prev;
+            return { ...prev, [segmentId]: { id: segmentId, chunks: [] } };
+        });
+        setSegmentOrder(prev => prev.includes(segmentId) ? prev : [...prev, segmentId]);
+    };
+
+    const encodeWavFromChunks = (chunks: AudioChunk[], sampleRate = 16000): Blob => {
+        const sorted = [...chunks].sort((a, b) => a.timestamp - b.timestamp);
+        const totalPcmBytes = sorted.reduce((acc, c) => acc + c.data.byteLength, 0);
+        const headerSize = 44;
+        const buffer = new ArrayBuffer(headerSize + totalPcmBytes);
+        const view = new DataView(buffer);
+
+        // RIFF header
+        const writeString = (offset: number, str: string) => {
+            for (let i = 0; i < str.length; i++) {
+                view.setUint8(offset + i, str.charCodeAt(i));
+            }
+        };
+
+        writeString(0, 'RIFF');
+        view.setUint32(4, 36 + totalPcmBytes, true);
+        writeString(8, 'WAVE');
+        writeString(12, 'fmt ');
+        view.setUint32(16, 16, true); // Subchunk1Size for PCM
+        view.setUint16(20, 1, true);  // PCM format
+        view.setUint16(22, 1, true);  // channels = 1
+        view.setUint32(24, sampleRate, true);
+        const bytesPerSample = 2;
+        const blockAlign = 1 * bytesPerSample;
+        view.setUint32(28, sampleRate * blockAlign, true); // ByteRate
+        view.setUint16(32, blockAlign, true); // BlockAlign
+        view.setUint16(34, 8 * bytesPerSample, true); // BitsPerSample = 16
+        writeString(36, 'data');
+        view.setUint32(40, totalPcmBytes, true);
+
+        // PCM data
+        let offset = headerSize;
+        const out = new Uint8Array(buffer);
+        for (const c of sorted) {
+            out.set(new Uint8Array(c.data), offset);
+            offset += c.data.byteLength;
+        }
+
+        return new Blob([buffer], { type: 'audio/wav' });
+    };
+
+    const handleSegmentEnd = (segmentId: string) => {
+        setSegments(prev => {
+            const seg = prev[segmentId];
+            if (!seg || seg.chunks.length === 0) return prev;
+            // Create WAV
+            const blob = encodeWavFromChunks(seg.chunks, 16000);
+            const url = URL.createObjectURL(blob);
+            const durationSeconds = seg.chunks.reduce((acc, c) => acc + (c.duration || 0), 0);
+            return { ...prev, [segmentId]: { ...seg, wavUrl: url, durationSeconds } };
+        });
+    };
 
     const clearChunks = () => {
         setReceivedChunks([]);
+        // Revoke and clear segment URLs and data
+        setSegments(prev => {
+            Object.values(prev).forEach(s => { if (s.wavUrl) URL.revokeObjectURL(s.wavUrl); });
+            return {};
+        });
+        setSegmentOrder([]);
     };
 
     return (
@@ -306,9 +391,63 @@ const VADTestPage: React.FC = () => {
                     onRecordingStart={handleRecordingStart}
                     onRecordingStop={handleRecordingStop}
                     onDataSent={handleDataSent}
+                    onSegmentStart={handleSegmentStart}
+                    onSegmentEnd={handleSegmentEnd}
                     isMobile={isMobile}
                     isTablet={isTablet}
                 />
+            </div>
+
+            {/* Segments and merged audio */}
+            <div style={chunksSectionStyle}>
+                <div style={chunksTitleStyle}>
+                    <span>Merged Segments</span>
+                </div>
+                {segmentOrder.length === 0 ? (
+                    <p style={{
+                        fontSize: Size.Small,
+                        color: Colors.SECONDARY_TEXT_COLOR,
+                        fontFamily: font.Regular,
+                        textAlign: 'center',
+                        fontStyle: 'italic',
+                    }}>
+                        No segments yet.
+                    </p>
+                ) : (
+                    segmentOrder.map((sid) => {
+                        const seg = segments[sid];
+                        return (
+                            <div key={sid} style={chunkItemStyle}>
+                                <div style={chunkHeaderStyle}>
+                                    <span>Segment {sid.substring(0, 10)}...</span>
+                                    <span style={{ color: Colors.SECONDARY_TEXT_COLOR, fontFamily: font.Medium }}>
+                                        {seg.chunks.length} chunks{seg.durationSeconds ? ` · ${seg.durationSeconds.toFixed(2)}s` : ''}
+                                    </span>
+                                </div>
+                                <div style={chunkDetailsStyle}>
+                                    {seg.wavUrl ? (
+                                        <>
+                                            <audio controls src={seg.wavUrl} style={{ width: '100%' }} />
+                                            <a href={seg.wavUrl} download={`segment_${sid.substring(0, 10)}.wav`} style={{
+                                                padding: `${Size.Small} ${Size.Medium}`,
+                                                backgroundColor: Colors.ACCENT_COLOR,
+                                                color: Colors.TEXT_WHITE_COLOR,
+                                                borderRadius: Size.Small,
+                                                textDecoration: 'none',
+                                                fontFamily: font.Medium,
+                                                textAlign: 'center'
+                                            }}>Download WAV</a>
+                                        </>
+                                    ) : (
+                                        <span style={{ fontSize: Size.Small, color: Colors.SECONDARY_TEXT_COLOR }}>
+                                            Segment is active or awaiting end to merge.
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })
+                )}
             </div>
 
             <div style={chunksSectionStyle}>
