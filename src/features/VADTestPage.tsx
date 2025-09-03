@@ -143,7 +143,7 @@ const VADTestPage: React.FC = () => {
         transform: 'translateY(-1px)',
     };
 
-    const [websocketUrl, setWebsocketUrl] = useState('ws://localhost:8080/api/v1/ws/connect/78db6166-d760-4634-8787-16c0335b36a2');
+    const [websocketUrl, setWebsocketUrl] = useState('ws://localhost:8080/api/v1/ws/connect/6a9077a7-6ccd-44a6-8cec-932fb9a63728');
     const [receivedChunks, setReceivedChunks] = useState<AudioChunk[]>([]);
     const [segments, setSegments] = useState<Record<string, { id: string; chunks: AudioChunk[]; wavUrl?: string; durationSeconds?: number }>>({});
     const [segmentOrder, setSegmentOrder] = useState<string[]>([]);
