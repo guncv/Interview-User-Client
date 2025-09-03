@@ -39,6 +39,8 @@ interface VADRecorderState {
     serverResponses: ServerResponse[];
     currentSegmentId: string | null;
     isSegmentActive: boolean;
+    sessionStartTimestamp: number | null;
+    sessionElapsedSeconds: number;
 }
 
 interface ServerResponse {
@@ -249,14 +251,21 @@ const InfoPanel: React.FC<{
     audioLevel: number;
     chunksSent: number;
     sessionId: string | null;
+    sessionElapsedSeconds: number;
     vadThreshold: number;
     isSegmentActive: boolean;
     currentSegmentId: string | null;
-}> = ({ recordingTime, audioLevel, chunksSent, sessionId, vadThreshold, isSegmentActive, currentSegmentId }) => {
+}> = ({ recordingTime, audioLevel, chunksSent, sessionId, sessionElapsedSeconds, vadThreshold, isSegmentActive, currentSegmentId }) => {
     const formatTime = (seconds: number): string => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const formatMinuteDotSeconds = (secondsTotal: number): string => {
+        const mins = Math.floor(secondsTotal / 60);
+        const secs = secondsTotal % 60;
+        return `${mins}.${secs.toString().padStart(2, '0')}`;
     };
 
     const infoRowStyle: React.CSSProperties = {
@@ -292,6 +301,10 @@ const InfoPanel: React.FC<{
             borderRadius: Size.Small,
             border: `1px solid ${Colors.ACCENT_COLOR_LIGHT}`,
         }}>
+            <div style={infoRowStyle}>
+                <span>Session Time:</span>
+                <span style={{ fontFamily: font.Medium }}>{formatMinuteDotSeconds(sessionElapsedSeconds)}</span>
+            </div>
             <div style={infoRowStyle}>
                 <span>Recording Time:</span>
                 <span style={{ fontFamily: font.Medium }}>{formatTime(recordingTime)}</span>
@@ -494,7 +507,9 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
         sessionId: null,
         serverResponses: [],
         currentSegmentId: null,
-        isSegmentActive: false
+        isSegmentActive: false,
+        sessionStartTimestamp: null,
+        sessionElapsedSeconds: 0
     });
 
     // Refs
@@ -503,6 +518,7 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
     const analyserRef = useRef<AnalyserNode | null>(null);
     const websocketRef = useRef<WebSocket | null>(null);
     const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const sessionIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
     const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
     const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -576,6 +592,22 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
                     isConnected: true,
                     connectionStatus: 'connected'
                 }));
+                // Start session timer on connect if not already started
+                setState(prev => ({
+                    ...prev,
+                    sessionStartTimestamp: prev.sessionStartTimestamp ?? Date.now(),
+                    sessionElapsedSeconds: prev.sessionStartTimestamp ? prev.sessionElapsedSeconds : 0
+                }));
+                if (!sessionIntervalRef.current) {
+                    sessionIntervalRef.current = setInterval(() => {
+                        setState(prev => {
+                            if (!prev.sessionStartTimestamp) return prev;
+                            const elapsed = Math.floor((Date.now() - prev.sessionStartTimestamp) / 1000);
+                            if (elapsed === prev.sessionElapsedSeconds) return prev;
+                            return { ...prev, sessionElapsedSeconds: elapsed };
+                        });
+                    }, 1000);
+                }
             };
             
             websocketRef.current.onclose = () => {
@@ -584,6 +616,11 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
                     isConnected: false, 
                     connectionStatus: 'disconnected' 
                 }));
+                if (sessionIntervalRef.current) {
+                    clearInterval(sessionIntervalRef.current);
+                    sessionIntervalRef.current = null;
+                }
+                setState(prev => ({ ...prev, sessionStartTimestamp: null }));
             };
             
             websocketRef.current.onerror = () => {
@@ -612,7 +649,10 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
                     }));
 
                     if (response.type === 'connection_established' && response.session_id) {
-                        setState(prev => ({ ...prev, sessionId: response.session_id }));
+                        setState(prev => ({ 
+                            ...prev, 
+                            sessionId: response.session_id
+                        }));
                     }
                     
                 } catch (error) {
@@ -650,8 +690,8 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
             type: 'segment_start',
             session_id: state.sessionId,
             segment_id: segmentId,
-        };
-
+            started_at: state.sessionElapsedSeconds
+        }
         try {
             websocketRef.current.send(JSON.stringify(segmentStartMessage));
             setState(prev => ({ 
@@ -682,7 +722,8 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
         const segmentEndMessage = {
             type: 'segment_end',
             session_id: state.sessionId,
-            segment_id: state.currentSegmentId
+            segment_id: state.currentSegmentId,
+            ended_at: state.sessionElapsedSeconds
         };
 
         try {
@@ -924,6 +965,10 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
             if (recordingIntervalRef.current) {
                 clearInterval(recordingIntervalRef.current);
             }
+            if (sessionIntervalRef.current) {
+                clearInterval(sessionIntervalRef.current);
+                sessionIntervalRef.current = null;
+            }
         };
     }, [initializeWebSocket]);
 
@@ -1007,6 +1052,7 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
                 audioLevel={state.audioLevel}
                 chunksSent={state.chunksSent}
                 sessionId={state.sessionId}
+                sessionElapsedSeconds={state.sessionElapsedSeconds}
                 vadThreshold={VAD_THRESHOLD}
                 isSegmentActive={state.isSegmentActive}
                 currentSegmentId={state.currentSegmentId}
