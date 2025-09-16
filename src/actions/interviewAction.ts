@@ -1,7 +1,9 @@
-import type { CreateInterviewSessionResponse, CreateInterviewSessionWithExistingResumeRequest } from "../interface/interviewInterface";
+import type { CreateInterviewSessionResponse, CreateInterviewSessionWithExistingResumeRequest, GetChatHistoryBySessionTokenResp } from "../interface/interviewInterface";
 
 export const CREATE_SESSION_WITH_NEW_RESUME = 'CREATE_SESSION_WITH_NEW_RESUME';
 export const CREATE_SESSION_WITH_EXISTING_RESUME = 'CREATE_SESSION_WITH_EXISTING_RESUME';
+export const GET_CHAT_HISTORY_BY_SESSION_TOKEN = 'GET_CHAT_HISTORY_BY_SESSION_TOKEN';
+export const SET_CHAT_HISTORY = 'SET_CHAT_HISTORY';
 
 export const SET_CREATE_INTERVIEW_ERROR = 'SET_CREATE_INTERVIEW_ERROR';
 export const SET_CREATE_INTERVIEW_SUCCESS = 'SET_CREATE_INTERVIEW_SUCCESS';
@@ -25,6 +27,10 @@ export const createInterviewSessionWithExistingResume = (payload: CreateIntervie
     return { type: CREATE_SESSION_WITH_EXISTING_RESUME, payload };
 };
 
-export const setChatHistory = (payload: ChatHistory) => {
-    return { type: SET_CHAT_HISTORY, payload };
+export const getChatHistoryBySessionToken = (session_token: string) => {
+    return { type: GET_CHAT_HISTORY_BY_SESSION_TOKEN, payload: { session_token } };
+};
+
+export const setChatHistory = (payload: GetChatHistoryBySessionTokenResp) => {
+    return { type: SET_CHAT_HISTORY, payload: { chatHistory: payload } };
 };

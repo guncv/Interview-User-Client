@@ -1,8 +1,8 @@
 import { call, delay, put, take } from "redux-saga/effects";
 import type { SagaIterator } from "redux-saga";
 import { ERROR_MESSAGES, HTTP_STATUS, ROUTES, STORAGE_KEYS } from "../constants";
-import { apiCreateSessionWithNewResume, apiCreateSessionWithExistingResume } from "../api/interviewApi";
-import { CREATE_SESSION_WITH_NEW_RESUME, CREATE_SESSION_WITH_EXISTING_RESUME, setCreateInterviewSuccess } from "../actions/interviewAction";
+import { apiCreateSessionWithNewResume, apiCreateSessionWithExistingResume, apiGetChatHistoryBySessionToken } from "../api/interviewApi";
+import { CREATE_SESSION_WITH_NEW_RESUME, CREATE_SESSION_WITH_EXISTING_RESUME, setCreateInterviewSuccess, GET_CHAT_HISTORY_BY_SESSION_TOKEN, setChatHistory } from "../actions/interviewAction";
 import { setCreateInterviewError } from "../actions/interviewAction";
 import { hideSpinner, safeNavigate, showSpinner } from "..";
 
@@ -40,6 +40,13 @@ function* workerCreateSessionWithNewResume(payload: {
     }
 }
 
+export function* watcherCreateSessionWithNewResume(): SagaIterator {
+    while (true) {
+        const action = yield take(CREATE_SESSION_WITH_NEW_RESUME);
+        yield call(workerCreateSessionWithNewResume, action.payload);
+    }
+}
+
 function* workerCreateSessionWithExistingResume(payload: {
     resume_id: string;
     position: string;
@@ -70,17 +77,39 @@ function* workerCreateSessionWithExistingResume(payload: {
     }
 }
 
-export function* watcherCreateSessionWithNewResume(): SagaIterator {
-    while (true) {
-        const action = yield take(CREATE_SESSION_WITH_NEW_RESUME);
-        yield call(workerCreateSessionWithNewResume, action.payload);
-    }
-}
-
 export function* watcherCreateSessionWithExistingResume(): SagaIterator {
     while (true) {
         const action = yield take(CREATE_SESSION_WITH_EXISTING_RESUME);
         yield call(workerCreateSessionWithExistingResume, action.payload);
+    }
+}
+
+function* workerGetChatHistoryBySessionToken(payload: { session_token: string }): SagaIterator {
+    try {
+        yield delay(0);
+        yield call(showSpinner);
+        const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+        const response = yield call(apiGetChatHistoryBySessionToken, payload.session_token, token || '');
+        console.log("response", response);
+        if (response && response.success) {
+            yield put(setChatHistory(response.data));
+        } else {
+            yield call(hideSpinner);
+            yield call(handleStatusInterviewError, response.statusCode, response.message);
+        }
+        yield call(hideSpinner);
+    }
+    catch (error) {
+        yield call(hideSpinner);
+        const message = (error as { message?: string })?.message || ERROR_MESSAGES.UNEXPECTED_ERROR;
+        yield call(handleStatusInterviewError, 0, message);
+    }
+}
+
+export function* watcherGetChatHistoryBySessionToken(): SagaIterator {
+    while (true) {
+        const action = yield take(GET_CHAT_HISTORY_BY_SESSION_TOKEN);
+        yield call(workerGetChatHistoryBySessionToken, action.payload);
     }
 }
 

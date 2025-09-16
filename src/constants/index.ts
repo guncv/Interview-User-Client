@@ -14,6 +14,7 @@ export const API_ENDPOINTS = {
 
   CREATE_SESSION_WITH_NEW_RESUME: '/api/v1/sessions',
   CREATE_SESSION_WITH_EXISTING_RESUME: '/api/v1/sessions/existing',
+  GET_CHAT_HISTORY_BY_SESSION_TOKEN: '/api/v1/sessions/chat-history',
 } as const;
 
 export const HTTP_HEADERS = {

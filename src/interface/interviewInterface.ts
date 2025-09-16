@@ -109,3 +109,17 @@ export interface CreateInterviewFormErrors {
     consentAt?: string;
     consentGiven?: string;
 }
+
+export interface GetChatHistoryBySessionTokenResp {
+	chat_history: ChatHistory[];
+}
+
+export interface ChatHistory {
+	id: string;
+	turn_no: number;
+	actor : string;
+	transcript_text: string;
+	start_at: string;
+	end_at: string;
+	created_at: string;
+}

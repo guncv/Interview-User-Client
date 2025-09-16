@@ -2,25 +2,31 @@ import { createSelector } from '@reduxjs/toolkit';
 import {
     SET_CREATE_INTERVIEW_ERROR,
     SET_CREATE_INTERVIEW_SUCCESS,
+    SET_CHAT_HISTORY,
 } from '../actions/interviewAction';
 import type { RootState } from './rootReducer';
-import type { CreateInterviewSessionResponse } from '../interface/interviewInterface';
+import type { CreateInterviewSessionResponse, GetChatHistoryBySessionTokenResp } from '../interface/interviewInterface';
 
 type InterviewState = {
     error: string;
     success: CreateInterviewSessionResponse;
+    chatHistory: GetChatHistoryBySessionTokenResp;
 }
 type InterviewStateAction = {
     type: string;
     payload: {
         error: string;
         success: CreateInterviewSessionResponse;
+        chatHistory: GetChatHistoryBySessionTokenResp;
     }
 }
 const initialState: InterviewState = {
     error: '',
     success: {
         session_token: '',
+    },
+    chatHistory: {
+        chat_history: [],
     },
 };
 
@@ -38,6 +44,11 @@ export const interviewReducer = (
             return {
             ...state,
             success: action.payload.success,
+            };
+        case SET_CHAT_HISTORY:
+            return {
+            ...state,
+            chatHistory: action.payload.chatHistory,
             };
         default:
             return state;
