@@ -2,37 +2,60 @@ import { useSearchParams } from "react-router-dom";
 import ContentLayout from "../components/layout/ContentLayout";
 import ChatHistory from "../components/common/ChatHistory";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { STORAGE_KEYS } from "../constants";
+import { STORAGE_KEYS, WEBSOCKET_TYPES } from "../constants";
 import InterviewRecording from "../components/common/InterviewRecording";
 import { useVoiceStreaming } from "../hook/useVoiceStreaming";
 
-const audioQueue: Blob[] = [];
+const audioQueue: ArrayBuffer[] = [];
 let audioPlaying = false;
+const audioCtx = new AudioContext();
 
 async function playBinaryAudio(buffer: ArrayBuffer) {
-    const blob = new Blob([buffer], { type: 'audio/webm' });
-    audioQueue.push(blob);
+    audioQueue.push(buffer);
 
     if (!audioPlaying) {
         audioPlaying = true;
+
         while (audioQueue.length > 0) {
-            const currentBlob = audioQueue.shift();
-            const audioUrl = URL.createObjectURL(currentBlob!);
-            const audio = new Audio(audioUrl);
+            const currentBuffer = audioQueue.shift()!;
 
             try {
-                await audio.play();
-                await new Promise((resolve) => {
-                    audio.onended = resolve;
-                    audio.onerror = resolve;
+                const float32:any = convertPCM16ToFloat32(currentBuffer);
+                const audioBuffer = audioCtx.createBuffer(
+                    1,
+                    float32.length,
+                    24000
+                );
+                audioBuffer.copyToChannel(float32, 0);
+
+                const source = audioCtx.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(audioCtx.destination);
+                source.start();
+
+                await new Promise<void>((resolve) => {
+                    source.onended = () => resolve(); // ✅ fix
                 });
-            } finally {
-                URL.revokeObjectURL(audioUrl);
+            } catch (e) {
+                console.error("Audio playback failed:", e);
             }
         }
+
         audioPlaying = false;
     }
 }
+
+function convertPCM16ToFloat32(buffer: ArrayBuffer): Float32Array {
+    const int16Array = new Int16Array(buffer);
+    const float32Array = new Float32Array(int16Array.length);
+
+    for (let i = 0; i < int16Array.length; i++) {
+        float32Array[i] = int16Array[i] / 32768; // Normalize to range [-1, 1]
+    }
+
+    return float32Array;
+}
+
 
 const InterviewSimulation = () => {
     const [searchParams] = useSearchParams();
@@ -82,8 +105,22 @@ const InterviewSimulation = () => {
             websocketRef.current.onmessage = async (event) => {
                 try {
                     if (event.data instanceof Blob) {
-                        const arrayBuffer = await event.data.arrayBuffer();
-                        playBinaryAudio(arrayBuffer);
+                        console.log("Received audio blob");
+                        const buffer = await event.data.arrayBuffer();
+                        const view = new DataView(buffer);
+                
+                        const headerLength = view.getUint32(0, false);
+                        const headerBytes = new Uint8Array(buffer.slice(4, 4 + headerLength));
+                        const headerJson = new TextDecoder("utf-8").decode(headerBytes);
+                        const header = JSON.parse(headerJson);
+                
+                        const audioData = buffer.slice(4 + headerLength);
+                        console.log("header", header);
+                
+                        if (header.type === WEBSOCKET_TYPES.INTERVIEWER_AUDIO_CHUNKING) {
+                            console.log("Playing audio data");
+                            await playBinaryAudio(audioData);
+                        }
                     } else {
                         const data = JSON.parse(event.data);
                         handleWebSocketMessage(data);

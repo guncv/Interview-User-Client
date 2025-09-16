@@ -20,6 +20,7 @@ export const API_ENDPOINTS = {
 export const WEBSOCKET_TYPES = {
   START_SEGMENT: 'start_segment',
   END_SEGMENT: 'end_segment',
+  INTERVIEWER_AUDIO_CHUNKING: 'interviewer_audio_chunking',
 } as const;
 
 export const HTTP_HEADERS = {
