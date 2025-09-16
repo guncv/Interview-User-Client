@@ -7,6 +7,7 @@ import ResetPasswordSuccess from '../features/ResetPasswordSuccess';
 import RecordingListPage from '../features/RecordingListPage';
 import CreateInterviewPage from '../features/CreateInterviewPage';
 import VADTestPage from '../features/VADTestPage';
+import InterviewSimulation from '../features/InterviewSimulation';
 
 interface ComponentProps {
   title: string;
@@ -17,7 +18,7 @@ export interface RouteConfig {
   path: string;
   component: React.FC<ComponentProps>;
   exact: boolean;
-} 
+}
 
 export const routes: RouteConfig[]= [
   { path: '/', component: SignInPage, exact: true },
@@ -28,5 +29,6 @@ export const routes: RouteConfig[]= [
   { path: '/reset-password-success', component: ResetPasswordSuccess, exact: true},
   { path: '/recordings', component: RecordingListPage, exact: true},
   { path: '/create-interview', component: CreateInterviewPage, exact: true},
+  { path: '/interview', component: InterviewSimulation, exact: true},
   { path: '/vad-test', component: VADTestPage, exact: true},
 ];

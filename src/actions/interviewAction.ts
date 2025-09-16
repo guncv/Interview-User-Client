@@ -24,3 +24,7 @@ export const createInterviewSessionWithNewResume = (payload: {
 export const createInterviewSessionWithExistingResume = (payload: CreateInterviewSessionWithExistingResumeRequest) => {
     return { type: CREATE_SESSION_WITH_EXISTING_RESUME, payload };
 };
+
+export const setChatHistory = (payload: ChatHistory) => {
+    return { type: SET_CHAT_HISTORY, payload };
+};

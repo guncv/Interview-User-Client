@@ -16,7 +16,7 @@ import type { ResumeContent } from '../interface/resumeInterface';
 import { useDispatch, useSelector } from 'react-redux';
 import { resumeSelector } from '../reducers/resumeReducer';
 import { listResume } from '../actions/resumeAction';
-import { createInterviewSessionWithExistingResume, setCreateInterviewSuccess, setCreateInterviewError } from '../actions/interviewAction';
+import { createInterviewSessionWithExistingResume, setCreateInterviewError } from '../actions/interviewAction';
 import { API_ENDPOINTS, CONTENT_TYPES, HTTP_HEADERS, HTTP_STATUS, ROUTES, STORAGE_KEYS } from '../constants';
 import { axiosInstance } from '../api/axiosInstance';
 import { safeNavigate } from '../utils';
@@ -123,10 +123,11 @@ const CreateInterviewPage = () => {
         formDataToSend.append('is_consent', formData.consentGiven.toString() as string);
 
         console.log('Creating interview with new resume:', formDataToSend);
-        
+
+        let response;
         try {
           showSpinner();
-          const response = await axiosInstance.post(API_ENDPOINTS.CREATE_SESSION_WITH_NEW_RESUME, formDataToSend, {
+          response = await axiosInstance.post(API_ENDPOINTS.CREATE_SESSION_WITH_NEW_RESUME, formDataToSend, {
             headers: {
               [HTTP_HEADERS.CONTENT_TYPE]: CONTENT_TYPES.MULTIPART_FORM_DATA,
               [HTTP_HEADERS.AUTHORIZATION]: `${HTTP_HEADERS.BEARER} ${localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)}`,
@@ -134,7 +135,6 @@ const CreateInterviewPage = () => {
           });
           
           console.log('Interview created successfully:', response.data);
-          dispatch(setCreateInterviewSuccess(response.data));
         } catch (error: any) {
           console.error('Failed to create interview:', error);
 
@@ -147,6 +147,9 @@ const CreateInterviewPage = () => {
           dispatch(setCreateInterviewError(errorMessage));
         } finally {
           hideSpinner();
+          if (response && response.data.session_token) {
+            safeNavigate(ROUTES.INTERVIEW, { session_token: response.data.session_token });
+          }
         }
       } else {
         const request: CreateInterviewSessionWithExistingResumeRequest = {
@@ -155,11 +158,11 @@ const CreateInterviewPage = () => {
           is_consent: formData.consentGiven,
         };
         console.log('Creating interview with existing resume:', request);
-        dispatch(createInterviewSessionWithExistingResume(request));
+        dispatch(createInterviewSessionWithExistingResume(request));;
       }
     } catch (error) {
       console.error('Error creating interview session:', error);
-    }
+    } 
   };
 
   return (

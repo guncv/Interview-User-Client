@@ -53,6 +53,7 @@ export const ROUTES = {
   RESET_PASSWORD: '/reset-password',
   RESET_PASSWORD_SUCCESS: '/reset-password-success',
   RECORDINGS: '/recordings',
+  INTERVIEW: '/interview',
 } as const;
 
 // Rating Constants

@@ -22,6 +22,7 @@ function* workerCreateSessionWithNewResume(payload: {
         
         if (response && response.success) {
             yield put(setCreateInterviewSuccess(response.data));
+            safeNavigate(ROUTES.INTERVIEW, { session_token: response.data.session_token });
         } else {
             yield call(hideSpinner);
             if (response) {
@@ -31,6 +32,7 @@ function* workerCreateSessionWithNewResume(payload: {
             }
         }
         yield call(hideSpinner);
+        safeNavigate(ROUTES.INTERVIEW, { session_token: response.data.session_token });
     } catch (error) {
         yield call(hideSpinner);
         const message = (error as { message?: string })?.message || ERROR_MESSAGES.UNEXPECTED_ERROR;
@@ -51,6 +53,7 @@ function* workerCreateSessionWithExistingResume(payload: {
         
         if (response && response.success) {
             yield put(setCreateInterviewSuccess(response.data));
+            safeNavigate(ROUTES.INTERVIEW, { session_token: response.data.session_token });
         } else {
             yield call(hideSpinner);
             if (response) {
