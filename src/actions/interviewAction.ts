@@ -16,11 +16,6 @@ export const setCreateInterviewSuccess = (payload: CreateInterviewSessionRespons
 
 export const createInterviewSessionWithNewResume = (payload: {
     position: string;
-    company: string;
-    work_type: string;
-    job_requirements: string;
-    interview_type: string;
-    language: string;
     is_consent: string;
 }) => {
     return { type: CREATE_SESSION_WITH_NEW_RESUME, payload };

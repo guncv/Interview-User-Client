@@ -3,8 +3,6 @@ import { Upload, FileText, Plus } from 'lucide-react';
 import ContentLayout from "../components/layout/ContentLayout";
 import { PrimaryButton } from "../components/common/PrimaryButton";
 import { PrimaryTextField } from "../components/common/PrimaryTextField";
-import { PrimaryTextArea } from "../components/common/PrimaryTextArea";
-import { PrimaryDropdown } from "../components/common/PrimaryDropdown";
 import { ResumeList, FileUpload } from "../components/common";
 import Colors from "../assets/styles/Color";
 import Size from "../assets/styles/Size";
@@ -19,9 +17,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { resumeSelector } from '../reducers/resumeReducer';
 import { listResume } from '../actions/resumeAction';
 import { createInterviewSessionWithExistingResume, setCreateInterviewSuccess, setCreateInterviewError } from '../actions/interviewAction';
-import { API_ENDPOINTS, HTTP_STATUS, ROUTES } from '../constants';
+import { API_ENDPOINTS, CONTENT_TYPES, HTTP_HEADERS, HTTP_STATUS, ROUTES, STORAGE_KEYS } from '../constants';
 import { axiosInstance } from '../api/axiosInstance';
 import { safeNavigate } from '../utils';
+import { hideSpinner, showSpinner } from '..';
 
 type ResumeMode = 'upload' | 'existing';
 
@@ -29,11 +28,6 @@ interface FormDataState {
   file: File | null;
   resumeId: string;
   position: string;
-  company: string;
-  workType: string;
-  jobRequirements: string;
-  interviewType: string;
-  language: string;
   consentGiven: boolean;
 }
 
@@ -51,11 +45,6 @@ const CreateInterviewPage = () => {
     file: null,
     resumeId: '',
     position: '',
-    company: '',
-    workType: '',
-    jobRequirements: '',
-    interviewType: '',
-    language: '',
     consentGiven: false,
   });
 
@@ -78,28 +67,6 @@ const CreateInterviewPage = () => {
       setResumeCount(success.count);
     }
   }, [success, error]);
-
-
-  const workTypeOptions = [
-    { value: 'full-time', label: 'Full Time' },
-    { value: 'part-time', label: 'Part Time' },
-    { value: 'contract', label: 'Contract' },
-    { value: 'internship', label: 'Internship' },
-    { value: 'freelance', label: 'Freelance' },
-  ];
-
-  const interviewTypeOptions = [
-    { value: 'technical', label: 'Technical Interview' },
-    { value: 'behavioral', label: 'Behavioral Interview' },
-    { value: 'case-study', label: 'Case Study Interview' },
-    { value: 'system-design', label: 'System Design Interview' },
-    { value: 'general', label: 'General Interview' },
-  ];
-
-  const languageOptions = [
-    { value: 'en', label: 'English' },
-    { value: 'th', label: 'Thai' },
-  ];
 
   const handleFileChange = (file: File | null) => {
     setFormData(prev => ({ ...prev, file }));
@@ -128,11 +95,6 @@ const CreateInterviewPage = () => {
     if (resumeMode === 'upload' && !formData.file) newErrors.file = 'Please select a resume file';
     if (resumeMode === 'existing' && !formData.resumeId) newErrors.resumeId = 'Please select an existing resume';
     if (!formData.position.trim()) newErrors.position = 'required';
-    if (!formData.company.trim()) newErrors.company = 'required';
-    if (!formData.workType) newErrors.workType = 'required';
-    if (!formData.jobRequirements.trim()) newErrors.jobRequirements = 'required';
-    if (!formData.interviewType) newErrors.interviewType = 'required';
-    if (!formData.language) newErrors.language = 'required';
     if (!formData.consentGiven) newErrors.consentGiven = 'You must give consent to continue';
 
     setErrors(newErrors);
@@ -143,11 +105,7 @@ const CreateInterviewPage = () => {
     const hasResume = resumeMode === 'upload' ? !!formData.file : !!formData.resumeId;
     const hasRequiredFields =
       !!formData.position.trim() &&
-      !!formData.company.trim() &&
-      !!formData.workType &&
-      !!formData.jobRequirements.trim() &&
-      !!formData.interviewType &&
-      !!formData.language;
+      !!formData.consentGiven;
 
     const hasConsent = !!formData.consentGiven;
 
@@ -162,19 +120,16 @@ const CreateInterviewPage = () => {
         const formDataToSend = new FormData();
         formDataToSend.append('file', formData.file! as File);
         formDataToSend.append('position', formData.position as string);
-        formDataToSend.append('company', formData.company as string);
-        formDataToSend.append('work_type', formData.workType as string);
-        formDataToSend.append('job_requirements', formData.jobRequirements as string);
-        formDataToSend.append('interview_type', formData.interviewType as string);
-        formDataToSend.append('language', formData.language as string);
         formDataToSend.append('is_consent', formData.consentGiven.toString() as string);
 
         console.log('Creating interview with new resume:', formDataToSend);
         
         try {
+          showSpinner();
           const response = await axiosInstance.post(API_ENDPOINTS.CREATE_SESSION_WITH_NEW_RESUME, formDataToSend, {
             headers: {
-              'Content-Type': 'multipart/form-data',
+              [HTTP_HEADERS.CONTENT_TYPE]: CONTENT_TYPES.MULTIPART_FORM_DATA,
+              [HTTP_HEADERS.AUTHORIZATION]: `${HTTP_HEADERS.BEARER} ${localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)}`,
             },
           });
           
@@ -190,16 +145,13 @@ const CreateInterviewPage = () => {
           
           const errorMessage = error.response?.data?.message || 'Failed to create interview';
           dispatch(setCreateInterviewError(errorMessage));
+        } finally {
+          hideSpinner();
         }
       } else {
         const request: CreateInterviewSessionWithExistingResumeRequest = {
           resume_id: formData.resumeId,
           position: formData.position,
-          company: formData.company,
-          work_type: formData.workType,
-          job_requirements: formData.jobRequirements,
-          interview_type: formData.interviewType,
-          language: formData.language,
           is_consent: formData.consentGiven,
         };
         console.log('Creating interview with existing resume:', request);
@@ -541,51 +493,6 @@ const CreateInterviewPage = () => {
                   error={errors.position}
                 />
 
-                <PrimaryTextField
-                  label="Company"
-                  value={formData.company}
-                  onChange={(value) => handleInputChange('company', value)}
-                  placeholder="e.g., Google, Microsoft"
-                  error={errors.company}
-                />
-
-                <div style={{ display: 'flex', gap: Size.Small, flexDirection: isMobile ? 'column' : 'row' }}>
-                  <PrimaryDropdown
-                    label="Work Type"
-                    value={formData.workType}
-                    onChange={(value) => handleInputChange('workType', value)}
-                    options={workTypeOptions}
-                    placeholder="Work type"
-                    error={errors.workType}
-                  />
-
-                  <PrimaryDropdown
-                    label="Interview Type"
-                    value={formData.interviewType}
-                    onChange={(value) => handleInputChange('interviewType', value)}
-                    options={interviewTypeOptions}
-                    placeholder="Interview type"
-                    error={errors.interviewType}
-                  />
-                </div>
-
-                <PrimaryDropdown
-                  label="Language"
-                  value={formData.language}
-                  onChange={(value) => handleInputChange('language', value)}
-                  options={languageOptions}
-                  placeholder="Select language"
-                  error={errors.language}
-                />
-
-                <PrimaryTextArea
-                  label="Job Requirements"
-                  value={formData.jobRequirements}
-                  onChange={(value) => handleInputChange('jobRequirements', value)}
-                  placeholder="Describe the job requirements, skills needed, and any specific criteria..."
-                  error={errors.jobRequirements}
-                  rows={3}
-                />
               </div>
             </div>
           </div>

@@ -82,22 +82,12 @@ export interface InterviewRecordingStats {
 export interface CreateInterviewSessionWithNewResumeRequest {
     file: File;
     position: string;
-    company: string;
-    work_type: string;
-    job_requirements: string;
-    interview_type: string;
-    language: string;
     is_consent: boolean;
 }
 
 export interface CreateInterviewSessionWithExistingResumeRequest {
     resume_id: string;
     position: string;
-    company: string;
-    work_type: string;
-    job_requirements: string;
-    interview_type: string;
-    language: string;
     is_consent: boolean;
 }
 
@@ -116,11 +106,6 @@ export interface CreateInterviewFormErrors {
     file?: string;
     resumeId?: string;
     position?: string;
-    company?: string;
-    workType?: string;
-    jobRequirements?: string;
-    interviewType?: string;
-    language?: string;
     consentAt?: string;
     consentGiven?: string;
 }

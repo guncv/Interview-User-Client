@@ -19,10 +19,14 @@ export const API_ENDPOINTS = {
 export const HTTP_HEADERS = {
   CONTENT_TYPE: 'Content-Type',
   AUTHORIZATION: 'Authorization',
-  APPLICATION_JSON: 'application/json',
   BEARER: 'Bearer',
   ROLE: 'X-Active-Role',
   WITH_CREDENTIALS: true,
+} as const;
+
+export const CONTENT_TYPES = {
+  MULTIPART_FORM_DATA: 'multipart/form-data',
+  APPLICATION_JSON: 'application/json',
 } as const;
 
 export const ROLE = {

@@ -1,18 +1,13 @@
 import { call, delay, put, take } from "redux-saga/effects";
 import type { SagaIterator } from "redux-saga";
-import { ERROR_MESSAGES, HTTP_STATUS, ROUTES } from "../constants";
-import { apiCreateSessionWithNewResume } from "../api/interviewApi";
-import { CREATE_SESSION_WITH_NEW_RESUME, setCreateInterviewSuccess } from "../actions/interviewAction";
+import { ERROR_MESSAGES, HTTP_STATUS, ROUTES, STORAGE_KEYS } from "../constants";
+import { apiCreateSessionWithNewResume, apiCreateSessionWithExistingResume } from "../api/interviewApi";
+import { CREATE_SESSION_WITH_NEW_RESUME, CREATE_SESSION_WITH_EXISTING_RESUME, setCreateInterviewSuccess } from "../actions/interviewAction";
 import { setCreateInterviewError } from "../actions/interviewAction";
 import { hideSpinner, safeNavigate, showSpinner } from "..";
 
 function* workerCreateSessionWithNewResume(payload: {
     position: string;
-    company: string;
-    work_type: string;
-    job_requirements: string;
-    interview_type: string;
-    language: string;
     is_consent: string;
 }): SagaIterator {
     try {
@@ -21,14 +16,38 @@ function* workerCreateSessionWithNewResume(payload: {
         
         const formData = new FormData();
         formData.append('position', payload.position);
-        formData.append('company', payload.company);
-        formData.append('work_type', payload.work_type);
-        formData.append('job_requirements', payload.job_requirements);
-        formData.append('interview_type', payload.interview_type);
-        formData.append('language', payload.language);
         formData.append('is_consent', payload.is_consent);
         
         const response = yield call(apiCreateSessionWithNewResume, formData);
+        
+        if (response && response.success) {
+            yield put(setCreateInterviewSuccess(response.data));
+        } else {
+            yield call(hideSpinner);
+            if (response) {
+                yield call(handleStatusInterviewError, response.statusCode, response.message);
+            } else {
+                yield call(handleStatusInterviewError, 0, ERROR_MESSAGES.UNEXPECTED_ERROR);
+            }
+        }
+        yield call(hideSpinner);
+    } catch (error) {
+        yield call(hideSpinner);
+        const message = (error as { message?: string })?.message || ERROR_MESSAGES.UNEXPECTED_ERROR;
+        yield call(handleStatusInterviewError, 0, message);
+    }
+}
+
+function* workerCreateSessionWithExistingResume(payload: {
+    resume_id: string;
+    position: string;
+    is_consent: boolean;
+}): SagaIterator {
+    try {
+        yield delay(0);
+        yield call(showSpinner);
+        const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+        const response = yield call(apiCreateSessionWithExistingResume, payload, token || '');
         
         if (response && response.success) {
             yield put(setCreateInterviewSuccess(response.data));
@@ -52,6 +71,13 @@ export function* watcherCreateSessionWithNewResume(): SagaIterator {
     while (true) {
         const action = yield take(CREATE_SESSION_WITH_NEW_RESUME);
         yield call(workerCreateSessionWithNewResume, action.payload);
+    }
+}
+
+export function* watcherCreateSessionWithExistingResume(): SagaIterator {
+    while (true) {
+        const action = yield take(CREATE_SESSION_WITH_EXISTING_RESUME);
+        yield call(workerCreateSessionWithExistingResume, action.payload);
     }
 }
 
