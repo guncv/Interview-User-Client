@@ -627,9 +627,6 @@ const VADRecorder: React.FC<VADRecorderProps> = ({
                 setState(prev => ({ ...prev, connectionStatus: 'error' }));
             };
             
-            // Note: WebSocket ping/pong is handled automatically by the browser
-            // The Go server sends ping control frames using websocket.PingMessage
-            // and the browser automatically responds with pong
             websocketRef.current.onmessage = (event) => {
                 console.log('WebSocket message received from server:', event.data);
                 

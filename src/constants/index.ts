@@ -17,6 +17,11 @@ export const API_ENDPOINTS = {
   GET_CHAT_HISTORY_BY_SESSION_TOKEN: '/api/v1/sessions/chat-history',
 } as const;
 
+export const WEBSOCKET_TYPES = {
+  START_SEGMENT: 'start_segment',
+  END_SEGMENT: 'end_segment',
+} as const;
+
 export const HTTP_HEADERS = {
   CONTENT_TYPE: 'Content-Type',
   AUTHORIZATION: 'Authorization',
