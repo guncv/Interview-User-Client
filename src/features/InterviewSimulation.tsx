@@ -54,7 +54,7 @@ function convertPCM16ToFloat32(buffer: ArrayBuffer): Float32Array {
     const float32Array = new Float32Array(int16Array.length);
 
     for (let i = 0; i < int16Array.length; i++) {
-        float32Array[i] = int16Array[i] / 32768; // Normalize to range [-1, 1]
+        float32Array[i] = int16Array[i] / 32768;
     }
 
     return float32Array;
@@ -70,19 +70,28 @@ const InterviewSimulation = () => {
     const websocketRef = useRef<WebSocket | null>(null);
     const chatHistoryRef = useRef<ChatHistoryRef>(null);
 
-    useVoiceStreaming(websocketRef, sessionId, setIsUserSpeaking);
+    const handleUserSpeakingChange = useCallback((speaking: boolean) => {
+        setIsUserSpeaking(speaking);
+    }, []);
+
+    useVoiceStreaming(websocketRef, sessionId, handleUserSpeakingChange);
 
     const handleWebSocketMessage = useCallback((response: any) => {
         switch (response.type) {
             case WEBSOCKET_TYPES.CONNECTION_ESTABLISHED:
+                console.log("🔗 WebSocket connected, sessionId established:", response.session_id);
                 setSessionId(response.session_id);
                 break;
             case WEBSOCKET_TYPES.USER_PARTIAL_TRANSCRIPT:
                 chatHistoryRef.current?.handlePartialTranscript(response.segment_id, response.transcript, "user");
                 break;
             case WEBSOCKET_TYPES.INTERVIWER_RESPONSE:
-                const segment_id = generateSegmentId(sessionId || '');
-                chatHistoryRef.current?.handlePartialTranscript(segment_id, response.message, "interviewer");
+                if (sessionId) {
+                    const segment_id = generateSegmentId(sessionId);
+                    chatHistoryRef.current?.handlePartialTranscript(segment_id, response.message, "interviewer");
+                } else {
+                    console.warn("⚠️ Received interviewer response but no sessionId available");
+                }
                 break;
             case "error":
                 console.error("Server error:", response.message || response);
@@ -93,7 +102,7 @@ const InterviewSimulation = () => {
             default:
                 console.warn("Unknown message type:", response);
         }
-    }, []);
+    }, [sessionId]);
 
     const initializeWebSocket = useCallback(() => {
         try {

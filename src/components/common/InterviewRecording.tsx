@@ -151,7 +151,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                     }
                 };
                 
-                // Always monitor audio level for speech detection
                 updateAudioLevel();
             } catch (error) {
                 console.error('Failed to initialize audio analysis:', error);
@@ -164,6 +163,8 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     }, [selectedMicId]);
 
     useEffect(() => {
+        console.log("🎨 InterviewRecording state change - isAiSpeaking:", isAiSpeaking, "isUserSpeaking:", isUserSpeaking);
+        
         if (isAiSpeaking) {
             setSpeakingState('ai');
             setSessionInfo(prevInfo => ({
