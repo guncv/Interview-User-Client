@@ -2,10 +2,10 @@ import type { SagaIterator } from "redux-saga";
 import { call, delay, put, take } from "redux-saga/effects";
 import { handleStatusUserError } from "./userSaga";
 import type { ListResumeRequest } from "../interface/resumeInterface";
-import { apiGetResumeById, apiListResume } from "../api/resumeApi";
+import { apiDownloadResumeBySessionToken, apiGetResumeById, apiListResume } from "../api/resumeApi";
 import { hideSpinner, showSpinner } from "../components/layout/AppProvider";
 import { ERROR_MESSAGES, STORAGE_KEYS } from "../constants";
-import { LIST_RESUME, setResumeSuccess, GET_RESUME_BY_ID, setResumeByIdSuccess } from "../actions/resumeAction";
+import { LIST_RESUME, setResumeSuccess, GET_RESUME_BY_ID, setResumeByIdSuccess, DOWNLOAD_RESUME_BY_SESSION_TOKEN } from "../actions/resumeAction";
 
 function* workerListResume(payload: ListResumeRequest): SagaIterator {
     try {
@@ -80,6 +80,72 @@ export function* watcherGetResumeById(): SagaIterator {
         yield call(workerGetResumeById, action.payload);
     }
 }
+
+function* workerDownloadResumeBySessionToken(payload: { session_token: string }): SagaIterator {
+    try {
+        yield delay(0);
+        yield call(showSpinner);
+        
+        const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+        const response = yield call(apiDownloadResumeBySessionToken, payload.session_token, token || '');
+        
+        if (response && !response.success) {
+            yield call(handleStatusUserError, response.statusCode, response.message);
+        }
+        
+        if (response && response.success) {
+            console.log("response.data from download resume by session token", response.data);
+            try {
+                const fileResponse = yield call(fetch, response.data.file_url);
+                const blob = yield call([fileResponse, 'blob']);
+                
+                const blobUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = response.data.file_name;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                setTimeout(() => {
+                    URL.revokeObjectURL(blobUrl);
+                }, 1000);
+            } catch (fetchError) {
+                console.error('Failed to fetch file:', fetchError);
+                // Fallback to direct link if fetch fails
+                const link = document.createElement('a');
+                link.href = response.data.file_url;
+                link.download = response.data.file_name;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        } else {
+            yield call(hideSpinner);
+            if (response) {
+                yield call(handleStatusUserError, response.statusCode, response.message);
+            } else {
+                yield call(handleStatusUserError, 0, ERROR_MESSAGES.UNEXPECTED_ERROR);
+            }
+        }
+        yield call(hideSpinner);
+    } catch (error) {
+        yield call(hideSpinner);
+        const message = (error as { message?: string })?.message || ERROR_MESSAGES.UNEXPECTED_ERROR;
+        yield call(handleStatusUserError, 0, message);
+    }
+}
+
+export function* watcherDownloadResumeBySessionToken(): SagaIterator {
+    while (true) {
+        const action = yield take(DOWNLOAD_RESUME_BY_SESSION_TOKEN);
+        yield call(workerDownloadResumeBySessionToken, action.payload);
+    }
+}
+
+
 
 
 

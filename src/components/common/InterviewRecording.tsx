@@ -7,6 +7,7 @@ import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "../../reducers/rootReducer";
 import { FileUser, Headphones, Mic } from 'lucide-react';
 import { getInterviewSessionInformation } from "../../actions/interviewAction";
+import { downloadResumeBySessionToken } from "../../actions/resumeAction";
 
 interface InterviewRecordingProps {
     websocketUrl?: string;
@@ -23,7 +24,6 @@ interface MicrophoneDevice {
 interface SessionInfo {
     startTime: number;
     elapsedTime: number;
-    resumeFileName: string;
     interviewState: string;
     microphoneDevice: string;
     headphonesDevice: string;
@@ -39,7 +39,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     const [sessionInfo, setSessionInfo] = useState<SessionInfo>({
         startTime: Date.now(),
         elapsedTime: 0,
-        resumeFileName: 'Loading...',
         interviewState: 'Initializing',
         microphoneDevice: 'Default Microphone',
         headphonesDevice: 'Default Headphones'
@@ -108,15 +107,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
 
         getMicrophoneDevices();
     }, []);
-
-    useEffect(() => {
-        if (interviewSessionInformation.file_name) {
-            setSessionInfo(prev => ({
-                ...prev,
-                resumeFileName: interviewSessionInformation.file_name
-            }));
-        }
-    }, [interviewSessionInformation.file_name]);
 
     useEffect(() => {
         timerRef.current = setInterval(() => {
@@ -265,6 +255,10 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 {bars}
             </div>
         );
+    };
+
+    const handleDownloadResume = () => {
+        dispatch(downloadResumeBySessionToken(sessionToken || ''));
     };
 
     return (
@@ -591,13 +585,16 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                         <span style={{
                             fontSize: '13px',
                             fontWeight: '500',
-                            color: Colors.SECONDARY_TEXT_COLOR,
                             width: "60%",
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap'
                         }}>
-                            Resume: {sessionInfo.resumeFileName}
+                            Resume: {interviewSessionInformation.file_name}
+                            <span style={{ fontWeight: '600', color: Colors.LINK_COLOR, textDecoration: 'underline', marginLeft: '10px' }}
+                            onClick={() => handleDownloadResume()}>
+                                Download here
+                            </span>
                         </span>
                 </div>
             </div>

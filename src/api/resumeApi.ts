@@ -35,3 +35,19 @@ export const apiGetResumeById = async (id: string, token: string) => {
         return handleApiError(error as AxiosError);
     }
 } 
+
+export const apiDownloadResumeBySessionToken = async (session_token: string, token: string) => {
+    try {
+        
+        const response = await axiosInstance.get(`${API_ENDPOINTS.DOWNLOAD_RESUME_BY_SESSION_TOKEN}/${session_token}`, {
+            headers: {
+                [HTTP_HEADERS.AUTHORIZATION]: `${HTTP_HEADERS.BEARER} ${token}`,
+            },
+        });
+
+        return { success: true, data: response.data };
+    }
+    catch (error) {
+        return handleApiError(error as AxiosError);
+    }
+} 

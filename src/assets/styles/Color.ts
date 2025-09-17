@@ -9,6 +9,7 @@ const Colors = {
     TEXT_ERROR_COLOR: '#DC3545',
     SIDEBAR_COLOR: '#170833',
     CONTENT_HOVER_COLOR: '#DAE6FA',
+    LINK_COLOR: '#007BFF',
 };
 
 export default Colors;

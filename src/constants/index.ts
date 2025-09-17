@@ -11,6 +11,7 @@ export const API_ENDPOINTS = {
 
   LIST_RESUME: '/api/v1/resumes/list',
   GET_RESUME_BY_ID: '/api/v1/resumes',
+  DOWNLOAD_RESUME_BY_SESSION_TOKEN: '/api/v1/resumes/download',
 
   CREATE_SESSION_WITH_NEW_RESUME: '/api/v1/sessions',
   CREATE_SESSION_WITH_EXISTING_RESUME: '/api/v1/sessions/existing',
