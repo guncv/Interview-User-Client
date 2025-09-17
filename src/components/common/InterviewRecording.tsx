@@ -593,7 +593,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                             Resume: {interviewSessionInformation.file_name}
                             <span style={{ fontWeight: '600', color: Colors.LINK_COLOR, textDecoration: 'underline', marginLeft: '10px' }}
                             onClick={() => handleDownloadResume()}>
-                                Download here
+                                Open here
                             </span>
                         </span>
                 </div>

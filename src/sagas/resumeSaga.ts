@@ -97,30 +97,38 @@ function* workerDownloadResumeBySessionToken(payload: { session_token: string })
             console.log("response.data from download resume by session token", response.data);
             try {
                 const fileResponse = yield call(fetch, response.data.file_url);
-                const blob = yield call([fileResponse, 'blob']);
                 
+                // Check if fetch succeeded
+                if (!fileResponse.ok) {
+                    throw new Error(`HTTP error! status: ${fileResponse.status}`);
+                }
+        
+                const blob = yield call([fileResponse, 'blob']);
                 const blobUrl = URL.createObjectURL(blob);
+        
                 const link = document.createElement('a');
                 link.href = blobUrl;
-                link.download = response.data.file_name;
+                link.download = response.data.file_name || 'resume.pdf';
+                link.style.display = 'none';
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                
+        
+                // Clean up the blob URL
                 setTimeout(() => {
                     URL.revokeObjectURL(blobUrl);
                 }, 1000);
-            } catch (fetchError) {
-                console.error('Failed to fetch file:', fetchError);
-                // Fallback to direct link if fetch fails
-                const link = document.createElement('a');
-                link.href = response.data.file_url;
-                link.download = response.data.file_name;
-                link.target = '_blank';
-                link.rel = 'noopener noreferrer';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+            } catch (error) {
+                console.error('Failed to fetch or download file:', error);
+        
+                // Fallback: open in new tab (if all else fails)
+                const fallback = document.createElement('a');
+                fallback.href = response.data.file_url;
+                fallback.download = response.data.file_name;
+                fallback.target = '_blank';
+                document.body.appendChild(fallback);
+                fallback.click();
+                document.body.removeChild(fallback);
             }
         } else {
             yield call(hideSpinner);
