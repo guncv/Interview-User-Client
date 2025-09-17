@@ -1,4 +1,5 @@
 // Common Components
+export { default as CircularIconButton } from './CircularIconButton';
 export { default as ContentError } from './ContentError';
 export { default as ContentLoadingSpinner } from './ContentLoadingSpinner';
 export { default as ErrorMessage } from './ErrorMessage';

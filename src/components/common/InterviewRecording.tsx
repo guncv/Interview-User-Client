@@ -3,10 +3,9 @@ import Colors from "../../assets/styles/Color";
 import interviewImage from "../../assets/images/interview.png";
 import aiInterviewer from "../../assets/images/ai_interviewer.png";
 import Color from "../../assets/styles/Color";
-import { useSelector, useDispatch } from "react-redux";
-import type { RootState } from "../../reducers/rootReducer";
-import { FileUser, Headphones, Mic } from 'lucide-react';
-import { getInterviewSessionInformation } from "../../actions/interviewAction";
+import { useDispatch } from "react-redux";
+import { Headphones, Mic, MicOff, Settings, VolumeX } from 'lucide-react';
+import CircularIconButton from './CircularIconButton';
 import { downloadResumeBySessionToken } from "../../actions/resumeAction";
 
 interface InterviewRecordingProps {
@@ -25,7 +24,6 @@ interface MicrophoneDevice {
 
 interface SessionInfo {
     startTime: number;
-    elapsedTime: number;
     interviewState: string;
     microphoneDevice: string;
     headphonesDevice: string;
@@ -42,7 +40,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     const [speakingState, setSpeakingState] = useState<SpeakingState>('none');
     const [sessionInfo, setSessionInfo] = useState<SessionInfo>({
         startTime: Date.now(),
-        elapsedTime: 0,
         interviewState: 'Initializing',
         microphoneDevice: 'Default Microphone',
         headphonesDevice: 'Default Headphones'
@@ -52,19 +49,14 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     const [availableHeadphones, setAvailableHeadphones] = useState<MicrophoneDevice[]>([]);
     const [audioLevel, setAudioLevel] = useState<number>(0);
     const [selectedHeadphonesId, setSelectedHeadphonesId] = useState<string>('default');
+    const [isMicMuted, setIsMicMuted] = useState<boolean>(false);
+    const [isHeadphonesMuted, setIsHeadphonesMuted] = useState<boolean>(false);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
-    
+    const mediaStreamRef = useRef<MediaStream | null>(null);
+    const gainNodeRef = useRef<GainNode | null>(null);
     const dispatch = useDispatch();
-    const interviewSessionInformation = useSelector((state: RootState) => state.interview.interviewSessionInformation);
-
-    useEffect(() => {
-        if (sessionToken) {
-            dispatch(getInterviewSessionInformation(sessionToken));
-        }
-    }, [sessionToken, dispatch]);
-
 
     useEffect(() => {
         const getHeadphonesDevices = async () => {
@@ -135,11 +127,19 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                     } 
                 });
                 
+                mediaStreamRef.current = stream;
                 audioContextRef.current = new AudioContext();
                 const source = audioContextRef.current.createMediaStreamSource(stream);
+                
+                // Create gain node for volume control
+                gainNodeRef.current = audioContextRef.current.createGain();
+                
                 analyserRef.current = audioContextRef.current.createAnalyser();
                 analyserRef.current.fftSize = 256;
-                source.connect(analyserRef.current);
+                
+                // Connect: source -> gain -> analyser
+                source.connect(gainNodeRef.current);
+                gainNodeRef.current.connect(analyserRef.current);
                 
                 const updateAudioLevel = () => {
                     if (analyserRef.current) {
@@ -160,6 +160,16 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
         if (selectedMicId) {
             initAudioAnalysis();
         }
+
+        return () => {
+            // Cleanup audio resources
+            if (mediaStreamRef.current) {
+                mediaStreamRef.current.getTracks().forEach(track => track.stop());
+            }
+            if (audioContextRef.current) {
+                audioContextRef.current.close();
+            }
+        };
     }, [selectedMicId]);
 
     useEffect(() => {
@@ -185,13 +195,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
             }));
         }
     }, [isAiSpeaking, isUserSpeaking]);
-
-    const formatTime = (milliseconds: number): string => {
-        const totalSeconds = Math.floor(milliseconds / 1000);
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = totalSeconds % 60;
-        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    };
 
     const handleMicrophoneChange = (deviceId: string) => {
         setSelectedMicId(deviceId);
@@ -256,34 +259,39 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
         dispatch(downloadResumeBySessionToken(sessionToken || ''));
     };
 
+    const toggleMicMute = () => {
+        const newMutedState = !isMicMuted;
+        setIsMicMuted(newMutedState);
+        
+        if (gainNodeRef.current) {
+            gainNodeRef.current.gain.value = newMutedState ? 0 : 1;
+        }
+        
+        if (mediaStreamRef.current) {
+            mediaStreamRef.current.getAudioTracks().forEach(track => {
+                track.enabled = !newMutedState;
+            });
+        }
+        
+        console.log(`Microphone ${newMutedState ? 'muted' : 'unmuted'}`);
+    };
+
+    const toggleHeadphonesMute = () => {
+        const newMutedState = !isHeadphonesMuted;
+        setIsHeadphonesMuted(newMutedState);
+        
+        console.log(`Headphones ${newMutedState ? 'muted' : 'unmuted'}`);
+        
+    };
+
     return (
         <div style={{padding: '20px'}}>
-            <div style={{
-                fontSize: '20px',
-                fontWeight: '600',
-                color: Colors.PRIMARY_COLOR,
-                marginBottom: '20px',
-                display: 'flex',
-                justifyContent: 'space-between'
-            }}>
-                <div>
-                    Session Position: {interviewSessionInformation.position}
-                </div>
-                
-                <div style={{
-                    fontSize: '20px',
-                    fontWeight: '600',
-                    color: Colors.PRIMARY_COLOR,
-                }}>
-                    Time: {formatTime(sessionInfo.elapsedTime)}
-                </div>
-            </div>
 
             <div style={{ 
-                width: '100%', 
-                height: '45vh', 
-                display: 'flex', 
-                flexDirection: 'row', 
+                width: '100%',
+                height: '40vh',
+                display: 'flex',
+                flexDirection: 'row',
                 background: 'linear-gradient(135deg, #E6D2FF 0%, #F0E6FF 50%, #E6D2FF 100%)',
                 position: 'relative',
                 borderRadius: '20px',
@@ -353,11 +361,25 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                         alignItems: 'center',
                         gap: '15px'
                     }}>
-                        {speakingState === 'user' && (
+                        {speakingState === 'user' && !isMicMuted && (
                             <WaveformVisualization 
                                 audioLevel={audioLevel} 
-                                isActive={speakingState === 'user'} 
+                                isActive={speakingState === 'user' && !isMicMuted} 
                             />
+                        )}
+                        
+                        {speakingState === 'user' && isMicMuted && (
+                            <div style={{
+                                backgroundColor: 'rgba(255, 68, 68, 0.1)',
+                                color: '#FF4444',
+                                padding: '8px 16px',
+                                borderRadius: '20px',
+                                fontSize: '13px',
+                                fontWeight: '500',
+                                border: '1px solid rgba(255, 68, 68, 0.3)'
+                            }}>
+                                Microphone is muted
+                            </div>
                         )}
 
                         {speakingState === 'user' ? (
@@ -516,16 +538,40 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
             <div style={{
                 width: '100%',
                 borderRadius: '15px',
-                marginTop: '30px',
                 padding: '15px 0px',
                 marginBottom: '20px',
                 backdropFilter: 'blur(10px)',
                 gap: '20px',
                 display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'start'
+                flexDirection: 'row',
+                alignItems: 'start',
+                justifyContent: 'center',
             }}>
-                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'start', alignItems: 'start', gap: '15px', width: "100%" }}>
+                <CircularIconButton 
+                    icon={isMicMuted ? <MicOff /> : <Mic />}
+                    buttonId="mic"
+                    onClick={toggleMicMute}
+                    isActive={!isMicMuted}
+                    activeColor={Colors.PRIMARY_COLOR}
+                    inactiveColor="#FF4444"
+                />
+                
+                <CircularIconButton 
+                    icon={isHeadphonesMuted ? <VolumeX /> : <Headphones />}
+                    buttonId="headphones"
+                    onClick={toggleHeadphonesMute}
+                    isActive={!isHeadphonesMuted}
+                    activeColor={Colors.PRIMARY_COLOR}
+                    inactiveColor="#FF4444"
+                />
+                
+                <CircularIconButton 
+                    icon={<Settings />}
+                    buttonId="settings"
+                    onClick={() => {/* Handle general settings */}}
+                    isActive={true}
+                />
+                {/* <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'start', alignItems: 'start', gap: '15px', width: "100%" }}>
                     <Mic style={{ fontSize: '30px' }}/>
                     <select
                         value={selectedMicId}
@@ -573,25 +619,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                                 </option>
                             ))}
                         </select>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'start', alignItems: 'start', gap: '15px', width: "100%" }}>
-                        <FileUser style={{ fontSize: '30px' }}/>
-                        <span style={{
-                            fontSize: '15px',
-                            fontWeight: '500',
-                            width: "60%",
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                        }}>
-                            Resume: {interviewSessionInformation.file_name}
-                            <span style={{ fontWeight: '600', color: Colors.LINK_COLOR, textDecoration: 'underline', marginLeft: '10px', cursor: 'pointer' }}
-                            onClick={() => handleDownloadResume()}>
-                                Open here
-                            </span>
-                        </span>
-                </div>
+                    </div> */}
             </div>
         </div>
     );

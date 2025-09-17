@@ -5,8 +5,12 @@ import { STORAGE_KEYS, WEBSOCKET_TYPES } from "../constants";
 import InterviewRecording from "../components/common/InterviewRecording";
 import { useVoiceStreaming } from "../hook/useVoiceStreaming";
 import { generateSegmentId } from "../utils/generator";
-import { DoorOpen } from "lucide-react";
 import { Colors } from "../assets/styles";
+import ContentLayout from "../components/layout/ContentLayout";
+import { useDispatch, useSelector } from "react-redux";
+import { getInterviewSessionInformation } from "../actions/interviewAction";
+import type { RootState } from "../reducers/rootReducer";
+import { DoorOpen } from "lucide-react";
 
 const audioQueue: ArrayBuffer[] = [];
 let audioPlaying = false;
@@ -69,6 +73,23 @@ const InterviewSimulation = () => {
     const [isUserSpeaking, setIsUserSpeaking] = useState<boolean>(false);
     const websocketRef = useRef<WebSocket | null>(null);
     const chatHistoryRef = useRef<ChatHistoryRef>(null);
+    const dispatch = useDispatch();
+    // const [elapsedTime, setElapsedTime] = useState<number>(0);
+
+    const formatTime = (milliseconds: number): string => {
+        const totalSeconds = Math.floor(milliseconds / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    };
+
+    const interviewSessionInformation = useSelector((state: RootState) => state.interview.interviewSessionInformation);
+
+    useEffect(() => {
+        if (sessionTokenParam) {
+            dispatch(getInterviewSessionInformation(sessionTokenParam));
+        }
+    }, [sessionTokenParam, dispatch]);
 
     const handleUserSpeakingChange = useCallback((speaking: boolean) => {
         setIsUserSpeaking(speaking);
@@ -163,14 +184,26 @@ const InterviewSimulation = () => {
     }, [initializeWebSocket]);
 
     return (
-        <div style={{ width: '100%', height: '100vh', padding: '20px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end' }}>
+        <ContentLayout>
+            <div style={{ width: '100%', height: '100vh', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', padding: '20px 20px 0 20px' }}>
+                    <div style={{
+                        fontSize: '20px',
+                        fontWeight: '600',
+                        color: Colors.PRIMARY_COLOR,
+                        display: 'flex',
+                        flexDirection: 'row',
+                        gap: '10px'
+                    }}>
+                        <div>
+                            Session Position: {interviewSessionInformation.position}
+                        </div>
+                    </div>
 
-                <div 
-                    style={{ 
+                    <div style={{ 
                         display: 'flex', 
                         flexDirection: 'row', 
-                        alignItems: 'center', 
+                        alignItems: 'center',
                         gap: '10px', 
                         cursor: 'pointer'
                     }}
@@ -185,34 +218,78 @@ const InterviewSimulation = () => {
                         if (span) {
                             span.style.borderBottom = '2px solid transparent';
                         }
+                        }}
+                    >
+                        <div style={{
+                            fontSize: '20px',
+                            fontWeight: '600',
+                            color: Colors.PRIMARY_COLOR,
+                        }}>
+                            {/* Time: {formatTime(elapsedTime)} */}
+                            9
+                        </div>
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', padding: '0 20px 5px 20px' }}>
+                    <div style={{
+                        fontSize: '15px',
+                        color: Colors.PRIMARY_COLOR,
+                    }}>
+                        <div>
+                            Connecting
+                        </div>
+                    </div>
+
+                    <div style={{ 
+                        display: 'flex', 
+                        flexDirection: 'row', 
+                        alignItems: 'center',
+                        gap: '10px', 
+                        cursor: 'pointer'
                     }}
-                >
-                    <DoorOpen style={{ width: '25px', height: '25px', color: Colors.ACCENT_COLOR }} />
-                    <span style={{ 
-                        fontSize: '17px', 
-                        fontWeight: '600', 
-                        color: Colors.ACCENT_COLOR,
-                        transition: 'all 0.2s ease',
-                        borderBottom: '2px solid transparent'
-                    }}>End Interview</span>
+                    onMouseEnter={(e) => {
+                        const span = e.currentTarget.querySelector('span');
+                        if (span) {
+                            span.style.borderBottom = `2px solid ${Colors.ACCENT_COLOR}`;
+                        }
+                    }}
+                    onMouseLeave={(e) => {
+                        const span = e.currentTarget.querySelector('span');
+                        if (span) {
+                            span.style.borderBottom = '2px solid transparent';
+                        }
+                        }}
+                    >
+                        <DoorOpen style={{ width: '25px', height: '25px', color: Colors.ACCENT_COLOR }} />
+                        <span style={{
+                            fontSize: '17px',
+                            fontWeight: '600',
+                            color: Colors.ACCENT_COLOR,
+                            transition: 'all 0.2s ease',
+                            borderBottom: '2px solid transparent'
+                        }}>End Interview</span>
+                    </div>
                 </div>
-            </div>
 
-            <div style={{ width: '100%', height: 'calc(100% - 60px)', display: 'flex', flexDirection: 'row' }}>
-                <div style={{ width: '50%', height: '100%', overflow: 'hidden' }}>
-                    <ChatHistory ref={chatHistoryRef} session_token={sessionTokenParam || ''} />
-                </div>
+                <div style={{borderBottom: `1px solid ${Colors.SECONDARY_TEXT_COLOR}`}}></div>
 
-                <div style={{ width: '50%', height: '100%' }}>
-                    <InterviewRecording
-                        websocketUrl={websocketUrl}
-                        sessionToken={sessionTokenParam || ''}
-                        isAiSpeaking={isAiSpeaking}
-                        isUserSpeaking={isUserSpeaking}
-                    />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+                    <div style={{ width: '50%'}}>
+                        <InterviewRecording
+                            websocketUrl={websocketUrl}
+                            sessionToken={sessionTokenParam || ''}
+                            isAiSpeaking={isAiSpeaking}
+                            isUserSpeaking={isUserSpeaking}
+                        />
+                    </div>
+                    <div style={{ width: '50%', height: '100%', overflow: 'hidden' }}>
+                        <ChatHistory ref={chatHistoryRef} session_token={sessionTokenParam || ''} />
+                    </div>
                 </div>
+                    
             </div>
-        </div>
+        </ContentLayout>
     );
 };
 

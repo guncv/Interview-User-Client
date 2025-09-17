@@ -84,9 +84,6 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        paddingTop: isMobile || isTablet ? '80px' : '30px',
-        paddingLeft: isMobile || isTablet ? '30px' : '40px',
-        paddingRight: isMobile || isTablet ? '30px' : '40px',
         height: isMobile || isTablet ? '100vh' : '100%',
     };
 
