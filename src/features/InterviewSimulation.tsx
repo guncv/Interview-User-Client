@@ -1,10 +1,12 @@
 import { useSearchParams } from "react-router-dom";
-import ContentLayout from "../components/layout/ContentLayout";
-import ChatHistory from "../components/common/ChatHistory";
+import ChatHistory, { type ChatHistoryRef } from "../components/common/ChatHistory";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { STORAGE_KEYS, WEBSOCKET_TYPES } from "../constants";
 import InterviewRecording from "../components/common/InterviewRecording";
 import { useVoiceStreaming } from "../hook/useVoiceStreaming";
+import { generateSegmentId } from "../utils/generator";
+import { useSelector } from "react-redux";
+import type { RootState } from "../reducers/rootReducer";
 
 const audioQueue: ArrayBuffer[] = [];
 let audioPlaying = false;
@@ -34,7 +36,7 @@ async function playBinaryAudio(buffer: ArrayBuffer) {
                 source.start();
 
                 await new Promise<void>((resolve) => {
-                    source.onended = () => resolve(); // ✅ fix
+                    source.onended = () => resolve();
                 });
             } catch (e) {
                 console.error("Audio playback failed:", e);
@@ -63,16 +65,24 @@ const InterviewSimulation = () => {
     const [websocketUrl] = useState(`ws://localhost:8080/api/v1/ws/connect/${sessionTokenParam}`);
     const [sessionId, setSessionId] = useState<string | null>(null);
     const websocketRef = useRef<WebSocket | null>(null);
+    const chatHistoryRef = useRef<ChatHistoryRef>(null);
+
+    // Get resume data from Redux store
+    const resumeData = useSelector((state: RootState) => state.resume);
 
     useVoiceStreaming(websocketRef, sessionId);
 
     const handleWebSocketMessage = useCallback((response: any) => {
         switch (response.type) {
-            case "connection_established":
+            case WEBSOCKET_TYPES.CONNECTION_ESTABLISHED:
                 setSessionId(response.session_id);
                 break;
-            case "chat_message":
-                console.log("Chat message:", response);
+            case WEBSOCKET_TYPES.USER_PARTIAL_TRANSCRIPT:
+                chatHistoryRef.current?.handlePartialTranscript(response.segment_id, response.transcript, "user");
+                break;
+            case WEBSOCKET_TYPES.INTERVIWER_RESPONSE:
+                const segment_id = generateSegmentId(sessionId || '');
+                chatHistoryRef.current?.handlePartialTranscript(segment_id, response.message, "interviewer");
                 break;
             case "error":
                 console.error("Server error:", response.message || response);
@@ -144,17 +154,21 @@ const InterviewSimulation = () => {
     }, [initializeWebSocket]);
 
     return (
-        <ContentLayout>
+        <div style={{ width: '100%', height: '100%', padding: '20px' }}>
             <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'row' }}>
                 <div style={{ width: '50%', height: '100%' }}>
-                    <ChatHistory session_token={sessionTokenParam || ''} />
+                    <ChatHistory ref={chatHistoryRef} session_token={sessionTokenParam || ''} />
                 </div>
 
                 <div style={{ width: '50%', height: '100%' }}>
-                    <InterviewRecording />
+                    <InterviewRecording 
+                        websocketUrl={websocketUrl}
+                        sessionToken={sessionTokenParam || ''}
+                        currentResumeId={resumeData.resumeById.id}
+                    />
                 </div>
             </div>
-        </ContentLayout>
+        </div>
     );
 };
 

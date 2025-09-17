@@ -18,9 +18,12 @@ export const API_ENDPOINTS = {
 } as const;
 
 export const WEBSOCKET_TYPES = {
+  CONNECTION_ESTABLISHED: 'connection_established',
   START_SEGMENT: 'start_segment',
   END_SEGMENT: 'end_segment',
   INTERVIEWER_AUDIO_CHUNKING: 'interviewer_audio_chunking',
+  USER_PARTIAL_TRANSCRIPT: 'user_partial_transcript',
+  INTERVIWER_RESPONSE: 'interviewer_response',
 } as const;
 
 export const HTTP_HEADERS = {
