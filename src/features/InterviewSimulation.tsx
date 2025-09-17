@@ -12,11 +12,12 @@ const audioQueue: ArrayBuffer[] = [];
 let audioPlaying = false;
 const audioCtx = new AudioContext();
 
-async function playBinaryAudio(buffer: ArrayBuffer) {
+async function playBinaryAudio(buffer: ArrayBuffer, setIsAiSpeaking: (speaking: boolean) => void) {
     audioQueue.push(buffer);
 
     if (!audioPlaying) {
         audioPlaying = true;
+        setIsAiSpeaking(true); // AI starts speaking
 
         while (audioQueue.length > 0) {
             const currentBuffer = audioQueue.shift()!;
@@ -44,6 +45,7 @@ async function playBinaryAudio(buffer: ArrayBuffer) {
         }
 
         audioPlaying = false;
+        setIsAiSpeaking(false); // AI stops speaking
     }
 }
 
@@ -63,10 +65,12 @@ const InterviewSimulation = () => {
     const sessionTokenParam = searchParams.get('session_token');
     const [websocketUrl] = useState(`ws://localhost:8080/api/v1/ws/connect/${sessionTokenParam}`);
     const [sessionId, setSessionId] = useState<string | null>(null);
+    const [isAiSpeaking, setIsAiSpeaking] = useState<boolean>(false);
+    const [isUserSpeaking, setIsUserSpeaking] = useState<boolean>(false);
     const websocketRef = useRef<WebSocket | null>(null);
     const chatHistoryRef = useRef<ChatHistoryRef>(null);
 
-    useVoiceStreaming(websocketRef, sessionId);
+    useVoiceStreaming(websocketRef, sessionId, setIsUserSpeaking);
 
     const handleWebSocketMessage = useCallback((response: any) => {
         switch (response.type) {
@@ -125,7 +129,7 @@ const InterviewSimulation = () => {
                 
                         if (header.type === WEBSOCKET_TYPES.INTERVIEWER_AUDIO_CHUNKING) {
                             console.log("Playing audio data");
-                            await playBinaryAudio(audioData);
+                            await playBinaryAudio(audioData, setIsAiSpeaking);
                         }
                     } else {
                         const data = JSON.parse(event.data);
@@ -194,6 +198,8 @@ const InterviewSimulation = () => {
                     <InterviewRecording
                         websocketUrl={websocketUrl}
                         sessionToken={sessionTokenParam || ''}
+                        isAiSpeaking={isAiSpeaking}
+                        isUserSpeaking={isUserSpeaking}
                     />
                 </div>
             </div>

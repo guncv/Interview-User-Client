@@ -12,6 +12,8 @@ import { downloadResumeBySessionToken } from "../../actions/resumeAction";
 interface InterviewRecordingProps {
     websocketUrl?: string;
     sessionToken?: string;
+    isAiSpeaking?: boolean;
+    isUserSpeaking?: boolean;
 }
 
 type SpeakingState = 'ai' | 'user' | 'none';
@@ -32,6 +34,8 @@ interface SessionInfo {
 const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     websocketUrl,
     sessionToken,
+    isAiSpeaking = false,
+    isUserSpeaking = false,
 }) => {
     void websocketUrl;
     void sessionToken;
@@ -47,7 +51,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     const [selectedMicId, setSelectedMicId] = useState<string>('default');
     const [availableHeadphones, setAvailableHeadphones] = useState<MicrophoneDevice[]>([]);
     const [audioLevel, setAudioLevel] = useState<number>(0);
-    const [isRecording, setIsRecording] = useState<boolean>(false);
     const [selectedHeadphonesId, setSelectedHeadphonesId] = useState<string>('default');
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
@@ -139,7 +142,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 source.connect(analyserRef.current);
                 
                 const updateAudioLevel = () => {
-                    if (analyserRef.current && isRecording) {
+                    if (analyserRef.current) {
                         const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
                         analyserRef.current.getByteFrequencyData(dataArray);
                         const average = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
@@ -148,9 +151,8 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                     }
                 };
                 
-                if (isRecording) {
-                    updateAudioLevel();
-                }
+                // Always monitor audio level for speech detection
+                updateAudioLevel();
             } catch (error) {
                 console.error('Failed to initialize audio analysis:', error);
             }
@@ -159,37 +161,29 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
         if (selectedMicId) {
             initAudioAnalysis();
         }
-    }, [selectedMicId, isRecording]);
+    }, [selectedMicId]);
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            setSpeakingState(prev => {
-                if (prev === 'none') {
-                    setIsRecording(true);
-                    setSessionInfo(prevInfo => ({
-                        ...prevInfo,
-                        interviewState: 'AI Speaking'
-                    }));
-                    return 'ai';
-                }
-                if (prev === 'ai') {
-                    setSessionInfo(prevInfo => ({
-                        ...prevInfo,
-                        interviewState: 'User Speaking'
-                    }));
-                    return 'user';
-                }
-                setIsRecording(false);
-                setSessionInfo(prevInfo => ({
-                    ...prevInfo,
-                    interviewState: 'Listening'
-                }));
-                return 'none';
-            });
-        }, 3000);
-
-        return () => clearInterval(interval);
-    }, []);
+        if (isAiSpeaking) {
+            setSpeakingState('ai');
+            setSessionInfo(prevInfo => ({
+                ...prevInfo,
+                interviewState: 'AI Speaking'
+            }));
+        } else if (isUserSpeaking) {
+            setSpeakingState('user');
+            setSessionInfo(prevInfo => ({
+                ...prevInfo,
+                interviewState: 'User Speaking'
+            }));
+        } else {
+            setSpeakingState('none');
+            setSessionInfo(prevInfo => ({
+                ...prevInfo,
+                interviewState: 'Listening'
+            }));
+        }
+    }, [isAiSpeaking, isUserSpeaking]);
 
     const formatTime = (milliseconds: number): string => {
         const totalSeconds = Math.floor(milliseconds / 1000);
@@ -540,7 +534,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                             borderRadius: '8px',
                             border: '1px solid rgba(139, 21, 255, 0.2)',
                             background: 'white',
-                            fontSize: '13px',
+                            fontSize: '15px',
                             width: "60%",
                             fontWeight: '500',
                             color: Colors.PRIMARY_COLOR,
@@ -557,7 +551,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                     
                     <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'start', alignItems: 'start', gap: '15px', width: "100%" }}>
                         <Headphones style={{ fontSize: '30px' }}/>
-                        <select 
+                        <select
                             value={selectedHeadphonesId}
                             onChange={(e) => handleHeadphonesChange(e.target.value)}
                             style={{
@@ -565,7 +559,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                                 borderRadius: '8px',
                                 border: '1px solid rgba(139, 21, 255, 0.2)',
                                 background: 'white',
-                                fontSize: '13px',
+                                fontSize: '15px',
                                 fontWeight: '500',
                                 color: Colors.PRIMARY_COLOR,
                                 cursor: 'pointer',
@@ -583,7 +577,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                     <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'start', alignItems: 'start', gap: '15px', width: "100%" }}>
                         <FileUser style={{ fontSize: '30px' }}/>
                         <span style={{
-                            fontSize: '13px',
+                            fontSize: '15px',
                             fontWeight: '500',
                             width: "60%",
                             overflow: 'hidden',

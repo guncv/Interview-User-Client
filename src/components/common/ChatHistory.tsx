@@ -19,93 +19,6 @@ export interface ChatMessage {
 	start_at: string;
 }
 
-const ChatHistoryMessage = [
-    {
-        id: '1',
-        actor: 'user',
-        transcript_text: 'Hello, how are you?',
-        start_at: '10:00',
-        end_at: '10:05'
-    },
-    {
-        id: '2',
-        actor: 'interviewer',
-        transcript_text: 'I am good, thank you!',
-        start_at: '10:05',
-        end_at: '10:10'
-    },
-    {
-        id: '1',
-        actor: 'user',
-        transcript_text: 'Hello, how are you?',
-        start_at: '10:00',
-        end_at: '10:05'
-    },
-    {
-        id: '2',
-        actor: 'interviewer',
-        transcript_text: 'I am good, thank you!',
-        start_at: '10:05',
-        end_at: '10:10'
-    },
-    {
-        id: '1',
-        actor: 'user',
-        transcript_text: 'Hello, how are you?',
-        start_at: '10:00',
-        end_at: '10:05'
-    },
-    {
-        id: '2',
-        actor: 'interviewer',
-        transcript_text: 'I am good, thank you!',
-        start_at: '10:05',
-        end_at: '10:10'
-    },
-    {
-        id: '1',
-        actor: 'user',
-        transcript_text: 'Hello, how are you?',
-        start_at: '10:00',
-        end_at: '10:05'
-    },
-    {
-        id: '2',
-        actor: 'interviewer',
-        transcript_text: 'I am good, thank you!',
-        start_at: '10:05',
-        end_at: '10:10'
-    },
-    {
-        id: '1',
-        actor: 'user',
-        transcript_text: 'Hello, how are you?',
-        start_at: '10:00',
-        end_at: '10:05'
-    },
-    {
-        id: '2',
-        actor: 'interviewer',
-        transcript_text: 'I am good, thank you!',
-        start_at: '10:05',
-        end_at: '10:10'
-    },
-    {
-        id: '1',
-        actor: 'user',
-        transcript_text: 'Hello, how are you?',
-        start_at: '10:00',
-        end_at: '10:05'
-    },
-    {
-        id: '2',
-        actor: 'interviewer',
-        transcript_text: 'I am good, thank you!',
-        start_at: '10:05',
-        end_at: '10:10'
-    },
-]
-
 const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_token }, ref) => {
     const dispatch = useDispatch();
     const chatHistory = useSelector((state: RootState) => state.interview.chatHistory);
@@ -182,14 +95,6 @@ const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_toke
                 overflowY: 'auto',
                 borderRadius: '8px',
             }}>
-                {ChatHistoryMessage.map((chat) => (
-                    <div key={chat.id} style={{ display: 'flex', justifyContent: chat.actor === 'interviewer' ? 'flex-start' : 'flex-end' }}>
-                        <div style={{ maxWidth: '70%', padding: '12px 16px', borderRadius: '18px', backgroundColor: chat.actor === 'user' ? Colors.ACCENT_COLOR : Colors.TEXT_WHITE_COLOR, color: chat.actor === 'user' ? Colors.TEXT_WHITE_COLOR : Colors.PRIMARY_COLOR, boxShadow: '0 2px 4px rgba(0,0,0,0.1)', wordWrap: 'break-word' }}>
-                            <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '4px', fontWeight: 500 }}>{chat.actor === 'user' ? 'You' : 'Interviewer'}</div>
-                            <div style={{ fontSize: '14px', lineHeight: '1.4' }}>{chat.transcript_text}</div>
-                        </div>
-                    </div>
-                ))}
                 {chatHistory.chat_history.map((chat) => (
                     <div
                         key={chat.id}

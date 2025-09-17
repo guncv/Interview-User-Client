@@ -3,11 +3,15 @@ import { generateSegmentId } from "../utils/generator";
 
 export function useVoiceStreaming(
     websocketRef: React.MutableRefObject<WebSocket | null>,
-    sessionId: string | null
+    sessionId: string | null,
+    onUserSpeakingChange?: (isSpeaking: boolean) => void
 ) {
     const segmentIdRef = useRef<string | null>(null);
     const silenceTimerRef = useRef<number | null>(null);
+    const chunkEndTimerRef = useRef<number | null>(null);
     const speakingRef = useRef<boolean>(false);
+    const lastSpeechTimeRef = useRef<number>(0);
+    const onSegmentStarted = useRef<boolean>(false);
 
     useEffect(() => {
         let mediaStream: MediaStream;
@@ -19,7 +23,6 @@ export function useVoiceStreaming(
         async function startRecording() {
         mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-        // Check for supported MIME types for MediaRecorder
         const getSupportedMimeType = (): string => {
             const types = [
                 'audio/webm;codecs=opus',
@@ -40,7 +43,6 @@ export function useVoiceStreaming(
         const mimeType = getSupportedMimeType();
         console.log("Using audio MIME type:", mimeType);
 
-        // MediaRecorder for sending audio chunks
         mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
         mediaRecorder.ondataavailable = async (event) => {
             if (
@@ -77,7 +79,7 @@ export function useVoiceStreaming(
             }
         };
 
-        mediaRecorder.start(300);
+        mediaRecorder.start(2000);
 
         audioContext = new AudioContext();
         source = audioContext.createMediaStreamSource(mediaStream);
@@ -88,6 +90,23 @@ export function useVoiceStreaming(
         const dataArray = new Uint8Array(analyser.fftSize);
 
         function detectSilence() {
+            if (!websocketRef.current || websocketRef.current.readyState !== WebSocket.OPEN || !sessionId) {
+                if (chunkEndTimerRef.current) {
+                    clearTimeout(chunkEndTimerRef.current);
+                    chunkEndTimerRef.current = null;
+                }
+                if (silenceTimerRef.current) {
+                    clearTimeout(silenceTimerRef.current);
+                    silenceTimerRef.current = null;
+                }
+                speakingRef.current = false;
+                onUserSpeakingChange?.(false);
+                segmentIdRef.current = null;
+                
+                requestAnimationFrame(detectSilence);
+                return;
+            }
+
             analyser.getByteTimeDomainData(dataArray);
             let sum = 0;
             for (let i = 0; i < dataArray.length; i++) {
@@ -95,46 +114,83 @@ export function useVoiceStreaming(
                 sum += value * value;
             }
             const rms = Math.sqrt(sum / dataArray.length);
+            const currentTime = Date.now();
 
-            if (rms > 0.02) {
-            // User is speaking
-            if (!speakingRef.current) {
-                speakingRef.current = true;
-                if (sessionId) {
-                const newSegmentId = generateSegmentId(sessionId);
-                segmentIdRef.current = newSegmentId;
-                websocketRef.current?.send(
-                    JSON.stringify({
-                    type: 'segment_start',
-                    session_id: sessionId,
-                    segment_id: newSegmentId,
-                    started_at: Date.now() / 1000 // Add timestamp like VADRecorder
-                    })
-                );
-                }
-            }
-
-            if (silenceTimerRef.current) {
-                clearTimeout(silenceTimerRef.current);
-                silenceTimerRef.current = null;
-            }
-            } else {
-                if (speakingRef.current && !silenceTimerRef.current) {
-                    silenceTimerRef.current = window.setTimeout(() => {
-                    speakingRef.current = false;
-                    if (sessionId && segmentIdRef.current) {
-                        websocketRef.current?.send(
-                        JSON.stringify({
-                            type: 'segment_end',
-                            session_id: sessionId,
-                            segment_id: segmentIdRef.current,
-                            ended_at: Date.now() / 1000 // Add timestamp like VADRecorder
-                        })
-                        );
+            if (rms > 0.02) { 
+                console.log("🎤 User is speaking - RMS:", rms.toFixed(4), "Speaking:", speakingRef.current, "SegmentStarted:", onSegmentStarted.current);
+                lastSpeechTimeRef.current = currentTime;
+                
+                if (!speakingRef.current && !onSegmentStarted.current) {
+                    console.log("set onSegmentStarted to true", onSegmentStarted.current);
+                    onSegmentStarted.current = true;
+                    console.log("set onSegmentStarted finished to be true", onSegmentStarted.current);
+                    speakingRef.current = true;
+                    onUserSpeakingChange?.(true);
+                    
+                    if (sessionId) {
+                        const newSegmentId = generateSegmentId(sessionId);
+                        segmentIdRef.current = newSegmentId;
+                        console.log("🎤 Starting new segment:", newSegmentId);
+                        
+                        if (websocketRef.current?.readyState === WebSocket.OPEN) {
+                            websocketRef.current.send(
+                                JSON.stringify({
+                                    type: 'segment_start',
+                                    session_id: sessionId,
+                                    segment_id: newSegmentId,
+                                    started_at: currentTime / 1000
+                                })
+                            );
+                        }
                     }
-                    segmentIdRef.current = null;
+                }
+
+                if (chunkEndTimerRef.current) {
+                    clearTimeout(chunkEndTimerRef.current);
+                    chunkEndTimerRef.current = null;
+                }
+                if (silenceTimerRef.current) {
+                    clearTimeout(silenceTimerRef.current);
                     silenceTimerRef.current = null;
-                    }, 2000);
+                }
+            } else if (speakingRef.current && segmentIdRef.current) {
+                const silenceDuration = currentTime - lastSpeechTimeRef.current;
+                
+                if (silenceDuration >= 1500 && !chunkEndTimerRef.current) {
+                    chunkEndTimerRef.current = window.setTimeout(() => {
+                        console.log("📝 Ending segment after 1.5s silence - sending final audio");
+                        
+                        if (mediaRecorder && mediaRecorder.state === 'recording') {
+                            mediaRecorder.requestData(); // Force send remaining audio
+                        }
+                        
+                        if (sessionId && segmentIdRef.current && websocketRef.current?.readyState === WebSocket.OPEN) {
+                            websocketRef.current.send(
+                                JSON.stringify({
+                                    type: 'segment_end',
+                                    session_id: sessionId,
+                                    segment_id: segmentIdRef.current,
+                                    ended_at: Date.now() / 1000
+                                })
+                            );
+                        }
+                        
+                        speakingRef.current = false;
+                        onUserSpeakingChange?.(false);
+                        onSegmentStarted.current = false;
+                        segmentIdRef.current = null;
+                        chunkEndTimerRef.current = null;
+                    }, 500);
+                }
+                
+            } else {
+                if (chunkEndTimerRef.current) {
+                    clearTimeout(chunkEndTimerRef.current);
+                    chunkEndTimerRef.current = null;
+                }
+                if (silenceTimerRef.current) {
+                    clearTimeout(silenceTimerRef.current);
+                    silenceTimerRef.current = null;
                 }
             }
 
@@ -151,6 +207,7 @@ export function useVoiceStreaming(
             mediaStream?.getTracks().forEach((track) => track.stop());
             audioContext?.close();
             if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+            if (chunkEndTimerRef.current) clearTimeout(chunkEndTimerRef.current);
         };
-    }, [websocketRef, sessionId]);
+    }, [websocketRef, sessionId, onUserSpeakingChange]);
 }
