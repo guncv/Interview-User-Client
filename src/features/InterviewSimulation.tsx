@@ -5,8 +5,6 @@ import { STORAGE_KEYS, WEBSOCKET_TYPES } from "../constants";
 import InterviewRecording from "../components/common/InterviewRecording";
 import { useVoiceStreaming } from "../hook/useVoiceStreaming";
 import { generateSegmentId } from "../utils/generator";
-import { useSelector } from "react-redux";
-import type { RootState } from "../reducers/rootReducer";
 
 const audioQueue: ArrayBuffer[] = [];
 let audioPlaying = false;
@@ -66,9 +64,6 @@ const InterviewSimulation = () => {
     const [sessionId, setSessionId] = useState<string | null>(null);
     const websocketRef = useRef<WebSocket | null>(null);
     const chatHistoryRef = useRef<ChatHistoryRef>(null);
-
-    // Get resume data from Redux store
-    const resumeData = useSelector((state: RootState) => state.resume);
 
     useVoiceStreaming(websocketRef, sessionId);
 
@@ -164,7 +159,6 @@ const InterviewSimulation = () => {
                     <InterviewRecording 
                         websocketUrl={websocketUrl}
                         sessionToken={sessionTokenParam || ''}
-                        currentResumeId={resumeData.resumeById.id}
                     />
                 </div>
             </div>

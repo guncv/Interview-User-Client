@@ -5,14 +5,12 @@ import aiInterviewer from "../../assets/images/ai_interviewer.png";
 import Color from "../../assets/styles/Color";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "../../reducers/rootReducer";
-import { getResumeById } from "../../actions/resumeAction";
 import { FileUser, Headphones, Mic } from 'lucide-react';
+import { getInterviewSessionInformation } from "../../actions/interviewAction";
 
 interface InterviewRecordingProps {
     websocketUrl?: string;
     sessionToken?: string;
-    currentResumeId?: string;
-    interviewPosition?: string;
 }
 
 type SpeakingState = 'ai' | 'user' | 'none';
@@ -31,16 +29,12 @@ interface SessionInfo {
     headphonesDevice: string;
 }
 
-const InterviewRecording: React.FC<InterviewRecordingProps> = ({ 
-    websocketUrl, 
-    sessionToken, 
-    currentResumeId, 
-    interviewPosition 
+const InterviewRecording: React.FC<InterviewRecordingProps> = ({
+    websocketUrl,
+    sessionToken,
 }) => {
-    // Suppress unused variable warnings - these will be used for real-time integration
     void websocketUrl;
     void sessionToken;
-    void interviewPosition;
     const [speakingState, setSpeakingState] = useState<SpeakingState>('none');
     const [sessionInfo, setSessionInfo] = useState<SessionInfo>({
         startTime: Date.now(),
@@ -60,18 +54,15 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     const audioContextRef = useRef<AudioContext | null>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
     
-    // Get resume data from Redux store
     const dispatch = useDispatch();
-    const resumeData = useSelector((state: RootState) => state.resume);
+    const interviewSessionInformation = useSelector((state: RootState) => state.interview.interviewSessionInformation);
 
-    // Load resume data if currentResumeId is provided
     useEffect(() => {
-        if (currentResumeId && currentResumeId !== resumeData.resumeById.id) {
-            dispatch(getResumeById(currentResumeId));
+        if (sessionToken) {
+            dispatch(getInterviewSessionInformation(sessionToken));
         }
-    }, [currentResumeId, dispatch, resumeData.resumeById.id]);
+    }, [sessionToken, dispatch]);
 
-    // Initialize headphones devices
 
     useEffect(() => {
         const getHeadphonesDevices = async () => {
@@ -91,7 +82,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
         getHeadphonesDevices();
     }, []);
 
-    // Initialize microphone devices
     useEffect(() => {
         const getMicrophoneDevices = async () => {
             try {
@@ -119,17 +109,15 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
         getMicrophoneDevices();
     }, []);
 
-    // Update resume information
     useEffect(() => {
-        if (resumeData.resumeById.file_name) {
+        if (interviewSessionInformation.file_name) {
             setSessionInfo(prev => ({
                 ...prev,
-                resumeFileName: resumeData.resumeById.file_name
+                resumeFileName: interviewSessionInformation.file_name
             }));
         }
-    }, [resumeData.resumeById.file_name]);
+    }, [interviewSessionInformation.file_name]);
 
-    // Session timer
     useEffect(() => {
         timerRef.current = setInterval(() => {
             setSessionInfo(prev => ({
@@ -145,7 +133,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
         };
     }, []);
 
-    // Initialize audio analysis
     useEffect(() => {
         const initAudioAnalysis = async () => {
             try {
@@ -184,7 +171,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
         }
     }, [selectedMicId, isRecording]);
 
-    // Demo speaking state changes
     useEffect(() => {
         const interval = setInterval(() => {
             setSpeakingState(prev => {
@@ -210,12 +196,11 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 }));
                 return 'none';
             });
-        }, 3000); // Change every 3 seconds for demo
+        }, 3000);
 
         return () => clearInterval(interval);
     }, []);
 
-    // Format time helper
     const formatTime = (milliseconds: number): string => {
         const totalSeconds = Math.floor(milliseconds / 1000);
         const minutes = Math.floor(totalSeconds / 60);
@@ -245,7 +230,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
         }
     };
 
-    // Waveform visualization component
     const WaveformVisualization: React.FC<{ audioLevel: number; isActive: boolean }> = ({ audioLevel, isActive }) => {
         const bars = Array.from({ length: 12 }, (_, i) => {
             const height = isActive ? Math.max(0.1, audioLevel + Math.random() * 0.3) : 0.1;
@@ -294,7 +278,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 justifyContent: 'space-between'
             }}>
                 <div>
-                    Session Position: {interviewPosition}
+                    Session Position: {interviewSessionInformation.position}
                 </div>
                 
                 <div style={{
@@ -318,7 +302,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 boxShadow: '0 10px 30px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.2)',
                 animation: speakingState !== 'none' ? 'breathingGlow 2s ease-in-out infinite' : 'none'
             }}>
-                {/* Floating background elements */}
                 <div style={{
                     position: 'absolute',
                     top: '10%',
@@ -350,7 +333,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                     animation: 'floatingElements 5s ease-in-out infinite 2s'
                 }}></div>
 
-                {/* Main interview content in the center */}
                 <div style={{
                     flex: 1,
                     display: 'flex',
@@ -375,7 +357,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                         />
                     
 
-                    {/* Speaking/Status indicator with waveform */}
                     <div style={{
                         marginTop: '20px',
                         display: 'flex',
@@ -383,7 +364,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                         alignItems: 'center',
                         gap: '15px'
                     }}>
-                        {/* Waveform visualization when user is speaking */}
                         {speakingState === 'user' && (
                             <WaveformVisualization 
                                 audioLevel={audioLevel} 
@@ -391,7 +371,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                             />
                         )}
 
-                        {/* Status indicator */}
                         {speakingState === 'user' ? (
                             <div style={{
                                 backgroundColor: Color.ACCENT_COLOR,
@@ -437,7 +416,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                     </div>
                 </div>
 
-                {/* AI Interviewer Profile on the right */}
                 <div style={{
                     position: 'absolute',
                     top: '25px',
@@ -455,7 +433,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                     transform: speakingState === 'ai' ? 'scale(1.03)' : 'scale(1)',
                     transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
                 }}>
-                    {/* AI Avatar with enhanced styling */}
                     <div style={{ position: 'relative' }}>
                         <div style={{
                             width: '56px',
@@ -484,7 +461,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                             />
                         </div>
                         
-                        {/* Enhanced sound waves when AI is speaking */}
                         {speakingState === 'ai' && (
                             <>
                                 <div style={{
@@ -513,7 +489,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                         )}
                     </div>
                     
-                    {/* AI Name */}
                     <div style={{
                         fontSize: '13px',
                         fontWeight: '600',
@@ -525,7 +500,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                         AI Interviewer
                     </div>
                     
-                    {/* Status indicator */}
                     <div style={{
                         fontSize: '11px',
                         color: speakingState === 'ai' ? Colors.ACCENT_COLOR : Colors.SECONDARY_TEXT_COLOR,
@@ -562,7 +536,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 flexDirection: 'column',
                 alignItems: 'start'
             }}>
-                {/* Microphone Selection */}
                 <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'start', alignItems: 'start', gap: '15px', width: "100%" }}>
                     <Mic style={{ fontSize: '30px' }}/>
                     <select
@@ -613,7 +586,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                         </select>
                     </div>
 
-                    {/* Resume Info */}
                     <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'start', alignItems: 'start', gap: '15px', width: "100%" }}>
                         <FileUser style={{ fontSize: '30px' }}/>
                         <span style={{

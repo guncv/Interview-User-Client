@@ -95,6 +95,16 @@ export interface CreateInterviewSessionResponse {
     session_token: string;
 }
 
+export interface GetInterviewSessionInformationReq {
+    session_token: string;
+}
+
+export interface GetInterviewSessionInformationResp {
+	position:    string;
+	file_name:   string;
+}
+
+
 export interface JobRequirement {
     id: string;
     requirement: string;

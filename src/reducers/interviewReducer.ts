@@ -3,14 +3,16 @@ import {
     SET_CREATE_INTERVIEW_ERROR,
     SET_CREATE_INTERVIEW_SUCCESS,
     SET_CHAT_HISTORY,
+    SET_INTERVIEW_SESSION_INFORMATION,
 } from '../actions/interviewAction';
 import type { RootState } from './rootReducer';
-import type { CreateInterviewSessionResponse, GetChatHistoryBySessionTokenResp } from '../interface/interviewInterface';
+import type { CreateInterviewSessionResponse, GetChatHistoryBySessionTokenResp, GetInterviewSessionInformationResp } from '../interface/interviewInterface';
 
 type InterviewState = {
     error: string;
     success: CreateInterviewSessionResponse;
     chatHistory: GetChatHistoryBySessionTokenResp;
+    interviewSessionInformation: GetInterviewSessionInformationResp;
 }
 type InterviewStateAction = {
     type: string;
@@ -18,6 +20,7 @@ type InterviewStateAction = {
         error: string;
         success: CreateInterviewSessionResponse;
         chatHistory: GetChatHistoryBySessionTokenResp;
+        interviewSessionInformation: GetInterviewSessionInformationResp;
     }
 }
 const initialState: InterviewState = {
@@ -27,6 +30,13 @@ const initialState: InterviewState = {
     },
     chatHistory: {
         chat_history: [],
+    },
+    interviewSessionInformation: {
+        session_id: '',
+        user_id: '',
+        position: '',
+        file_name: '',
+        storage_key: '',
     },
 };
 
@@ -50,6 +60,11 @@ export const interviewReducer = (
             ...state,
             chatHistory: action.payload.chatHistory,
             };
+        case SET_INTERVIEW_SESSION_INFORMATION:
+            return {
+            ...state,
+            interviewSessionInformation: action.payload.interviewSessionInformation,
+            };
         default:
             return state;
         }
@@ -62,5 +77,7 @@ export const interviewReducer = (
         (interview: InterviewState) => ({
             error: interview.error,
             success: interview.success,
+            chatHistory: interview.chatHistory,
+            interviewSessionInformation: interview.interviewSessionInformation,
         }),
     );

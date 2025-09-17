@@ -1,8 +1,8 @@
 import { call, delay, put, take } from "redux-saga/effects";
 import type { SagaIterator } from "redux-saga";
 import { ERROR_MESSAGES, HTTP_STATUS, ROUTES, STORAGE_KEYS } from "../constants";
-import { apiCreateSessionWithNewResume, apiCreateSessionWithExistingResume, apiGetChatHistoryBySessionToken } from "../api/interviewApi";
-import { CREATE_SESSION_WITH_NEW_RESUME, CREATE_SESSION_WITH_EXISTING_RESUME, setCreateInterviewSuccess, GET_CHAT_HISTORY_BY_SESSION_TOKEN, setChatHistory } from "../actions/interviewAction";
+import { apiCreateSessionWithNewResume, apiCreateSessionWithExistingResume, apiGetChatHistoryBySessionToken, apiGetInterviewSessionInformation } from "../api/interviewApi";
+import { CREATE_SESSION_WITH_NEW_RESUME, CREATE_SESSION_WITH_EXISTING_RESUME, setCreateInterviewSuccess, GET_CHAT_HISTORY_BY_SESSION_TOKEN, setChatHistory, setInterviewSessionInformation, GET_INTERVIEW_SESSION_INFORMATION } from "../actions/interviewAction";
 import { setCreateInterviewError } from "../actions/interviewAction";
 import { hideSpinner, safeNavigate, showSpinner } from "..";
 
@@ -110,6 +110,35 @@ export function* watcherGetChatHistoryBySessionToken(): SagaIterator {
     while (true) {
         const action = yield take(GET_CHAT_HISTORY_BY_SESSION_TOKEN);
         yield call(workerGetChatHistoryBySessionToken, action.payload);
+    }
+}
+
+function* workerGetInterviewSessionInformation(payload: { session_token: string }): SagaIterator {
+    try {
+        yield delay(0);
+        yield call(showSpinner);
+        const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+        const response = yield call(apiGetInterviewSessionInformation, payload.session_token, token || '');
+        console.log("response", response);
+        if (response && response.success) {
+            yield put(setInterviewSessionInformation(response.data));
+        } else {
+            yield call(hideSpinner);
+            yield call(handleStatusInterviewError, response.statusCode, response.message);
+        }
+        yield call(hideSpinner);
+    }
+    catch (error) {
+        yield call(hideSpinner);
+        const message = (error as { message?: string })?.message || ERROR_MESSAGES.UNEXPECTED_ERROR;
+        yield call(handleStatusInterviewError, 0, message);
+    }
+}
+
+export function* watcherGetInterviewSessionInformation(): SagaIterator {
+    while (true) {
+        const action = yield take(GET_INTERVIEW_SESSION_INFORMATION);
+        yield call(workerGetInterviewSessionInformation, action.payload);
     }
 }
 

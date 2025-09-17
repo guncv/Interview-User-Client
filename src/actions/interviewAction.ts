@@ -1,9 +1,11 @@
-import type { CreateInterviewSessionResponse, CreateInterviewSessionWithExistingResumeRequest, GetChatHistoryBySessionTokenResp } from "../interface/interviewInterface";
+import type { CreateInterviewSessionResponse, CreateInterviewSessionWithExistingResumeRequest, GetChatHistoryBySessionTokenResp, GetInterviewSessionInformationResp } from "../interface/interviewInterface";
 
 export const CREATE_SESSION_WITH_NEW_RESUME = 'CREATE_SESSION_WITH_NEW_RESUME';
 export const CREATE_SESSION_WITH_EXISTING_RESUME = 'CREATE_SESSION_WITH_EXISTING_RESUME';
 export const GET_CHAT_HISTORY_BY_SESSION_TOKEN = 'GET_CHAT_HISTORY_BY_SESSION_TOKEN';
 export const SET_CHAT_HISTORY = 'SET_CHAT_HISTORY';
+export const GET_INTERVIEW_SESSION_INFORMATION = 'GET_INTERVIEW_SESSION_INFORMATION';
+export const SET_INTERVIEW_SESSION_INFORMATION = 'SET_INTERVIEW_SESSION_INFORMATION';
 
 export const SET_CREATE_INTERVIEW_ERROR = 'SET_CREATE_INTERVIEW_ERROR';
 export const SET_CREATE_INTERVIEW_SUCCESS = 'SET_CREATE_INTERVIEW_SUCCESS';
@@ -33,4 +35,12 @@ export const getChatHistoryBySessionToken = (session_token: string) => {
 
 export const setChatHistory = (payload: GetChatHistoryBySessionTokenResp) => {
     return { type: SET_CHAT_HISTORY, payload: { chatHistory: payload } };
+};
+
+export const getInterviewSessionInformation = (session_token: string) => {
+    return { type: GET_INTERVIEW_SESSION_INFORMATION, payload: { session_token } };
+};
+
+export const setInterviewSessionInformation = (payload: GetInterviewSessionInformationResp) => {
+    return { type: SET_INTERVIEW_SESSION_INFORMATION, payload: { interviewSessionInformation: payload } };
 };
