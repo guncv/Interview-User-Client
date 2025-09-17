@@ -19,6 +19,93 @@ export interface ChatMessage {
 	start_at: string;
 }
 
+const ChatHistoryMessage = [
+    {
+        id: '1',
+        actor: 'user',
+        transcript_text: 'Hello, how are you?',
+        start_at: '10:00',
+        end_at: '10:05'
+    },
+    {
+        id: '2',
+        actor: 'interviewer',
+        transcript_text: 'I am good, thank you!',
+        start_at: '10:05',
+        end_at: '10:10'
+    },
+    {
+        id: '1',
+        actor: 'user',
+        transcript_text: 'Hello, how are you?',
+        start_at: '10:00',
+        end_at: '10:05'
+    },
+    {
+        id: '2',
+        actor: 'interviewer',
+        transcript_text: 'I am good, thank you!',
+        start_at: '10:05',
+        end_at: '10:10'
+    },
+    {
+        id: '1',
+        actor: 'user',
+        transcript_text: 'Hello, how are you?',
+        start_at: '10:00',
+        end_at: '10:05'
+    },
+    {
+        id: '2',
+        actor: 'interviewer',
+        transcript_text: 'I am good, thank you!',
+        start_at: '10:05',
+        end_at: '10:10'
+    },
+    {
+        id: '1',
+        actor: 'user',
+        transcript_text: 'Hello, how are you?',
+        start_at: '10:00',
+        end_at: '10:05'
+    },
+    {
+        id: '2',
+        actor: 'interviewer',
+        transcript_text: 'I am good, thank you!',
+        start_at: '10:05',
+        end_at: '10:10'
+    },
+    {
+        id: '1',
+        actor: 'user',
+        transcript_text: 'Hello, how are you?',
+        start_at: '10:00',
+        end_at: '10:05'
+    },
+    {
+        id: '2',
+        actor: 'interviewer',
+        transcript_text: 'I am good, thank you!',
+        start_at: '10:05',
+        end_at: '10:10'
+    },
+    {
+        id: '1',
+        actor: 'user',
+        transcript_text: 'Hello, how are you?',
+        start_at: '10:00',
+        end_at: '10:05'
+    },
+    {
+        id: '2',
+        actor: 'interviewer',
+        transcript_text: 'I am good, thank you!',
+        start_at: '10:05',
+        end_at: '10:10'
+    },
+]
+
 const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_token }, ref) => {
     const dispatch = useDispatch();
     const chatHistory = useSelector((state: RootState) => state.interview.chatHistory);
@@ -66,26 +153,94 @@ const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_toke
     }));
     
     return (
-        <div ref={chatContainerRef} style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-            padding: '16px',
-            maxHeight: '100%',
-            overflowY: 'auto',
-            borderRadius: '8px',
-        }}>
-            {chatHistory.chat_history.map((chat) => (
-                <div
-                    key={chat.id}
-                    style={{
-                        display: 'flex',
-                        justifyContent: chat.actor === 'interviewer' ? 'flex-start' : 'flex-end',
-                        marginBottom: '8px'
-                    }}
-                >
+        <div style={{ height: '100%', display: 'flex',marginRight: '20px', flexDirection: 'column', backgroundColor: Colors.ACCENT_COLOR_LIGHT, borderRadius: '20px' }}>
+            <div style={{
+                fontSize: '25px',
+                fontWeight: '600',
+                marginBottom: '12px',
+                marginTop: '20px',
+                textAlign: 'center',
+                flexShrink: 0,
+            }}>
+                Chat History
+            </div>
+            
+            <div style={{
+                borderBottomColor: Colors.SECONDARY_TEXT_COLOR,
+                borderBottomWidth: '1px',
+                borderBottomStyle: 'solid',
+            }}>
+
+            </div>
+
+            <div ref={chatContainerRef} style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                padding: '16px',
+                flex: 1,
+                overflowY: 'auto',
+                borderRadius: '8px',
+            }}>
+                {ChatHistoryMessage.map((chat) => (
+                    <div key={chat.id} style={{ display: 'flex', justifyContent: chat.actor === 'interviewer' ? 'flex-start' : 'flex-end' }}>
+                        <div style={{ maxWidth: '70%', padding: '12px 16px', borderRadius: '18px', backgroundColor: chat.actor === 'user' ? Colors.ACCENT_COLOR : Colors.TEXT_WHITE_COLOR, color: chat.actor === 'user' ? Colors.TEXT_WHITE_COLOR : Colors.PRIMARY_COLOR, boxShadow: '0 2px 4px rgba(0,0,0,0.1)', wordWrap: 'break-word' }}>
+                            <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '4px', fontWeight: 500 }}>{chat.actor === 'user' ? 'You' : 'Interviewer'}</div>
+                            <div style={{ fontSize: '14px', lineHeight: '1.4' }}>{chat.transcript_text}</div>
+                        </div>
+                    </div>
+                ))}
+                {chatHistory.chat_history.map((chat) => (
                     <div
+                        key={chat.id}
                         style={{
+                            display: 'flex',
+                            justifyContent: chat.actor === 'interviewer' ? 'flex-start' : 'flex-end',
+                            marginBottom: '8px'
+                        }}
+                    >
+                        <div
+                            style={{
+                                maxWidth: '70%',
+                                padding: '12px 16px',
+                                borderRadius: '18px',
+                                backgroundColor: chat.actor === 'user' ? Colors.ACCENT_COLOR : Colors.TEXT_WHITE_COLOR,
+                                color: chat.actor === 'user' ? Colors.TEXT_WHITE_COLOR : Colors.PRIMARY_COLOR,
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                wordWrap: 'break-word',
+                                position: 'relative'
+                            }}
+                        >
+                            <div style={{
+                                fontSize: '12px',
+                                opacity: 0.7,
+                                marginBottom: '4px',
+                                fontWeight: '500'
+                            }}>
+                                {chat.actor === 'user' ? 'You' : 'Interviewer'}
+                            </div>
+                            <div style={{ fontSize: '14px', lineHeight: '1.4' }}>
+                                {chat.transcript_text}
+                            </div>
+                            <div style={{
+                                fontSize: '10px',
+                                opacity: 0.6,
+                                marginTop: '4px',
+                                textAlign: 'right'
+                            }}>
+                                {chat.start_at} - {chat.end_at}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+
+                {chatOrder.map(segment_id => {
+                    const chat = chatMap.get(segment_id);
+                    if (!chat) return null;
+
+                    return (
+                        <div key={chat.id} style={{ display: 'flex', justifyContent: chat.actor === 'interviewer' ? 'flex-start' : 'flex-end' }}>
+                        <div style={{
                             maxWidth: '70%',
                             padding: '12px 16px',
                             borderRadius: '18px',
@@ -93,57 +248,18 @@ const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_toke
                             color: chat.actor === 'user' ? Colors.TEXT_WHITE_COLOR : Colors.PRIMARY_COLOR,
                             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                             wordWrap: 'break-word',
-                            position: 'relative'
-                        }}
-                    >
-                        <div style={{
-                            fontSize: '12px',
-                            opacity: 0.7,
-                            marginBottom: '4px',
-                            fontWeight: '500'
                         }}>
+                            <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '4px', fontWeight: 500 }}>
                             {chat.actor === 'user' ? 'You' : 'Interviewer'}
-                        </div>
-                        <div style={{ fontSize: '14px', lineHeight: '1.4' }}>
+                            </div>
+                            <div style={{ fontSize: '14px', lineHeight: '1.4' }}>
                             {chat.transcript_text}
+                            </div>
                         </div>
-                        <div style={{
-                            fontSize: '10px',
-                            opacity: 0.6,
-                            marginTop: '4px',
-                            textAlign: 'right'
-                        }}>
-                            {chat.start_at} - {chat.end_at}
                         </div>
-                    </div>
-                </div>
-            ))}
-
-            {chatOrder.map(segment_id => {
-                const chat = chatMap.get(segment_id);
-                if (!chat) return null;
-
-                return (
-                    <div key={chat.id} style={{ display: 'flex', justifyContent: chat.actor === 'interviewer' ? 'flex-start' : 'flex-end' }}>
-                    <div style={{
-                        maxWidth: '70%',
-                        padding: '12px 16px',
-                        borderRadius: '18px',
-                        backgroundColor: chat.actor === 'user' ? Colors.ACCENT_COLOR : Colors.TEXT_WHITE_COLOR,
-                        color: chat.actor === 'user' ? Colors.TEXT_WHITE_COLOR : Colors.PRIMARY_COLOR,
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                        wordWrap: 'break-word',
-                    }}>
-                        <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '4px', fontWeight: 500 }}>
-                        {chat.actor === 'user' ? 'You' : 'Interviewer'}
-                        </div>
-                        <div style={{ fontSize: '14px', lineHeight: '1.4' }}>
-                        {chat.transcript_text}
-                        </div>
-                    </div>
-                    </div>
-                );
-                })}
+                    );
+                    })}
+            </div>
         </div>
     );
 });

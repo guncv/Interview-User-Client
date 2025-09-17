@@ -5,6 +5,8 @@ import { STORAGE_KEYS, WEBSOCKET_TYPES } from "../constants";
 import InterviewRecording from "../components/common/InterviewRecording";
 import { useVoiceStreaming } from "../hook/useVoiceStreaming";
 import { generateSegmentId } from "../utils/generator";
+import { DoorOpen } from "lucide-react";
+import { Colors } from "../assets/styles";
 
 const audioQueue: ArrayBuffer[] = [];
 let audioPlaying = false;
@@ -55,7 +57,6 @@ function convertPCM16ToFloat32(buffer: ArrayBuffer): Float32Array {
 
     return float32Array;
 }
-
 
 const InterviewSimulation = () => {
     const [searchParams] = useSearchParams();
@@ -149,14 +150,48 @@ const InterviewSimulation = () => {
     }, [initializeWebSocket]);
 
     return (
-        <div style={{ width: '100%', height: '100%', padding: '20px' }}>
-            <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'row' }}>
-                <div style={{ width: '50%', height: '100%' }}>
+        <div style={{ width: '100%', height: '100vh', padding: '20px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end' }}>
+
+                <div 
+                    style={{ 
+                        display: 'flex', 
+                        flexDirection: 'row', 
+                        alignItems: 'center', 
+                        gap: '10px', 
+                        cursor: 'pointer'
+                    }}
+                    onMouseEnter={(e) => {
+                        const span = e.currentTarget.querySelector('span');
+                        if (span) {
+                            span.style.borderBottom = `2px solid ${Colors.ACCENT_COLOR}`;
+                        }
+                    }}
+                    onMouseLeave={(e) => {
+                        const span = e.currentTarget.querySelector('span');
+                        if (span) {
+                            span.style.borderBottom = '2px solid transparent';
+                        }
+                    }}
+                >
+                    <DoorOpen style={{ width: '25px', height: '25px', color: Colors.ACCENT_COLOR }} />
+                    <span style={{ 
+                        fontSize: '17px', 
+                        fontWeight: '600', 
+                        color: Colors.ACCENT_COLOR,
+                        transition: 'all 0.2s ease',
+                        borderBottom: '2px solid transparent'
+                    }}>End Interview</span>
+                </div>
+            </div>
+
+            <div style={{ width: '100%', height: 'calc(100% - 60px)', display: 'flex', flexDirection: 'row' }}>
+                <div style={{ width: '50%', height: '100%', overflow: 'hidden' }}>
                     <ChatHistory ref={chatHistoryRef} session_token={sessionTokenParam || ''} />
                 </div>
 
                 <div style={{ width: '50%', height: '100%' }}>
-                    <InterviewRecording 
+                    <InterviewRecording
                         websocketUrl={websocketUrl}
                         sessionToken={sessionTokenParam || ''}
                     />

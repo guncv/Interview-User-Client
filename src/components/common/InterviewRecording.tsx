@@ -591,7 +591,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                             whiteSpace: 'nowrap'
                         }}>
                             Resume: {interviewSessionInformation.file_name}
-                            <span style={{ fontWeight: '600', color: Colors.LINK_COLOR, textDecoration: 'underline', marginLeft: '10px' }}
+                            <span style={{ fontWeight: '600', color: Colors.LINK_COLOR, textDecoration: 'underline', marginLeft: '10px', cursor: 'pointer' }}
                             onClick={() => handleDownloadResume()}>
                                 Open here
                             </span>
