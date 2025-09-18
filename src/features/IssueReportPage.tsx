@@ -1,7 +1,7 @@
-import { ContentLayout, PrimaryButton, IssueReportItem } from "../components";
+import { ContentLayout, PrimaryButton, IssueReportItem, CreateAndUpdateIssuePopup } from "../components";
 import { useDispatch, useSelector } from "react-redux";
 import { listIssueReportsAction } from "../index";
-import { useEffect, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import type { RootState } from "../reducers/rootReducer";
 import type { UserIssueReport } from "../interface/reportIssueInterface";
 import Colors from "../assets/styles/Color";
@@ -11,6 +11,8 @@ import EmptyStateImage from "../assets/images/no_data.png";
 
 const IssueReportPage = () => {
     const dispatch = useDispatch();
+    const [isPopupVisible, setIsPopupVisible] = useState(false);
+    const [editingIssueReport, setEditingIssueReport] = useState<UserIssueReport | undefined>(undefined);
 
     useEffect(() => {
         dispatch(listIssueReportsAction());
@@ -19,7 +21,23 @@ const IssueReportPage = () => {
     const { listIssueReports } = useSelector((state: RootState) => state.issueReport);
 
     const handleCreateIssueReport = () => {
-        console.log('Create issue report clicked');
+        setEditingIssueReport(undefined);
+        setIsPopupVisible(true);
+    };
+
+    const handleEditIssueReport = (issueReport: UserIssueReport) => {
+        setEditingIssueReport(issueReport);
+        setIsPopupVisible(true);
+    };
+
+    const handleClosePopup = () => {
+        setIsPopupVisible(false);
+        setEditingIssueReport(undefined);
+    };
+
+    const handlePopupSuccess = () => {
+        // Refresh the list after successful creation/update
+        dispatch(listIssueReportsAction());
     };
 
     const headerStyle: CSSProperties = {
@@ -81,6 +99,7 @@ const IssueReportPage = () => {
                             <IssueReportItem
                                 key={issueReport.id}
                                 issueReport={issueReport}
+                                onEdit={handleEditIssueReport}
                             />
                         ))}
                     </div>
@@ -95,6 +114,13 @@ const IssueReportPage = () => {
                         </div>
                     </div>
                 )}
+
+                <CreateAndUpdateIssuePopup
+                    isVisible={isPopupVisible}
+                    onClose={handleClosePopup}
+                    onSuccess={handlePopupSuccess}
+                    issueReport={editingIssueReport}
+                />
             </div>
         </ContentLayout>
     );

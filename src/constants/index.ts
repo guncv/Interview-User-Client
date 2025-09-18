@@ -23,6 +23,10 @@ export const API_ENDPOINTS = {
 
   // Issue Report API
   LIST_ISSUE_REPORTS: '/api/v1/issue-reports',
+  CREATE_ISSUE_REPORT: '/api/v1/issue-reports',
+  UPDATE_ISSUE_REPORT: '/api/v1/issue-reports',
+
+  LIST_ISSUE_CATEGORIES: '/api/v1/issue-categories',
 } as const;
 
 export const WEBSOCKET_TYPES = {

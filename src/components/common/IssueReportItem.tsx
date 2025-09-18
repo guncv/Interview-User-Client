@@ -8,9 +8,10 @@ import { Tooltip } from './Tooltip';
 
 type Props = {
     issueReport: UserIssueReport;
+    onEdit?: (issueReport: UserIssueReport) => void;
 };
 
-const IssueReportItem = ({ issueReport }: Props) => {
+const IssueReportItem = ({ issueReport, onEdit }: Props) => {
     const containerStyle: CSSProperties = {
         backgroundColor: Colors.TEXT_WHITE_COLOR,
         border: `1px solid ${Colors.BORDER_COLOR}`,
@@ -72,8 +73,13 @@ const IssueReportItem = ({ issueReport }: Props) => {
                     <h3 style={categoryStyle}>{issueReport.category_name}</h3>
                 </Tooltip>
                 {issueReport.is_editable && (
-                    <Tooltip content="This issue can be edited" position="top">
-                        <SquarePen size={20} color={Colors.SECONDARY_TEXT_COLOR} style={{ cursor: 'pointer' }} />
+                    <Tooltip content="Edit this issue" position="top">
+                        <SquarePen 
+                            size={20} 
+                            color={Colors.SECONDARY_TEXT_COLOR} 
+                            style={{ cursor: 'pointer' }} 
+                            onClick={() => onEdit?.(issueReport)}
+                        />
                     </Tooltip>
                 )}
             </div>
