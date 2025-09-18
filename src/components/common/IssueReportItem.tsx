@@ -1,17 +1,20 @@
+import { type CSSProperties } from 'react';
 import Colors from '../../assets/styles/Color';
 import Size from '../../assets/styles/Size';
 import font from '../../assets/styles/Font';
 import type { UserIssueReport } from '../../interface/reportIssueInterface';
-import type { CSSProperties } from 'react';
+import { MessageCircle, SquarePen, ThumbsUp } from 'lucide-react';
+import { Tooltip } from './Tooltip';
 
 type Props = {
     issueReport: UserIssueReport;
+    onEdit?: (issueReport: UserIssueReport) => void;
 };
 
-const IssueReportItem = ({ issueReport }: Props) => {
+const IssueReportItem = ({ issueReport, onEdit }: Props) => {
     const containerStyle: CSSProperties = {
-        backgroundColor: Colors.PRIMARY_COLOR,
-        border: `1px solid ${Colors.ACCENT_COLOR}`,
+        backgroundColor: Colors.TEXT_WHITE_COLOR,
+        border: `1px solid ${Colors.BORDER_COLOR}`,
         borderRadius: Size.Small,
         padding: Size.Medium,
         marginBottom: Size.Small,
@@ -26,36 +29,31 @@ const IssueReportItem = ({ issueReport }: Props) => {
     };
 
     const categoryStyle: CSSProperties = {
-        fontFamily: font.Bold,
+        fontFamily: font.Medium,
         fontSize: Size.Medium,
-        color: Colors.ACCENT_COLOR,
+        color: Colors.PRIMARY_COLOR,
         margin: 0,
     };
 
-    const statusStyle: CSSProperties = {
-        backgroundColor: issueReport.acknowledged ? Colors.ACCENT_COLOR : Colors.ACCENT_COLOR_LIGHT,
-        color: Colors.TEXT_WHITE_COLOR,
-        padding: `${Size.Small}px ${Size.Small}px`,
-        borderRadius: Size.Small,
-        fontSize: Size.Small,
-        fontFamily: font.Medium,
-    };
 
     const descriptionStyle: CSSProperties = {
         fontFamily: font.Regular,
         fontSize: Size.Small,
-        color: Colors.TEXT_ERROR_COLOR,
+        textAlign: 'left',
+        color: Colors.PRIMARY_COLOR,
         marginBottom: Size.Small,
         lineHeight: 1.5,
     };
 
     const metaStyle: CSSProperties = {
         display: 'flex',
+        marginTop: Size.Medium,
         justifyContent: 'space-between',
         alignItems: 'center',
         fontSize: Size.Small,
-        color: Colors.TEXT_ERROR_COLOR,
+        color: Colors.SECONDARY_TEXT_COLOR,
         fontFamily: font.Regular,
+        marginLeft: Size.Medium,
     };
 
     const formatDate = (dateString: string) => {
@@ -71,22 +69,42 @@ const IssueReportItem = ({ issueReport }: Props) => {
     return (
         <div style={containerStyle}>
             <div style={headerStyle}>
-                <h3 style={categoryStyle}>{issueReport.category_name}</h3>
-                <span style={statusStyle}>
-                    {issueReport.acknowledged ? 'Acknowledged' : 'Pending'}
-                </span>
+                <Tooltip content={`Category: ${issueReport.category_name}`} position="top">
+                    <h3 style={categoryStyle}>{issueReport.category_name}</h3>
+                </Tooltip>
+                {issueReport.is_editable && (
+                    <Tooltip content="Edit this issue" position="top">
+                        <SquarePen 
+                            size={20} 
+                            color={Colors.SECONDARY_TEXT_COLOR} 
+                            style={{ cursor: 'pointer' }} 
+                            onClick={() => onEdit?.(issueReport)}
+                        />
+                    </Tooltip>
+                )}
             </div>
             
             <p style={descriptionStyle}>{issueReport.description}</p>
             
             <div style={metaStyle}>
-                <span>Created: {formatDate(issueReport.created_at)}</span>
-                {issueReport.comment_count > 0 && (
-                    <span>{issueReport.comment_count} comment{issueReport.comment_count > 1 ? 's' : ''}</span>
-                )}
-                {issueReport.is_editable && (
-                    <span style={{ color: Colors.ACCENT_COLOR }}>Editable</span>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: "10px" }}>
+                    <Tooltip content={issueReport.acknowledged ? "Issue acknowledged by support" : "Pending acknowledgment"} position="top">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: "3px" }}>
+                            <ThumbsUp size={15} color={issueReport.acknowledged ? Colors.ACCENT_COLOR : Colors.DISABLED_TEXT_COLOR} />
+                        </div>
+                    </Tooltip>
+
+                    <Tooltip content={`${issueReport.comment_count} comment${issueReport.comment_count !== 1 ? 's' : ''}`} position="top">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: "3px" }}>
+                            <MessageCircle size={15}/>
+                            <span>{issueReport.comment_count} comment{issueReport.comment_count > 1 ? 's' : ''}</span>
+                        </div>
+                    </Tooltip>
+                </div>
+                
+                <Tooltip content={`Created: ${formatDate(issueReport.created_at)}`} position="bottom">
+                    <span>{formatDate(issueReport.created_at)}</span>
+                </Tooltip>
             </div>
         </div>
     );

@@ -89,6 +89,7 @@ export const PrimaryTextArea = ({
                     onChange={(e) => onChange(e.target.value)}
                     style={textareaStyle}
                     disabled={disabled}
+                    data-grammarly-disable
                 />
             </div>
         </div>

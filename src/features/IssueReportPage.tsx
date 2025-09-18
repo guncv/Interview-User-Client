@@ -1,15 +1,18 @@
-import { ContentLayout, PrimaryButton, IssueReportItem } from "../components";
+import { ContentLayout, PrimaryButton, IssueReportItem, CreateAndUpdateIssuePopup } from "../components";
 import { useDispatch, useSelector } from "react-redux";
 import { listIssueReportsAction } from "../index";
-import { useEffect, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import type { RootState } from "../reducers/rootReducer";
 import type { UserIssueReport } from "../interface/reportIssueInterface";
 import Colors from "../assets/styles/Color";
 import Size from "../assets/styles/Size";
 import font from "../assets/styles/Font";
+import EmptyStateImage from "../assets/images/no_data.png";
 
 const IssueReportPage = () => {
     const dispatch = useDispatch();
+    const [isPopupVisible, setIsPopupVisible] = useState(false);
+    const [editingIssueReport, setEditingIssueReport] = useState<UserIssueReport | undefined>(undefined);
 
     useEffect(() => {
         dispatch(listIssueReportsAction());
@@ -18,11 +21,21 @@ const IssueReportPage = () => {
     const { listIssueReports } = useSelector((state: RootState) => state.issueReport);
 
     const handleCreateIssueReport = () => {
-        console.log('Create issue report clicked');
+        setEditingIssueReport(undefined);
+        setIsPopupVisible(true);
+    };
+
+    const handleEditIssueReport = (issueReport: UserIssueReport) => {
+        setEditingIssueReport(issueReport);
+        setIsPopupVisible(true);
+    };
+
+    const handleClosePopup = () => {
+        setIsPopupVisible(false);
+        setEditingIssueReport(undefined);
     };
 
     const headerStyle: CSSProperties = {
-        marginBottom: Size.Large,
         fontSize: Size.Large,
         display: 'flex',
         justifyContent: 'space-between',
@@ -39,6 +52,10 @@ const IssueReportPage = () => {
         display: 'flex',
         flexDirection: 'column',
         gap: Size.Medium,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        paddingRight: Size.Small,
+        scrollbarWidth: 'thin',
     };
 
     const emptyStateStyle: CSSProperties = {
@@ -55,13 +72,14 @@ const IssueReportPage = () => {
         padding: Size.Large,
         textAlign: 'center',
         width: '50%',
+        height: '100vh',
     };
 
     return (
         <ContentLayout>
             <div style={containerStyle}>
                 <div style={headerStyle}>
-                    <div>Issue Reports</div>
+                    <div>Your Issue Reports</div>
                     <div style={buttonContainerStyle}>
                         <PrimaryButton
                             label="Create Issue Report"
@@ -76,17 +94,27 @@ const IssueReportPage = () => {
                             <IssueReportItem
                                 key={issueReport.id}
                                 issueReport={issueReport}
+                                onEdit={handleEditIssueReport}
                             />
                         ))}
                     </div>
                 ) : (
                     <div style={emptyStateStyle}>
+                        <img src={EmptyStateImage} alt="No issue reports found"
+                            style={{ width: '200px', height: '200px' }}
+                        />
                         <div>No issue reports found</div>
                         <div style={{ marginTop: Size.Small, fontSize: Size.Medium }}>
                             Click "Create Issue Report" to submit your first report
                         </div>
                     </div>
                 )}
+
+                <CreateAndUpdateIssuePopup
+                    isVisible={isPopupVisible}
+                    onClose={handleClosePopup}
+                    issueReport={editingIssueReport}
+                />
             </div>
         </ContentLayout>
     );

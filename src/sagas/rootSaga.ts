@@ -2,7 +2,7 @@ import { all } from 'redux-saga/effects';
 import { watcherForgotPassword, watcherSignOut, watcherSignIn, watcherVerifyEmail, watcherSignUp, watcherResetVerifyEmail, watcherResetPassword } from './userSaga';
 import { watcherGetResumeById, watcherListResume, watcherDownloadResumeBySessionToken } from './resumeSaga';
 import { watcherCreateSessionWithNewResume, watcherCreateSessionWithExistingResume, watcherGetChatHistoryBySessionToken, watcherGetInterviewSessionInformation } from './interviewSaga';
-import { watcherListIssueReports } from './issueReport';
+import { watcherListIssueCategories, watcherListIssueReports, watcherCreateIssueReport, watcherUpdateIssueReport } from './issueReport';
 
 export default function* rootSaga() {
     yield all([
@@ -21,6 +21,9 @@ export default function* rootSaga() {
         watcherGetInterviewSessionInformation(),
         watcherDownloadResumeBySessionToken(),
         watcherListIssueReports(),
+        watcherListIssueCategories(),
+        watcherCreateIssueReport(),
+        watcherUpdateIssueReport(),
     ]);
 }
 
