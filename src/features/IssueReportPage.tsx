@@ -7,6 +7,7 @@ import type { UserIssueReport } from "../interface/reportIssueInterface";
 import Colors from "../assets/styles/Color";
 import Size from "../assets/styles/Size";
 import font from "../assets/styles/Font";
+import EmptyStateImage from "../assets/images/no_data.png";
 
 const IssueReportPage = () => {
     const dispatch = useDispatch();
@@ -22,7 +23,6 @@ const IssueReportPage = () => {
     };
 
     const headerStyle: CSSProperties = {
-        marginBottom: Size.Large,
         fontSize: Size.Large,
         display: 'flex',
         justifyContent: 'space-between',
@@ -39,6 +39,10 @@ const IssueReportPage = () => {
         display: 'flex',
         flexDirection: 'column',
         gap: Size.Medium,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        paddingRight: Size.Small,
+        scrollbarWidth: 'thin',
     };
 
     const emptyStateStyle: CSSProperties = {
@@ -55,13 +59,14 @@ const IssueReportPage = () => {
         padding: Size.Large,
         textAlign: 'center',
         width: '50%',
+        height: '100vh',
     };
 
     return (
         <ContentLayout>
             <div style={containerStyle}>
                 <div style={headerStyle}>
-                    <div>Issue Reports</div>
+                    <div>Your Issue Reports</div>
                     <div style={buttonContainerStyle}>
                         <PrimaryButton
                             label="Create Issue Report"
@@ -81,6 +86,9 @@ const IssueReportPage = () => {
                     </div>
                 ) : (
                     <div style={emptyStateStyle}>
+                        <img src={EmptyStateImage} alt="No issue reports found"
+                            style={{ width: '200px', height: '200px' }}
+                        />
                         <div>No issue reports found</div>
                         <div style={{ marginTop: Size.Small, fontSize: Size.Medium }}>
                             Click "Create Issue Report" to submit your first report
