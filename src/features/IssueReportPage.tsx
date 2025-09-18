@@ -35,11 +35,6 @@ const IssueReportPage = () => {
         setEditingIssueReport(undefined);
     };
 
-    const handlePopupSuccess = () => {
-        // Refresh the list after successful creation/update
-        dispatch(listIssueReportsAction());
-    };
-
     const headerStyle: CSSProperties = {
         fontSize: Size.Large,
         display: 'flex',
@@ -118,7 +113,6 @@ const IssueReportPage = () => {
                 <CreateAndUpdateIssuePopup
                     isVisible={isPopupVisible}
                     onClose={handleClosePopup}
-                    onSuccess={handlePopupSuccess}
                     issueReport={editingIssueReport}
                 />
             </div>

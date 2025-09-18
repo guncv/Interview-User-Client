@@ -101,6 +101,7 @@ export const PrimaryTextField = ({
                 onChange={(e) => onChange(e.target.value)}
                 style={inputStyle}
                 disabled={disabled}
+                data-grammarly-disable
                 />
                 {isPassword && (
                 isVisible && !disabled ? (

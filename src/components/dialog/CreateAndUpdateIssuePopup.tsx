@@ -14,14 +14,12 @@ interface CreateAndUpdateIssuePopupProps {
     isVisible: boolean;
     onClose: () => void;
     issueReport?: UserIssueReport;
-    onSuccess?: () => void;
 }
 
 const CreateAndUpdateIssuePopup: React.FC<CreateAndUpdateIssuePopupProps> = ({
     isVisible,
     onClose,
     issueReport,
-    onSuccess,
 }) => {
     const { isMobile } = useContextProvider();
     const isUpdateMode = !!issueReport;
@@ -85,8 +83,8 @@ const CreateAndUpdateIssuePopup: React.FC<CreateAndUpdateIssuePopupProps> = ({
                     category_id: categoryId,
                 };
                 
+                console.log("updateIssueReport", issueReport);
                 dispatch(updateIssueReportAction(issueReport.id, updateData));
-                console.log('Updating issue report:', { id: issueReport.id, ...updateData });                
             } else {
                 const createData: CreateUserIssueReportReq = {
                     description: description.trim(),
@@ -96,7 +94,6 @@ const CreateAndUpdateIssuePopup: React.FC<CreateAndUpdateIssuePopupProps> = ({
                 dispatch(createIssueReportAction(createData));
             }
 
-            onSuccess?.();
             onClose();
         } catch (error) {
             console.error('Error submitting issue report:', error);
