@@ -4,7 +4,7 @@ import interviewImage from "../../assets/images/interview.png";
 import aiInterviewer from "../../assets/images/ai_interviewer.png";
 import Color from "../../assets/styles/Color";
 import { useDispatch } from "react-redux";
-import { Headphones, Mic, MicOff, Settings, VolumeX } from 'lucide-react';
+import { HeadphoneOff, Headphones, Mic, MicOff, Settings } from 'lucide-react';
 import CircularIconButton from './CircularIconButton';
 import { downloadResumeBySessionToken } from "../../actions/resumeAction";
 
@@ -13,6 +13,8 @@ interface InterviewRecordingProps {
     sessionToken?: string;
     isAiSpeaking?: boolean;
     isUserSpeaking?: boolean;
+    onMicMuteChange?: (isMuted: boolean) => void;
+    onHeadphoneMuteChange?: (isMuted: boolean) => void;
 }
 
 type SpeakingState = 'ai' | 'user' | 'none';
@@ -34,6 +36,8 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     sessionToken,
     isAiSpeaking = false,
     isUserSpeaking = false,
+    onMicMuteChange,
+    onHeadphoneMuteChange,
 }) => {
     void websocketUrl;
     void sessionToken;
@@ -44,11 +48,13 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
         microphoneDevice: 'Default Microphone',
         headphonesDevice: 'Default Headphones'
     });
+    void sessionInfo; 
     const [availableMicrophones, setAvailableMicrophones] = useState<MicrophoneDevice[]>([]);
     const [selectedMicId, setSelectedMicId] = useState<string>('default');
     const [availableHeadphones, setAvailableHeadphones] = useState<MicrophoneDevice[]>([]);
     const [audioLevel, setAudioLevel] = useState<number>(0);
     const [selectedHeadphonesId, setSelectedHeadphonesId] = useState<string>('default');
+    void selectedHeadphonesId; // Suppress unused variable warning for now
     const [isMicMuted, setIsMicMuted] = useState<boolean>(false);
     const [isHeadphonesMuted, setIsHeadphonesMuted] = useState<boolean>(false);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -206,6 +212,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
             }));
         }
     };
+    void handleMicrophoneChange;
 
     const handleHeadphonesChange = (deviceId: string) => {
         setSelectedHeadphonesId(deviceId);
@@ -217,6 +224,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
             }));
         }
     };
+    void handleHeadphonesChange;
 
     const WaveformVisualization: React.FC<{ audioLevel: number; isActive: boolean }> = ({ audioLevel, isActive }) => {
         const bars = Array.from({ length: 12 }, (_, i) => {
@@ -258,6 +266,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     const handleDownloadResume = () => {
         dispatch(downloadResumeBySessionToken(sessionToken || ''));
     };
+    void handleDownloadResume; // Suppress unused warning for now
 
     const toggleMicMute = () => {
         const newMutedState = !isMicMuted;
@@ -272,16 +281,15 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 track.enabled = !newMutedState;
             });
         }
-        
-        console.log(`Microphone ${newMutedState ? 'muted' : 'unmuted'}`);
+
+        onMicMuteChange?.(newMutedState);
     };
 
     const toggleHeadphonesMute = () => {
         const newMutedState = !isHeadphonesMuted;
         setIsHeadphonesMuted(newMutedState);
         
-        console.log(`Headphones ${newMutedState ? 'muted' : 'unmuted'}`);
-        
+        onHeadphoneMuteChange?.(newMutedState);
     };
 
     return (
@@ -552,17 +560,13 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                     buttonId="mic"
                     onClick={toggleMicMute}
                     isActive={!isMicMuted}
-                    activeColor={Colors.PRIMARY_COLOR}
-                    inactiveColor="#FF4444"
                 />
                 
                 <CircularIconButton 
-                    icon={isHeadphonesMuted ? <VolumeX /> : <Headphones />}
+                    icon={isHeadphonesMuted ? <HeadphoneOff /> : <Headphones />}
                     buttonId="headphones"
                     onClick={toggleHeadphonesMute}
                     isActive={!isHeadphonesMuted}
-                    activeColor={Colors.PRIMARY_COLOR}
-                    inactiveColor="#FF4444"
                 />
                 
                 <CircularIconButton 

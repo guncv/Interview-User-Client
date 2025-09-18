@@ -31,7 +31,8 @@ async function sendingAudioChunk(event: any, sessionId: string, segmentIdRef: Re
 export function useVoiceStreaming(
     websocketRef: React.MutableRefObject<WebSocket | null>,
     sessionId: string | null,
-    onUserSpeakingChange?: (isSpeaking: boolean) => void
+    onUserSpeakingChange?: (isSpeaking: boolean) => void,
+    isMicMuted?: boolean
 ) {
     const segmentIdRef = useRef<string | null>(null);
     const silenceTimerRef = useRef<number | null>(null);
@@ -80,7 +81,8 @@ export function useVoiceStreaming(
                     websocketRef.current?.readyState === WebSocket.OPEN &&
                     speakingRef.current &&
                     sessionId &&
-                    segmentIdRef.current
+                    segmentIdRef.current &&
+                    !isMicMuted // Don't send audio data if microphone is muted
                 ) {
                     await sendingAudioChunk(event, sessionId, segmentIdRef, websocketRef);
                 }
@@ -123,7 +125,7 @@ export function useVoiceStreaming(
                 const rms = Math.sqrt(sum / dataArray.length);
                 const currentTime = Date.now();
 
-                if (rms > 0.1) {
+                if (rms > 0.1 && !isMicMuted) { // Only detect speech if mic is not muted
                     lastSpeechTimeRef.current = currentTime;
                     
                     if (!speakingRef.current && !onSegmentStarted.current) {
@@ -213,5 +215,5 @@ export function useVoiceStreaming(
             if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
             if (chunkEndTimerRef.current) clearTimeout(chunkEndTimerRef.current);
         };
-    }, [websocketRef, sessionId, onUserSpeakingChange]);
+    }, [websocketRef, sessionId, onUserSpeakingChange, isMicMuted]);
 }

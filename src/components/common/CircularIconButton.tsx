@@ -7,9 +7,7 @@ interface CircularIconButtonProps {
     onClick?: () => void;
     size?: string;
     iconSize?: string;
-    isActive?: boolean;  // For toggle states like mute/unmute
-    activeColor?: string;
-    inactiveColor?: string;
+    isActive?: boolean;
 }
 
 const CircularIconButton: React.FC<CircularIconButtonProps> = ({
@@ -19,8 +17,6 @@ const CircularIconButton: React.FC<CircularIconButtonProps> = ({
     size = '40px',
     iconSize = '35px',
     isActive = true,
-    activeColor = Colors.PRIMARY_COLOR,
-    inactiveColor = Colors.SECONDARY_TEXT_COLOR
 }) => {
     const [hoveredButton, setHoveredButton] = useState<string | null>(null);
     const isHovered = hoveredButton === buttonId;
@@ -32,14 +28,9 @@ const CircularIconButton: React.FC<CircularIconButtonProps> = ({
                 flexDirection: 'row', 
                 justifyContent: 'center',
                 alignItems: 'center',
-                border: isActive 
-                    ? (isHovered ? `0.5px solid ${Colors.ACCENT_COLOR}` : `0.5px solid ${Colors.PRIMARY_COLOR}`)
-                    : `0.5px solid ${Colors.SECONDARY_TEXT_COLOR}`,
+                border: (isHovered ? `0.5px solid ${Colors.ACCENT_COLOR}` : `0.5px solid ${Colors.PRIMARY_COLOR}`),
                 padding: '10px',
                 borderRadius: '50%',
-                backgroundColor: isActive 
-                    ? (isHovered ? Colors.ACCENT_COLOR_LIGHT : 'transparent')
-                    : (isHovered ? 'rgba(255, 0, 0, 0.1)' : 'rgba(255, 0, 0, 0.05)'),
                 cursor: 'pointer',
                 transition: 'background-color 0.3s ease',
                 width: size,
@@ -54,7 +45,7 @@ const CircularIconButton: React.FC<CircularIconButtonProps> = ({
             {React.cloneElement(icon, {
                 style: {
                     fontSize: iconSize,
-                    color: isActive ? activeColor : inactiveColor,
+                    color: Colors.PRIMARY_COLOR,
                     opacity: isActive ? 1 : 0.6
                 }
             })}

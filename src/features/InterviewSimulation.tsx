@@ -16,7 +16,7 @@ const audioQueue: ArrayBuffer[] = [];
 let audioPlaying = false;
 const audioCtx = new AudioContext();
 
-async function playBinaryAudio(buffer: ArrayBuffer, setIsAiSpeaking: (speaking: boolean) => void) {
+async function playBinaryAudio(buffer: ArrayBuffer, setIsAiSpeaking: (speaking: boolean) => void, isHeadphonesMuted: boolean) {
     audioQueue.push(buffer);
 
     if (!audioPlaying) {
@@ -37,7 +37,13 @@ async function playBinaryAudio(buffer: ArrayBuffer, setIsAiSpeaking: (speaking: 
 
                 const source = audioCtx.createBufferSource();
                 source.buffer = audioBuffer;
-                source.connect(audioCtx.destination);
+                
+                // Create gain node to control volume based on headphone mute state
+                const gainNode = audioCtx.createGain();
+                gainNode.gain.value = isHeadphonesMuted ? 0 : 1;
+                
+                source.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
                 source.start();
 
                 await new Promise<void>((resolve) => {
@@ -49,7 +55,7 @@ async function playBinaryAudio(buffer: ArrayBuffer, setIsAiSpeaking: (speaking: 
         }
 
         audioPlaying = false;
-        setIsAiSpeaking(false); // AI stops speaking
+        setIsAiSpeaking(false);
     }
 }
 
@@ -71,10 +77,13 @@ const InterviewSimulation = () => {
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [isAiSpeaking, setIsAiSpeaking] = useState<boolean>(false);
     const [isUserSpeaking, setIsUserSpeaking] = useState<boolean>(false);
+    const [isMicMuted, setIsMicMuted] = useState<boolean>(false);
+    const [isHeadphonesMuted, setIsHeadphonesMuted] = useState<boolean>(false);
     const websocketRef = useRef<WebSocket | null>(null);
     const chatHistoryRef = useRef<ChatHistoryRef>(null);
     const dispatch = useDispatch();
-    // const [elapsedTime, setElapsedTime] = useState<number>(0);
+    const [elapsedTime, setElapsedTime] = useState<number>(0);
+    const [startTime] = useState<number>(Date.now());
 
     const formatTime = (milliseconds: number): string => {
         const totalSeconds = Math.floor(milliseconds / 1000);
@@ -91,11 +100,33 @@ const InterviewSimulation = () => {
         }
     }, [sessionTokenParam, dispatch]);
 
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setElapsedTime(Date.now() - startTime);
+        }, 1000);
+
+        return () => {
+            clearInterval(timer);
+        };
+    }, [startTime]);
+
     const handleUserSpeakingChange = useCallback((speaking: boolean) => {
-        setIsUserSpeaking(speaking);
+        setIsUserSpeaking(speaking && !isMicMuted);
+    }, [isMicMuted]);
+
+    useVoiceStreaming(websocketRef, sessionId, handleUserSpeakingChange, isMicMuted);
+
+    const handleMicMuteChange = useCallback((isMuted: boolean) => {
+        setIsMicMuted(isMuted);
+        
+        if (isMuted) {
+            setIsUserSpeaking(false);
+        }
     }, []);
 
-    useVoiceStreaming(websocketRef, sessionId, handleUserSpeakingChange);
+    const handleHeadphoneMuteChange = useCallback((isMuted: boolean) => {
+        setIsHeadphonesMuted(isMuted);
+    }, []);
 
     const handleWebSocketMessage = useCallback((response: any) => {
         switch (response.type) {
@@ -159,7 +190,7 @@ const InterviewSimulation = () => {
                 
                         if (header.type === WEBSOCKET_TYPES.INTERVIEWER_AUDIO_CHUNKING) {
                             console.log("Playing audio data");
-                            await playBinaryAudio(audioData, setIsAiSpeaking);
+                            await playBinaryAudio(audioData, setIsAiSpeaking, isHeadphonesMuted);
                         }
                     } else {
                         const data = JSON.parse(event.data);
@@ -188,7 +219,7 @@ const InterviewSimulation = () => {
             <div style={{ width: '100%', height: '100vh', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', padding: '20px 20px 0 20px' }}>
                     <div style={{
-                        fontSize: '20px',
+                        fontSize: '18px',
                         fontWeight: '600',
                         color: Colors.PRIMARY_COLOR,
                         display: 'flex',
@@ -221,12 +252,11 @@ const InterviewSimulation = () => {
                         }}
                     >
                         <div style={{
-                            fontSize: '20px',
+                            fontSize: '17px',
                             fontWeight: '600',
                             color: Colors.PRIMARY_COLOR,
                         }}>
-                            {/* Time: {formatTime(elapsedTime)} */}
-                            9
+                            Time: {formatTime(elapsedTime)}
                         </div>
                     </div>
                 </div>
@@ -281,6 +311,8 @@ const InterviewSimulation = () => {
                             sessionToken={sessionTokenParam || ''}
                             isAiSpeaking={isAiSpeaking}
                             isUserSpeaking={isUserSpeaking}
+                            onMicMuteChange={handleMicMuteChange}
+                            onHeadphoneMuteChange={handleHeadphoneMuteChange}
                         />
                     </div>
                     <div style={{ width: '50%', height: '100%', overflow: 'hidden' }}>

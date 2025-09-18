@@ -104,52 +104,54 @@ const RecordingListPage = () => {
 
     return (
         <ContentLayout>
-            <div style={titleStyle}>
-                <div>Interview Recordings</div>
-                <div style={buttonSearchContainerStyle}>
-                    <PrimaryButton label="Start New Interviews" onClick={handleStartNewInterviews} />
-                    <input
-                        style={searchInputStyle}
-                        placeholder="Search Recordings..."
-                        onChange={() => {}}
-                        value=""
-                    />
+            <div style={{ width: '100%', padding: '20px 40px' }}>
+                <div style={titleStyle}>
+                    <div>Interview Recordings</div>
+                    <div style={buttonSearchContainerStyle}>
+                        <PrimaryButton label="Start New Interviews" onClick={handleStartNewInterviews} />
+                        <input
+                            style={searchInputStyle}
+                            placeholder="Search Recordings..."
+                            onChange={() => {}}
+                            value=""
+                        />
+                    </div>
                 </div>
-            </div>
-            
-            <div style={tableContainerStyle}>
-                <table style={tableStyle}>
-                    <thead>
-                        <tr>
-                            <th style={headerCellStyle}>Title</th>
-                            <th style={headerCellStyle}>Created</th>
-                            <th style={headerCellStyle}>Score</th>
-                            <th style={headerCellStyle}>Type</th>
-                            <th style={headerCellStyle}>Total Time</th>
-                            <th style={headerCellStyle}>Pacing</th>
-                            <th style={headerCellStyle}></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {interviews.map((interview) => (
-                            <tr key={interview.id}>
-                                <td style={dataCellStyle}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        <span>{interview.title}</span>
-                                    </div>
-                                </td>
-                                <td style={dataCellStyle}>{interview.created}</td>
-                                <td style={{...dataCellStyle, ...scoreStyle}}>{interview.score}</td>
-                                <td style={dataCellStyle}>{interview.type}</td>
-                                <td style={dataCellStyle}>{interview.totalTime}</td>
-                                <td style={{...dataCellStyle, ...pacingStyle}}>{interview.pacing}</td>
-                                <td style={dataCellStyle}>
-                                    <span style={optionsStyle}>⋯</span>
-                                </td>
+                
+                <div style={tableContainerStyle}>
+                    <table style={tableStyle}>
+                        <thead>
+                            <tr>
+                                <th style={headerCellStyle}>Title</th>
+                                <th style={headerCellStyle}>Created</th>
+                                <th style={headerCellStyle}>Score</th>
+                                <th style={headerCellStyle}>Type</th>
+                                <th style={headerCellStyle}>Total Time</th>
+                                <th style={headerCellStyle}>Pacing</th>
+                                <th style={headerCellStyle}></th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {interviews.map((interview) => (
+                                <tr key={interview.id}>
+                                    <td style={dataCellStyle}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <span>{interview.title}</span>
+                                        </div>
+                                    </td>
+                                    <td style={dataCellStyle}>{interview.created}</td>
+                                    <td style={{...dataCellStyle, ...scoreStyle}}>{interview.score}</td>
+                                    <td style={dataCellStyle}>{interview.type}</td>
+                                    <td style={dataCellStyle}>{interview.totalTime}</td>
+                                    <td style={{...dataCellStyle, ...pacingStyle}}>{interview.pacing}</td>
+                                    <td style={dataCellStyle}>
+                                        <span style={optionsStyle}>⋯</span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </ContentLayout>
     );
