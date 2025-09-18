@@ -32,7 +32,8 @@ export function useVoiceStreaming(
     websocketRef: React.MutableRefObject<WebSocket | null>,
     sessionId: string | null,
     onUserSpeakingChange?: (isSpeaking: boolean) => void,
-    isMicMuted?: boolean
+    isMicMuted?: boolean,
+    isConnected?: boolean
 ) {
     const segmentIdRef = useRef<string | null>(null);
     const silenceTimerRef = useRef<number | null>(null);
@@ -42,7 +43,7 @@ export function useVoiceStreaming(
     const onSegmentStarted = useRef<boolean>(false);
 
     useEffect(() => {
-        if (!sessionId) {
+        if (!sessionId || !isConnected) {
             return;
         }
 
@@ -93,7 +94,8 @@ export function useVoiceStreaming(
             audioContext = new AudioContext();
             source = audioContext.createMediaStreamSource(mediaStream);
             analyser = audioContext.createAnalyser();
-            analyser.fftSize = 512;
+            analyser.fftSize = 1024;
+            analyser.smoothingTimeConstant = 0.3;
             source.connect(analyser);
 
             const dataArray = new Uint8Array(analyser.fftSize);
@@ -125,7 +127,7 @@ export function useVoiceStreaming(
                 const rms = Math.sqrt(sum / dataArray.length);
                 const currentTime = Date.now();
 
-                if (rms > 0.1 && !isMicMuted) { // Only detect speech if mic is not muted
+                if (rms > 0.05 && !isMicMuted) { // Lower threshold for more sensitive voice detection
                     lastSpeechTimeRef.current = currentTime;
                     
                     if (!speakingRef.current && !onSegmentStarted.current) {
@@ -161,7 +163,7 @@ export function useVoiceStreaming(
                 } else if (speakingRef.current && segmentIdRef.current) {
                     const silenceDuration = currentTime - lastSpeechTimeRef.current;
                     
-                    if (silenceDuration >= 2000 && !chunkEndTimerRef.current) {
+                    if (silenceDuration >= 1500 && !chunkEndTimerRef.current) { // Reduced from 2000ms to 1500ms
                         chunkEndTimerRef.current = window.setTimeout(() => {
 
                             if (mediaRecorder && mediaRecorder.state === 'recording') {
@@ -215,5 +217,5 @@ export function useVoiceStreaming(
             if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
             if (chunkEndTimerRef.current) clearTimeout(chunkEndTimerRef.current);
         };
-    }, [websocketRef, sessionId, onUserSpeakingChange, isMicMuted]);
+    }, [websocketRef, sessionId, onUserSpeakingChange, isMicMuted, isConnected]);
 }

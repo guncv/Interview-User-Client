@@ -37,7 +37,6 @@ const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_toke
     }, []);
 
     function handlePartialTranscript(segment_id: string, transcript: string, actor: "user" | "interviewer") {
-        console.log("handlePartialTranscript", segment_id, transcript, actor);
         setChatMap(prevMap => {
             const updated = new Map(prevMap);
             const existing = updated.get(segment_id);

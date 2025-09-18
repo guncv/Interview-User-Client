@@ -7,21 +7,27 @@ import { useVoiceStreaming } from "../hook/useVoiceStreaming";
 import { generateSegmentId } from "../utils/generator";
 import { Colors } from "../assets/styles";
 import ContentLayout from "../components/layout/ContentLayout";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { getInterviewSessionInformation } from "../actions/interviewAction";
-import type { RootState } from "../reducers/rootReducer";
-import { DoorOpen } from "lucide-react";
 
 const audioQueue: ArrayBuffer[] = [];
 let audioPlaying = false;
 const audioCtx = new AudioContext();
 
-async function playBinaryAudio(buffer: ArrayBuffer, setIsAiSpeaking: (speaking: boolean) => void, isHeadphonesMuted: boolean) {
+async function playBinaryAudio(buffer: ArrayBuffer, setIsAiSpeaking: (speaking: boolean) => void, isHeadphonesMuted: boolean, isConnected: boolean) {
+    // Don't play audio if not connected
+    if (!isConnected) {
+        console.warn("⚠️ Skipping audio playback - not connected to server");
+        // Clear the audio queue when not connected
+        audioQueue.length = 0;
+        return;
+    }
+
     audioQueue.push(buffer);
 
     if (!audioPlaying) {
         audioPlaying = true;
-        setIsAiSpeaking(true); // AI starts speaking
+        setIsAiSpeaking(true);
 
         while (audioQueue.length > 0) {
             const currentBuffer = audioQueue.shift()!;
@@ -70,6 +76,8 @@ function convertPCM16ToFloat32(buffer: ArrayBuffer): Float32Array {
     return float32Array;
 }
 
+type WebSocketConnectionState = 'connecting' | 'connected' | 'disconnected' | 'error';
+
 const InterviewSimulation = () => {
     const [searchParams] = useSearchParams();
     const sessionTokenParam = searchParams.get('session_token');
@@ -79,20 +87,42 @@ const InterviewSimulation = () => {
     const [isUserSpeaking, setIsUserSpeaking] = useState<boolean>(false);
     const [isMicMuted, setIsMicMuted] = useState<boolean>(false);
     const [isHeadphonesMuted, setIsHeadphonesMuted] = useState<boolean>(false);
+    const [connectionState, setConnectionState] = useState<WebSocketConnectionState>('connecting');
     const websocketRef = useRef<WebSocket | null>(null);
     const chatHistoryRef = useRef<ChatHistoryRef>(null);
     const dispatch = useDispatch();
     const [elapsedTime, setElapsedTime] = useState<number>(0);
     const [startTime] = useState<number>(Date.now());
 
-    const formatTime = (milliseconds: number): string => {
-        const totalSeconds = Math.floor(milliseconds / 1000);
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = totalSeconds % 60;
-        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    const getConnectionStatusMessage = (): string => {
+        switch (connectionState) {
+            case 'connecting':
+                return '🟡 Connecting to Server...';
+            case 'connected':
+                return '🟢 Connected to Server ✓';
+            case 'disconnected':
+                return '🔴 Disconnected from Server - Click reconnect button to retry';
+            case 'error':
+                return '🔴 Connection error from Server - Click reconnect button to retry';
+            default:
+                return '🟡 Connecting to Server...';
+        }
     };
 
-    const interviewSessionInformation = useSelector((state: RootState) => state.interview.interviewSessionInformation);
+    const getConnectionStatusColor = (): string => {
+        switch (connectionState) {
+            case 'connected':
+                return '#4CAF50'; // Green
+            case 'connecting':
+                return '#FF9800'; // Orange
+            case 'disconnected':
+            case 'error':
+                return '#F44336'; // Red
+            default:
+                return Colors.PRIMARY_COLOR;
+        }
+    };
+
 
     useEffect(() => {
         if (sessionTokenParam) {
@@ -114,7 +144,7 @@ const InterviewSimulation = () => {
         setIsUserSpeaking(speaking && !isMicMuted);
     }, [isMicMuted]);
 
-    useVoiceStreaming(websocketRef, sessionId, handleUserSpeakingChange, isMicMuted);
+    useVoiceStreaming(websocketRef, sessionId, handleUserSpeakingChange, isMicMuted, connectionState === 'connected');
 
     const handleMicMuteChange = useCallback((isMuted: boolean) => {
         setIsMicMuted(isMuted);
@@ -129,10 +159,14 @@ const InterviewSimulation = () => {
     }, []);
 
     const handleWebSocketMessage = useCallback((response: any) => {
+        if (connectionState !== 'connected' && response.type !== WEBSOCKET_TYPES.CONNECTION_ESTABLISHED) {
+            return;
+        }
+
         switch (response.type) {
             case WEBSOCKET_TYPES.CONNECTION_ESTABLISHED:
-                console.log("🔗 WebSocket connected, sessionId established:", response.session_id);
                 setSessionId(response.session_id);
+                setConnectionState('connected');
                 break;
             case WEBSOCKET_TYPES.USER_PARTIAL_TRANSCRIPT:
                 chatHistoryRef.current?.handlePartialTranscript(response.segment_id, response.transcript, "user");
@@ -154,10 +188,12 @@ const InterviewSimulation = () => {
             default:
                 console.warn("Unknown message type:", response);
         }
-    }, [sessionId]);
+    }, [sessionId, connectionState]);
 
     const initializeWebSocket = useCallback(() => {
         try {
+            setConnectionState('connecting');
+            
             const accessToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
             const wsUrl = accessToken
                 ? `${websocketUrl}?access_token=${accessToken}`
@@ -165,12 +201,23 @@ const InterviewSimulation = () => {
 
             websocketRef.current = new WebSocket(wsUrl);
 
+            websocketRef.current.onopen = () => {
+                console.log("WebSocket connection opened");
+                // Note: We'll set to 'connected' when we receive CONNECTION_ESTABLISHED message
+            };
+
             websocketRef.current.onclose = (event) => {
                 console.log("WebSocket closed:", event.code, event.reason);
+                setConnectionState('disconnected');
+                setSessionId(null);
+                
+                // No automatic reconnection - user must manually reconnect
+                console.log("Connection closed. Use the reconnect button to reconnect manually.");
             };
 
             websocketRef.current.onerror = (error) => {
                 console.error("WebSocket error:", error);
+                setConnectionState('error');
             };
 
             websocketRef.current.onmessage = async (event) => {
@@ -190,7 +237,7 @@ const InterviewSimulation = () => {
                 
                         if (header.type === WEBSOCKET_TYPES.INTERVIEWER_AUDIO_CHUNKING) {
                             console.log("Playing audio data");
-                            await playBinaryAudio(audioData, setIsAiSpeaking, isHeadphonesMuted);
+                            await playBinaryAudio(audioData, setIsAiSpeaking, isHeadphonesMuted, connectionState === 'connected');
                         }
                     } else {
                         const data = JSON.parse(event.data);
@@ -205,6 +252,14 @@ const InterviewSimulation = () => {
         }
     }, [websocketUrl, handleWebSocketMessage]);
 
+    const handleManualReconnect = useCallback(() => {
+        if (websocketRef.current) {
+            websocketRef.current.close();
+        }
+
+        initializeWebSocket();
+    }, []);
+
     useEffect(() => {
         initializeWebSocket();
 
@@ -212,12 +267,12 @@ const InterviewSimulation = () => {
             websocketRef.current?.close();
             websocketRef.current = null;
         };
-    }, [initializeWebSocket]);
+    }, []);
 
     return (
         <ContentLayout>
             <div style={{ width: '100%', height: '100vh', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', padding: '20px 20px 0 20px' }}>
+                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-start', padding: '20px 20px 0 20px' }}>
                     <div style={{
                         fontSize: '18px',
                         fontWeight: '600',
@@ -227,36 +282,7 @@ const InterviewSimulation = () => {
                         gap: '10px'
                     }}>
                         <div>
-                            Session Position: {interviewSessionInformation.position}
-                        </div>
-                    </div>
-
-                    <div style={{ 
-                        display: 'flex', 
-                        flexDirection: 'row', 
-                        alignItems: 'center',
-                        gap: '10px', 
-                        cursor: 'pointer'
-                    }}
-                    onMouseEnter={(e) => {
-                        const span = e.currentTarget.querySelector('span');
-                        if (span) {
-                            span.style.borderBottom = `2px solid ${Colors.ACCENT_COLOR}`;
-                        }
-                    }}
-                    onMouseLeave={(e) => {
-                        const span = e.currentTarget.querySelector('span');
-                        if (span) {
-                            span.style.borderBottom = '2px solid transparent';
-                        }
-                        }}
-                    >
-                        <div style={{
-                            fontSize: '17px',
-                            fontWeight: '600',
-                            color: Colors.PRIMARY_COLOR,
-                        }}>
-                            Time: {formatTime(elapsedTime)}
+                            General Interview With AI
                         </div>
                     </div>
                 </div>
@@ -264,41 +290,25 @@ const InterviewSimulation = () => {
                 <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', padding: '0 20px 5px 20px' }}>
                     <div style={{
                         fontSize: '15px',
-                        color: Colors.PRIMARY_COLOR,
+                        color: getConnectionStatusColor(),
+                        fontWeight: '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
                     }}>
                         <div>
-                            Connecting
+                            {getConnectionStatusMessage()}
                         </div>
-                    </div>
-
-                    <div style={{ 
-                        display: 'flex', 
-                        flexDirection: 'row', 
-                        alignItems: 'center',
-                        gap: '10px', 
-                        cursor: 'pointer'
-                    }}
-                    onMouseEnter={(e) => {
-                        const span = e.currentTarget.querySelector('span');
-                        if (span) {
-                            span.style.borderBottom = `2px solid ${Colors.ACCENT_COLOR}`;
-                        }
-                    }}
-                    onMouseLeave={(e) => {
-                        const span = e.currentTarget.querySelector('span');
-                        if (span) {
-                            span.style.borderBottom = '2px solid transparent';
-                        }
-                        }}
-                    >
-                        <DoorOpen style={{ width: '25px', height: '25px', color: Colors.ACCENT_COLOR }} />
-                        <span style={{
-                            fontSize: '17px',
-                            fontWeight: '600',
-                            color: Colors.ACCENT_COLOR,
-                            transition: 'all 0.2s ease',
-                            borderBottom: '2px solid transparent'
-                        }}>End Interview</span>
+                        {(connectionState === 'connecting') && (
+                            <div style={{
+                                width: '12px',
+                                height: '12px',
+                                border: '2px solid transparent',
+                                borderTop: `2px solid ${getConnectionStatusColor()}`,
+                                borderRadius: '50%',
+                                animation: 'spin 1s linear infinite'
+                            }} />
+                        )}
                     </div>
                 </div>
 
@@ -313,6 +323,10 @@ const InterviewSimulation = () => {
                             isUserSpeaking={isUserSpeaking}
                             onMicMuteChange={handleMicMuteChange}
                             onHeadphoneMuteChange={handleHeadphoneMuteChange}
+                            onReconnect={handleManualReconnect}
+                            websocketRef={websocketRef}
+                            elapsedTime={elapsedTime}
+                            isConnected={connectionState === 'connected'}
                         />
                     </div>
                     <div style={{ width: '50%', height: '100%', overflow: 'hidden' }}>

@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import Colors from "../../assets/styles/Color";
-import interviewImage from "../../assets/images/interview.png";
-import aiInterviewer from "../../assets/images/ai_interviewer.png";
-import Color from "../../assets/styles/Color";
 import { useDispatch } from "react-redux";
-import { HeadphoneOff, Headphones, Mic, MicOff, Settings } from 'lucide-react';
+import { HeadphoneOff, Headphones, Mic, MicOff, Settings, RotateCcw, Square } from 'lucide-react';
 import CircularIconButton from './CircularIconButton';
+import SettingsPopup from '../dialog/SettingsPopup';
 import { downloadResumeBySessionToken } from "../../actions/resumeAction";
+import profileImage from "../../assets/images/profile.png";
 
 interface InterviewRecordingProps {
     websocketUrl?: string;
@@ -15,6 +14,10 @@ interface InterviewRecordingProps {
     isUserSpeaking?: boolean;
     onMicMuteChange?: (isMuted: boolean) => void;
     onHeadphoneMuteChange?: (isMuted: boolean) => void;
+    onReconnect?: () => void;
+    websocketRef?: React.MutableRefObject<WebSocket | null>;
+    elapsedTime?: number;
+    isConnected?: boolean;
 }
 
 type SpeakingState = 'ai' | 'user' | 'none';
@@ -38,6 +41,10 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     isUserSpeaking = false,
     onMicMuteChange,
     onHeadphoneMuteChange,
+    onReconnect,
+    websocketRef,
+    elapsedTime = 0,
+    isConnected = false,
 }) => {
     void websocketUrl;
     void sessionToken;
@@ -54,15 +61,23 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     const [availableHeadphones, setAvailableHeadphones] = useState<MicrophoneDevice[]>([]);
     const [audioLevel, setAudioLevel] = useState<number>(0);
     const [selectedHeadphonesId, setSelectedHeadphonesId] = useState<string>('default');
-    void selectedHeadphonesId; // Suppress unused variable warning for now
     const [isMicMuted, setIsMicMuted] = useState<boolean>(false);
     const [isHeadphonesMuted, setIsHeadphonesMuted] = useState<boolean>(false);
+    const [showSettings, setShowSettings] = useState<boolean>(false);
+    const [isReconnecting, setIsReconnecting] = useState<boolean>(false);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
     const mediaStreamRef = useRef<MediaStream | null>(null);
     const gainNodeRef = useRef<GainNode | null>(null);
     const dispatch = useDispatch();
+
+    const formatTime = (milliseconds: number): string => {
+        const totalSeconds = Math.floor(milliseconds / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    };
 
     useEffect(() => {
         const getHeadphonesDevices = async () => {
@@ -129,7 +144,10 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     audio: { 
-                        deviceId: selectedMicId === 'default' ? undefined : selectedMicId 
+                        deviceId: selectedMicId === 'default' ? undefined : selectedMicId,
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
                     } 
                 });
                 
@@ -137,29 +155,34 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 audioContextRef.current = new AudioContext();
                 const source = audioContextRef.current.createMediaStreamSource(stream);
                 
-                // Create gain node for volume control
                 gainNodeRef.current = audioContextRef.current.createGain();
+                gainNodeRef.current.gain.value = isMicMuted ? 0 : 1;
                 
                 analyserRef.current = audioContextRef.current.createAnalyser();
-                analyserRef.current.fftSize = 256;
+                analyserRef.current.fftSize = 512;
+                analyserRef.current.smoothingTimeConstant = 0.3;
                 
-                // Connect: source -> gain -> analyser
                 source.connect(gainNodeRef.current);
                 gainNodeRef.current.connect(analyserRef.current);
                 
                 const updateAudioLevel = () => {
-                    if (analyserRef.current) {
+                    if (analyserRef.current && !isMicMuted && isConnected) {
                         const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
                         analyserRef.current.getByteFrequencyData(dataArray);
                         const average = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
-                        setAudioLevel(average / 255);
-                        requestAnimationFrame(updateAudioLevel);
+                        const normalizedLevel = average / 255;
+                        
+                        
+                        setAudioLevel(normalizedLevel);
+                    } else {
+                        setAudioLevel(0);
                     }
+                    requestAnimationFrame(updateAudioLevel);
                 };
                 
                 updateAudioLevel();
             } catch (error) {
-                console.error('Failed to initialize audio analysis:', error);
+                console.error('❌ Failed to initialize audio analysis:', error);
             }
         };
 
@@ -168,7 +191,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
         }
 
         return () => {
-            // Cleanup audio resources
             if (mediaStreamRef.current) {
                 mediaStreamRef.current.getTracks().forEach(track => track.stop());
             }
@@ -176,11 +198,9 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 audioContextRef.current.close();
             }
         };
-    }, [selectedMicId]);
+    }, [selectedMicId, isMicMuted]);
 
     useEffect(() => {
-        console.log("🎨 InterviewRecording state change - isAiSpeaking:", isAiSpeaking, "isUserSpeaking:", isUserSpeaking);
-        
         if (isAiSpeaking) {
             setSpeakingState('ai');
             setSessionInfo(prevInfo => ({
@@ -202,6 +222,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
         }
     }, [isAiSpeaking, isUserSpeaking]);
 
+
     const handleMicrophoneChange = (deviceId: string) => {
         setSelectedMicId(deviceId);
         const selectedDevice = availableMicrophones.find(mic => mic.deviceId === deviceId);
@@ -212,8 +233,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
             }));
         }
     };
-    void handleMicrophoneChange;
-
     const handleHeadphonesChange = (deviceId: string) => {
         setSelectedHeadphonesId(deviceId);
         const selectedDevice = availableHeadphones.find(headphones => headphones.deviceId === deviceId);
@@ -224,49 +243,48 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
             }));
         }
     };
-    void handleHeadphonesChange;
 
-    const WaveformVisualization: React.FC<{ audioLevel: number; isActive: boolean }> = ({ audioLevel, isActive }) => {
-        const bars = Array.from({ length: 12 }, (_, i) => {
-            const height = isActive ? Math.max(0.1, audioLevel + Math.random() * 0.3) : 0.1;
-            const delay = i * 0.1;
+    // const WaveformVisualization: React.FC<{ audioLevel: number; isActive: boolean }> = ({ audioLevel, isActive }) => {
+    //     const bars = Array.from({ length: 12 }, (_, i) => {
+    //         const height = isActive ? Math.max(0.1, audioLevel + Math.random() * 0.3) : 0.1;
+    //         const delay = i * 0.1;
             
-            return (
-                <div
-                    key={i}
-                    style={{
-                        width: '3px',
-                        height: `${height * 30 + 5}px`,
-                        backgroundColor: isActive ? Colors.ACCENT_COLOR : Colors.SECONDARY_TEXT_COLOR,
-                        borderRadius: '2px',
-                        animation: isActive ? `waveformBounce 0.8s ease-in-out infinite ${delay}s` : 'none',
-                        opacity: isActive ? 0.8 + height * 0.2 : 0.3,
-                        transition: 'all 0.2s ease'
-                    }}
-                />
-            );
-        });
+    //         return (
+    //             <div
+    //                 key={i}
+    //                 style={{
+    //                     width: '3px',
+    //                     height: `${height * 30 + 5}px`,
+    //                     backgroundColor: isActive ? Colors.ACCENT_COLOR : Colors.SECONDARY_TEXT_COLOR,
+    //                     borderRadius: '2px',
+    //                     animation: isActive ? `waveformBounce 0.8s ease-in-out infinite ${delay}s` : 'none',
+    //                     opacity: isActive ? 0.8 + height * 0.2 : 0.3,
+    //                     transition: 'all 0.2s ease'
+    //                 }}
+    //             />
+    //         );
+    //     });
 
-        return (
-            <div style={{
-                display: 'flex',
-                alignItems: 'end',
-                gap: '2px',
-                height: '40px',
-                padding: '5px 10px',
-                background: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '8px',
-                backdropFilter: 'blur(5px)'
-            }}>
-                {bars}
-            </div>
-        );
-    };
+    //     return (
+    //         <div style={{
+    //             display: 'flex',
+    //             alignItems: 'end',
+    //             gap: '2px',
+    //             height: '40px',
+    //             padding: '5px 10px',
+    //             background: 'rgba(255, 255, 255, 0.1)',
+    //             borderRadius: '8px',
+    //             backdropFilter: 'blur(5px)'
+    //         }}>
+    //             {bars}
+    //         </div>
+    //     );
+    // };
 
     const handleDownloadResume = () => {
         dispatch(downloadResumeBySessionToken(sessionToken || ''));
     };
-    void handleDownloadResume; // Suppress unused warning for now
+    void handleDownloadResume;
 
     const toggleMicMute = () => {
         const newMutedState = !isMicMuted;
@@ -292,339 +310,317 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
         onHeadphoneMuteChange?.(newMutedState);
     };
 
-    return (
-        <div style={{padding: '20px'}}>
+    const toggleSettings = () => {
+        setShowSettings(!showSettings);
+    };
 
-            <div style={{ 
-                width: '100%',
-                height: '40vh',
+    const initAudio = async () => {
+        try {
+            if (mediaStreamRef.current) {
+                mediaStreamRef.current.getTracks().forEach(track => track.stop());
+            }
+            if (audioContextRef.current) {
+                audioContextRef.current.close();
+            }
+
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                audio: { 
+                    deviceId: selectedMicId === 'default' ? undefined : selectedMicId 
+                } 
+            });
+            
+            mediaStreamRef.current = stream;
+            audioContextRef.current = new AudioContext();
+            const source = audioContextRef.current.createMediaStreamSource(stream);
+            
+            gainNodeRef.current = audioContextRef.current.createGain();
+            
+            analyserRef.current = audioContextRef.current.createAnalyser();
+            analyserRef.current.fftSize = 512;
+            analyserRef.current.smoothingTimeConstant = 0.3;
+            
+            source.connect(gainNodeRef.current);
+            gainNodeRef.current.connect(analyserRef.current);
+            
+            const updateAudioLevel = () => {
+                if (analyserRef.current && !isMicMuted && isConnected) {
+                    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+                    analyserRef.current.getByteFrequencyData(dataArray);
+                    const average = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
+                    const normalizedLevel = average / 255;
+                    setAudioLevel(normalizedLevel);
+                } else {
+                    setAudioLevel(0);
+                }
+                requestAnimationFrame(updateAudioLevel);
+            };
+            
+            updateAudioLevel();
+        } catch (error) {
+            console.error('Failed to initialize audio:', error);
+        }
+    };
+
+    const handleReconnect = async () => {
+        setIsReconnecting(true);
+        
+        try {
+            if (websocketRef?.current) {
+                websocketRef.current.close();
+            }
+
+            await initAudio();
+
+            setSpeakingState('none');
+            setSessionInfo(prev => ({
+                ...prev,
+                interviewState: 'Ready for interview'
+            }));
+
+            if (onReconnect) {
+                onReconnect();
+            }
+        } catch (error) {
+            console.error('Failed to reconnect:', error);
+        } finally {
+            setIsReconnecting(false);
+        }
+    };
+
+    const handleEndInterview = () => {
+        setShowSettings(false);
+    };
+
+    return (
+        <div style={{ 
+            width: '50vw',
+            height: '40vh',
+            position: 'relative',
+            background: `${Colors.CONTENT_HOVER_COLOR}`,
+            borderRadius: '24px',
+            marginTop: '20px',
+            padding: '0',
+            overflow: 'hidden',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.08)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center'
+        }}>
+            <div style={{
+                position: 'absolute',
+                top: '10px',
+                left: '10px',
+                padding: '10px',
                 display: 'flex',
-                flexDirection: 'row',
-                background: 'linear-gradient(135deg, #E6D2FF 0%, #F0E6FF 50%, #E6D2FF 100%)',
-                position: 'relative',
-                borderRadius: '20px',
-                overflow: 'hidden',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.2)',
-                animation: speakingState !== 'none' ? 'breathingGlow 2s ease-in-out infinite' : 'none'
+                alignItems: 'center',
+                gap: '12px',
+                
+                minWidth: '180px'
             }}>
                 <div style={{
-                    position: 'absolute',
-                    top: '10%',
-                    left: '15%',
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '50%',
-                    background: 'rgba(139, 21, 255, 0.1)',
-                    animation: 'floatingElements 3s ease-in-out infinite'
-                }}></div>
-                <div style={{
-                    position: 'absolute',
-                    bottom: '15%',
-                    right: '20%',
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
-                    background: 'rgba(139, 21, 255, 0.08)',
-                    animation: 'floatingElements 4s ease-in-out infinite 1s'
-                }}></div>
-                <div style={{
-                    position: 'absolute',
-                    top: '60%',
-                    left: '10%',
-                    width: '30px',
-                    height: '30px',
-                    borderRadius: '50%',
-                    background: 'rgba(139, 21, 255, 0.06)',
-                    animation: 'floatingElements 5s ease-in-out infinite 2s'
-                }}></div>
-
-                <div style={{
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    padding: '40px',
-                    position: 'relative'
-                }}>
-                        <img
-                            src={interviewImage} 
-                            alt="Interview in progress" 
-                            style={{
-                                maxWidth: '220px',
-                                maxHeight: '220px',
-                                objectFit: 'contain',
-                                filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.15))',
-                                animation: speakingState === 'user' ? 'centerAISpeaking 1.8s ease-in-out infinite' : 'none',
-                                transition: 'all 0.5s ease',
-                                borderRadius: '12px'
-                            }}
-                        />
-                    
-
-                    <div style={{
-                        marginTop: '20px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '15px'
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: Colors.ACCENT_COLOR,
+                    marginBottom: '2px'
                     }}>
-                        {speakingState === 'user' && !isMicMuted && (
-                            <WaveformVisualization 
-                                audioLevel={audioLevel} 
-                                isActive={speakingState === 'user' && !isMicMuted} 
-                            />
-                        )}
-                        
-                        {speakingState === 'user' && isMicMuted && (
-                            <div style={{
-                                backgroundColor: 'rgba(255, 68, 68, 0.1)',
-                                color: '#FF4444',
-                                padding: '8px 16px',
-                                borderRadius: '20px',
-                                fontSize: '13px',
-                                fontWeight: '500',
-                                border: '1px solid rgba(255, 68, 68, 0.3)'
-                            }}>
-                                Microphone is muted
-                            </div>
-                        )}
-
-                        {speakingState === 'user' ? (
-                            <div style={{
-                                backgroundColor: Color.ACCENT_COLOR,
-                                color: 'white',
-                                padding: '10px 20px',
-                                borderRadius: '25px',
-                                fontSize: '15px',
-                                fontWeight: '600',
-                                boxShadow: '0 4px 12px rgba(139, 21, 255, 0.4)',
-                                animation: 'pulse 1s infinite',
-                                border: '2px solid rgba(255, 255, 255, 0.2)'
-                            }}>
-                                You are speaking...
-                            </div>
-                        ) : speakingState === 'ai' ? (
-                            <div style={{
-                                backgroundColor: 'rgba(255,255,255,0.9)',
-                                color: Colors.ACCENT_COLOR,
-                                padding: '10px 20px',
-                                borderRadius: '25px',
-                                fontSize: '15px',
-                                fontWeight: '600',
-                                boxShadow: '0 2px 8px rgba(139, 21, 255, 0.2)',
-                                border: '2px solid rgba(139, 21, 255, 0.3)',
-                                animation: 'pulse 1.5s infinite'
-                            }}>
-                                AI is speaking...
-                            </div>
-                        ) : (
-                            <div style={{
-                                backgroundColor: 'rgba(255,255,255,0.9)',
-                                color: Colors.SECONDARY_TEXT_COLOR,
-                                padding: '10px 20px',
-                                borderRadius: '25px',
-                                fontSize: '15px',
-                                fontWeight: '500',
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                                border: '2px solid rgba(255, 255, 255, 0.3)'
-                            }}>
-                                Ready for interview
-                            </div>
-                        )}
-                    </div>
+                    Time: {formatTime(elapsedTime)}
                 </div>
-
-                <div style={{
-                    position: 'absolute',
-                    top: '25px',
-                    right: '25px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    background: 'linear-gradient(145deg, rgba(255,255,255,0.95), rgba(255,255,255,0.85))',
-                    backdropFilter: 'blur(10px)',
-                    padding: '18px', 
-                    borderRadius: '18px',
-                    boxShadow: speakingState === 'ai' ? '0 8px 32px rgba(139, 21, 255, 0.4), 0 0 0 2px rgba(139, 21, 255, 0.2)' : '0 6px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.5)',
-                    minWidth: '130px',
-                    animation: speakingState === 'ai' ? 'aiSpeaking 1.5s ease-in-out infinite' : 'none',
-                    transform: speakingState === 'ai' ? 'scale(1.03)' : 'scale(1)',
-                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
-                }}>
-                    <div style={{ position: 'relative' }}>
-                        <div style={{
-                            width: '56px',
-                            height: '56px',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginBottom: '10px',
-                            position: 'relative',
-                            zIndex: 2,
-                            boxShadow: '0 4px 12px rgba(139, 21, 255, 0.3)',
-                            border: '2px solid rgba(255,255,255,0.2)',
-                            padding: '4px',
-                            overflow: 'hidden'
-                        }}>
-                            <img 
-                                src={aiInterviewer} 
-                                alt="AI Interviewer" 
-                                style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    borderRadius: '50%',
-                                    objectFit: 'cover'
-                                }}
-                            />
-                        </div>
-                        
-                        {speakingState === 'ai' && (
-                            <>
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '50%',
-                                    left: '50%',
-                                    transform: 'translate(-50%, -50%)',
-                                    width: '70px',
-                                    height: '70px',
-                                    borderRadius: '50%',
-                                    border: '3px solid rgba(139, 21, 255, 0.4)',
-                                    animation: 'soundWaves 1.2s ease-out infinite'
-                                }}></div>
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '50%',
-                                    left: '50%',
-                                    transform: 'translate(-50%, -50%)',
-                                    width: '85px',
-                                    height: '85px',
-                                    borderRadius: '50%',
-                                    border: '2px solid rgba(139, 21, 255, 0.25)',
-                                    animation: 'soundWaves 1.2s ease-out infinite 0.2s'
-                                }}></div>
-                            </>
-                        )}
-                    </div>
-                    
-                    <div style={{
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        color: speakingState === 'ai' ? Colors.ACCENT_COLOR : Colors.PRIMARY_COLOR,
-                        textAlign: 'center',
-                        marginBottom: '6px',
-                        transition: 'color 0.3s ease'
-                    }}>
-                        AI Interviewer
-                    </div>
-                    
-                    <div style={{
-                        fontSize: '11px',
-                        color: speakingState === 'ai' ? Colors.ACCENT_COLOR : Colors.SECONDARY_TEXT_COLOR,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        backgroundColor: speakingState === 'ai' ? 'rgba(139, 21, 255, 0.1)' : 'rgba(76, 175, 80, 0.1)',
-                        padding: '4px 8px',
-                        borderRadius: '12px'
-                    }}>
-                        <div style={{
-                            width: '7px',
-                            height: '7px',
-                            borderRadius: '50%',
-                            backgroundColor: speakingState === 'ai' ? '#FF6B6B' : '#4CAF50',
-                            animation: speakingState === 'ai' ? 'pulse 0.8s infinite' : 'pulse 2s infinite',
-                            boxShadow: `0 0 6px ${speakingState === 'ai' ? '#FF6B6B' : '#4CAF50'}`
-                        }}></div>
-                        {speakingState === 'ai' ? 'Speaking' : 'Listening'}
-                    </div>
-                </div>
-                
             </div>
 
             <div style={{
-                width: '100%',
-                borderRadius: '15px',
-                padding: '15px 0px',
-                marginBottom: '20px',
-                backdropFilter: 'blur(10px)',
-                gap: '20px',
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(20px)',
+                borderRadius: '16px',
+                padding: '10px',
                 display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'start',
-                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '12px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                minWidth: '180px'
             }}>
+                <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    boxShadow: '0 4px 16px rgba(102, 126, 234, 0.3)'
+                }}>
+                    <img 
+                        src={profileImage} 
+                        alt="AI Interviewer" 
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover'
+                        }}
+                    />
+                </div>
+                <div style={{ flex: 1 }}>
+                    <div style={{
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        color: Colors.PRIMARY_COLOR,
+                        marginBottom: '2px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                    }}>
+                        AI Assistant
+                    </div>
+                    <div style={{
+                        fontSize: '14px',
+                        color: Colors.SECONDARY_TEXT_COLOR,
+                        fontWeight: '500'
+                    }}>
+                        Software Engineer
+                    </div>
+                </div>
+                <div style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    backgroundColor: '#4CAF50',
+                    boxShadow: '0 0 8px rgba(76, 175, 80, 0.5)'
+                }}></div>
+            </div>
+
+            <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '32px',
+                zIndex: 1
+            }}>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    padding: '24px 48px',
+                    borderRadius: '24px',
+                    transition: 'all 0.3s ease',
+                    minWidth: '320px',
+                    minHeight: '120px'
+                }}>
+                    {Array.from({ length: 20 }, (_, i) => {
+                        const isActive = isConnected && ((speakingState === 'user' && !isMicMuted) || speakingState === 'ai');
+                        const baseHeight = 12;
+                        const maxHeight = 80; 
+                        
+                        const audioInfluence = Math.pow(audioLevel * 2, 1.5);
+                        const randomVariation = Math.sin((Date.now() / 120) + i * 0.8) * 0.4 + 0.6;
+                        
+                        let height;
+                        if (isActive || audioLevel > 0.05) {
+                            height = baseHeight + (audioInfluence + randomVariation * 0.3) * (maxHeight - baseHeight);
+
+                            if (audioLevel > 0.3) {
+                                height *= 1.2;
+                            }
+                        } else {
+                            height = baseHeight + randomVariation * 3;
+                        }
+                
+                        return (
+                            <div
+                                key={i}
+                                style={{
+                                    width: '5px',
+                                    height: `${Math.max(baseHeight, Math.min(height, maxHeight + 20))}px`,
+                                    backgroundColor: Colors.ACCENT_COLOR,
+                                    borderRadius: '3px',
+                                    transition: 'all 0.1s ease',
+                                    opacity: (audioLevel > 0.05 || isActive) ? 1 : 0.5,
+                                    boxShadow: (audioLevel > 0.2) ? `0 0 8px ${Colors.ACCENT_COLOR}40` : 'none'
+                                }}
+                            />
+                        );
+                    })}
+                </div>
+            </div>
+
+            <div style={{
+                position: 'absolute',
+                bottom: '20px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                gap: '12px',
+                padding: '15px 20px',
+                background: `${Colors.TEXT_WHITE_COLOR}`,
+                backdropFilter: 'blur(20px)',
+                borderRadius: '20px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)'
+            }}>
+                <CircularIconButton 
+                    icon={<RotateCcw />}
+                    buttonId="reconnect"
+                    onClick={handleReconnect}
+                    isActive={!isReconnecting}
+                    tooltip="Reconnect"
+                    size="38px"
+                    iconSize="38px"
+                />
+                
                 <CircularIconButton 
                     icon={isMicMuted ? <MicOff /> : <Mic />}
                     buttonId="mic"
-                    onClick={toggleMicMute}
-                    isActive={!isMicMuted}
+                    onClick={isConnected ? toggleMicMute : undefined}
+                    isActive={!isMicMuted && isConnected}
+                    tooltip={!isConnected ? "Connect to enable microphone" : (isMicMuted ? "Unmute Microphone" : "Mute Microphone")}
+                    size="38px"
+                    iconSize="38px"
                 />
                 
                 <CircularIconButton 
                     icon={isHeadphonesMuted ? <HeadphoneOff /> : <Headphones />}
                     buttonId="headphones"
-                    onClick={toggleHeadphonesMute}
-                    isActive={!isHeadphonesMuted}
+                    onClick={isConnected ? toggleHeadphonesMute : undefined}
+                    isActive={!isHeadphonesMuted && isConnected}
+                    tooltip={!isConnected ? "Connect to enable headphones" : (isHeadphonesMuted ? "Unmute Headphones" : "Mute Headphones")}
+                    size="38px"
+                    iconSize="38px"
                 />
                 
-                <CircularIconButton 
+                <CircularIconButton
                     icon={<Settings />}
                     buttonId="settings"
-                    onClick={() => {/* Handle general settings */}}
-                    isActive={true}
+                    onClick={toggleSettings}
+                    isActive={showSettings}
+                    tooltip="Settings"
+                    size="38px"
+                    iconSize="38px"
                 />
-                {/* <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'start', alignItems: 'start', gap: '15px', width: "100%" }}>
-                    <Mic style={{ fontSize: '30px' }}/>
-                    <select
-                        value={selectedMicId}
-                        onChange={(e) => handleMicrophoneChange(e.target.value)}
-                        style={{
-                            padding: '6px 10px',
-                            borderRadius: '8px',
-                            border: '1px solid rgba(139, 21, 255, 0.2)',
-                            background: 'white',
-                            fontSize: '15px',
-                            width: "60%",
-                            fontWeight: '500',
-                            color: Colors.PRIMARY_COLOR,
-                            cursor: 'pointer',
-                        }}
-                    >
-                        {availableMicrophones.map(mic => (
-                            <option key={mic.deviceId} value={mic.deviceId}>
-                                {mic.label}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'start', alignItems: 'start', gap: '15px', width: "100%" }}>
-                        <Headphones style={{ fontSize: '30px' }}/>
-                        <select
-                            value={selectedHeadphonesId}
-                            onChange={(e) => handleHeadphonesChange(e.target.value)}
-                            style={{
-                                padding: '6px 10px',
-                                borderRadius: '8px',
-                                border: '1px solid rgba(139, 21, 255, 0.2)',
-                                background: 'white',
-                                fontSize: '15px',
-                                fontWeight: '500',
-                                color: Colors.PRIMARY_COLOR,
-                                cursor: 'pointer',
-                                width: "60%",
-                            }}
-                        >
-                            {availableHeadphones.map(mic => (
-                                <option key={mic.deviceId} value={mic.deviceId}>
-                                    {mic.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div> */}
+
+                <CircularIconButton
+                    icon={<Square />}
+                    buttonId="endInterview"
+                    onClick={handleEndInterview}
+                    isActive={showSettings}
+                    tooltip="End Interview"
+                    size="38px"
+                    iconSize="38px"
+                    variant="danger"
+                />
             </div>
+            
+            <SettingsPopup 
+                isVisible={showSettings}
+                onClose={() => setShowSettings(false)}
+                availableMicrophones={availableMicrophones}
+                availableHeadphones={availableHeadphones}
+                selectedMicId={selectedMicId}
+                selectedHeadphonesId={selectedHeadphonesId}
+                onMicrophoneChange={handleMicrophoneChange}
+                onHeadphonesChange={handleHeadphonesChange}
+            />
         </div>
     );
 };

@@ -15,4 +15,3 @@ export { default as SideBarItem } from './SideBarItem';
 export { default as Spinner } from './Spinner';
 export { default as ResumeList } from './ResumeList';
 export { default as FileUpload } from './FileUpload';
-export { default as VADRecorder } from './VADRecorder';

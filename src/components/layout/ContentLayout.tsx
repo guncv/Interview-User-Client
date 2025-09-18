@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import Colors from '../../assets/styles/Color';
 import SideBarItem from '../common/SideBarItem';
-import { AudioLines, LogOut, Menu, Settings, X, Mic } from 'lucide-react';
+import { AudioLines, LogOut, Menu, Settings, X } from 'lucide-react';
 import Size from '../../assets/styles/Size';
 import Fonts from '../../assets/styles/Font';
 import { useLocation } from 'react-router-dom';
@@ -144,7 +144,6 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
 
     const menuItems: { icon: React.ReactNode; text: string; path: string }[] = [
         { icon: <AudioLines style={sideBarItemStyle} />, text: 'Recordings', path: '/recordings' },
-        { icon: <Mic style={sideBarItemStyle} />, text: 'VAD Test', path: '/vad-test' },
     ];
     
     return (

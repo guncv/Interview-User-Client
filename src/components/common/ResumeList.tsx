@@ -126,9 +126,6 @@ const ResumeList = ({
         border: `1px solid ${Colors.LECTURE_CONTENT_PART_COLOR}`,
     };
 
-    console.log("resumes", resumes);
-    console.log("resume default", resumes.default_resume);
-
     return (
         <div style={containerStyle}>
             <div style={tipBoxStyle}>
