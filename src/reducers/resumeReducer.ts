@@ -29,12 +29,12 @@ const initialState: ResumeState = {
     },
     resumeById: {
         id: '',
-        fileName: '',
-        mimeType: '',
-        byteSize: 0,
-        fileUrl: '',
-        createdAt: '',
-        updatedAt: '',
+        file_name: '',
+        mime_type: '',
+        byte_size: 0,
+        file_url: '',
+        created_at: '',
+        updated_at: '',
     },
 };
 

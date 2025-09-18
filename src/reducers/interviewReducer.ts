@@ -32,11 +32,8 @@ const initialState: InterviewState = {
         chat_history: [],
     },
     interviewSessionInformation: {
-        session_id: '',
-        user_id: '',
         position: '',
         file_name: '',
-        storage_key: '',
     },
 };
 

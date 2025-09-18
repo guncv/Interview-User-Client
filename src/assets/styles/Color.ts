@@ -10,6 +10,12 @@ const Colors = {
     SIDEBAR_COLOR: '#170833',
     CONTENT_HOVER_COLOR: '#DAE6FA',
     LINK_COLOR: '#007BFF',
+    // Additional colors for issue report components
+    BACKGROUND_COLOR: '#FFFFFF',
+    BORDER_COLOR: '#E1E5E9',
+    TEXT_TERTIARY_COLOR: '#9CA3AF',
+    SUCCESS_COLOR: '#28A745',
+    WARNING_COLOR: '#FFC107',
 };
 
 export default Colors;

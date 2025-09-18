@@ -44,7 +44,7 @@ const SideBarItem = ({ icon, text , isActive, onClick, isMenu }: SideBarItemProp
         display: 'flex',
         flexDirection: 'row',
         justifyContent: 'start',
-        color: isMobile || isTablet ? Colors.TEXT_WHITE_COLOR : Colors.PRIMARY_COLOR,
+        color: isMobile || isTablet ? Colors.TEXT_WHITE_COLOR : isActive ? Colors.ACCENT_COLOR : Colors.PRIMARY_COLOR,
         alignItems: 'center',
         width: '70%',
         fontSize: '15px',

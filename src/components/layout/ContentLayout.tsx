@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import Colors from '../../assets/styles/Color';
 import SideBarItem from '../common/SideBarItem';
-import { AudioLines, LogOut, Menu, Settings, X } from 'lucide-react';
+import { AudioLines, LogOut, Menu, MessageSquareWarning, Settings, X } from 'lucide-react';
 import Size from '../../assets/styles/Size';
 import Fonts from '../../assets/styles/Font';
 import { useLocation } from 'react-router-dom';
@@ -183,6 +183,13 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
 
                     <div style={{ paddingBottom: '20px' }}>
                         <div style={sideBarItemContainerStyle}>
+                            <SideBarItem
+                            icon={<MessageSquareWarning style={sideBarItemStyle} />}
+                            text="Report Issue"
+                            isActive={isActive('/report-issue')}
+                            onClick={() => {handleNavigate('/report-issue')}}
+                            isMenu={false}
+                            />
                             <SideBarItem
                             icon={<Settings style={sideBarItemStyle} />}
                             text="Settings"

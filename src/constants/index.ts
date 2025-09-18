@@ -1,5 +1,6 @@
 // API Constants
 export const API_ENDPOINTS = {
+  // Auth API
   SIGN_UP: '/api/v1/auth/sign-up',
   SIGN_IN: '/api/v1/auth/sign-in',
   VERIFY_EMAIL: '/api/v1/auth/verify-email',
@@ -9,14 +10,19 @@ export const API_ENDPOINTS = {
   SIGN_OUT: '/api/v1/auth/sign-out',
   REFRESH_TOKEN: '/api/v1/auth/refresh-token',
 
+  // Resume API
   LIST_RESUME: '/api/v1/resumes/list',
   GET_RESUME_BY_ID: '/api/v1/resumes',
   DOWNLOAD_RESUME_BY_SESSION_TOKEN: '/api/v1/resumes/download',
 
+  // Interview API
   CREATE_SESSION_WITH_NEW_RESUME: '/api/v1/sessions',
   CREATE_SESSION_WITH_EXISTING_RESUME: '/api/v1/sessions/existing',
   GET_CHAT_HISTORY_BY_SESSION_TOKEN: '/api/v1/sessions/chat-history',
   GET_INTERVIEW_SESSION_INFORMATION: '/api/v1/sessions/information',
+
+  // Issue Report API
+  LIST_ISSUE_REPORTS: '/api/v1/issue-reports',
 } as const;
 
 export const WEBSOCKET_TYPES = {
