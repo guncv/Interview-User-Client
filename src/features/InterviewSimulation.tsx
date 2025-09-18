@@ -9,16 +9,14 @@ import { Colors } from "../assets/styles";
 import ContentLayout from "../components/layout/ContentLayout";
 import { useDispatch } from "react-redux";
 import { getInterviewSessionInformation } from "../actions/interviewAction";
-
+import { useContextProvider } from "../components/layout/ContextProvider";
 const audioQueue: ArrayBuffer[] = [];
 let audioPlaying = false;
 const audioCtx = new AudioContext();
 
 async function playBinaryAudio(buffer: ArrayBuffer, setIsAiSpeaking: (speaking: boolean) => void, isHeadphonesMuted: boolean, isConnected: boolean) {
-    // Don't play audio if not connected
     if (!isConnected) {
         console.warn("⚠️ Skipping audio playback - not connected to server");
-        // Clear the audio queue when not connected
         audioQueue.length = 0;
         return;
     }
@@ -44,7 +42,6 @@ async function playBinaryAudio(buffer: ArrayBuffer, setIsAiSpeaking: (speaking: 
                 const source = audioCtx.createBufferSource();
                 source.buffer = audioBuffer;
                 
-                // Create gain node to control volume based on headphone mute state
                 const gainNode = audioCtx.createGain();
                 gainNode.gain.value = isHeadphonesMuted ? 0 : 1;
                 
@@ -93,6 +90,7 @@ const InterviewSimulation = () => {
     const dispatch = useDispatch();
     const [elapsedTime, setElapsedTime] = useState<number>(0);
     const [startTime] = useState<number>(Date.now());
+    const { isMobile, isTablet } = useContextProvider();
 
     const getConnectionStatusMessage = (): string => {
         switch (connectionState) {
@@ -101,9 +99,9 @@ const InterviewSimulation = () => {
             case 'connected':
                 return '🟢 Connected to Server ✓';
             case 'disconnected':
-                return '🔴 Disconnected from Server - Click reconnect button to retry';
+                return '🔴 Disconnected from Server';
             case 'error':
-                return '🔴 Connection error from Server - Click reconnect button to retry';
+                return '🔴 Connection error from Server';
             default:
                 return '🟡 Connecting to Server...';
         }
@@ -112,12 +110,12 @@ const InterviewSimulation = () => {
     const getConnectionStatusColor = (): string => {
         switch (connectionState) {
             case 'connected':
-                return '#4CAF50'; // Green
+                return '#4CAF50';
             case 'connecting':
-                return '#FF9800'; // Orange
+                return '#FF9800';
             case 'disconnected':
             case 'error':
-                return '#F44336'; // Red
+                return '#F44336';
             default:
                 return Colors.PRIMARY_COLOR;
         }
@@ -174,9 +172,9 @@ const InterviewSimulation = () => {
             case WEBSOCKET_TYPES.INTERVIWER_RESPONSE:
                 if (sessionId) {
                     const segment_id = generateSegmentId(sessionId);
+                    console.log("Received interviewer response", response.message);
                     chatHistoryRef.current?.handlePartialTranscript(segment_id, response.message, "interviewer");
                 } else {
-                    console.warn("⚠️ Received interviewer response but no sessionId available");
                 }
                 break;
             case "error":
@@ -203,7 +201,6 @@ const InterviewSimulation = () => {
 
             websocketRef.current.onopen = () => {
                 console.log("WebSocket connection opened");
-                // Note: We'll set to 'connected' when we receive CONNECTION_ESTABLISHED message
             };
 
             websocketRef.current.onclose = (event) => {
@@ -211,7 +208,6 @@ const InterviewSimulation = () => {
                 setConnectionState('disconnected');
                 setSessionId(null);
                 
-                // No automatic reconnection - user must manually reconnect
                 console.log("Connection closed. Use the reconnect button to reconnect manually.");
             };
 
@@ -274,7 +270,7 @@ const InterviewSimulation = () => {
             <div style={{ width: '100%', height: '100vh', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-start', padding: '20px 20px 0 20px' }}>
                     <div style={{
-                        fontSize: '18px',
+                        fontSize: isMobile ? '16px' : '18px',
                         fontWeight: '600',
                         color: Colors.PRIMARY_COLOR,
                         display: 'flex',
@@ -289,7 +285,7 @@ const InterviewSimulation = () => {
 
                 <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', padding: '0 20px 5px 20px' }}>
                     <div style={{
-                        fontSize: '15px',
+                        fontSize: isMobile ? '12px' : '15px',
                         color: getConnectionStatusColor(),
                         fontWeight: '500',
                         display: 'flex',
@@ -315,7 +311,7 @@ const InterviewSimulation = () => {
                 <div style={{borderBottom: `1px solid ${Colors.SECONDARY_TEXT_COLOR}`}}></div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-                    <div style={{ width: '50%'}}>
+                    <div style={{ width: isMobile ? '80%' : isTablet ? '70%' : '60%'}}>
                         <InterviewRecording
                             websocketUrl={websocketUrl}
                             sessionToken={sessionTokenParam || ''}
@@ -329,7 +325,7 @@ const InterviewSimulation = () => {
                             isConnected={connectionState === 'connected'}
                         />
                     </div>
-                    <div style={{ width: '50%', height: '100%', overflow: 'hidden' }}>
+                    <div style={{ width: isMobile ? '80%' : isTablet ? '70%' : '60%', overflow: 'hidden' }}>
                         <ChatHistory ref={chatHistoryRef} session_token={sessionTokenParam || ''} />
                     </div>
                 </div>

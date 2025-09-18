@@ -1,6 +1,7 @@
 import React from "react";
 import { Mic, Headphones } from 'lucide-react';
 import Colors from "../../assets/styles/Color";
+import { useContextProvider } from "../layout/ContextProvider";
 
 interface MicrophoneDevice {
     deviceId: string;
@@ -29,6 +30,7 @@ const SettingsPopup: React.FC<SettingsPopupProps> = ({
     onHeadphonesChange
 }) => {
     if (!isVisible) return null;
+    const { isMobile } = useContextProvider();
 
     return (
         <>
@@ -51,7 +53,7 @@ const SettingsPopup: React.FC<SettingsPopupProps> = ({
                 borderRadius: '12px',
                 boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
                 padding: '20px',
-                minWidth: '500px',
+                minWidth: isMobile ? '90vw' : '500px',
                 zIndex: 10000,
                 border: '1px solid rgba(139, 21, 255, 0.1)'
             }}>
@@ -74,7 +76,7 @@ const SettingsPopup: React.FC<SettingsPopupProps> = ({
                 }}>
                     <Mic style={{ fontSize: '18px', color: Colors.ACCENT_COLOR }} />
                     <span style={{
-                        fontSize: '14px',
+                        fontSize: isMobile ? '12px' : '14px',
                         fontWeight: '500',
                         color: Colors.PRIMARY_COLOR
                     }}>
@@ -90,7 +92,7 @@ const SettingsPopup: React.FC<SettingsPopupProps> = ({
                         borderRadius: '8px',
                         border: '1px solid rgba(139, 21, 255, 0.2)',
                         background: 'white',
-                        fontSize: '14px',
+                        fontSize: isMobile ? '12px' : '14px',
                         fontWeight: '500',
                         color: Colors.PRIMARY_COLOR,
                         cursor: 'pointer',
@@ -114,7 +116,7 @@ const SettingsPopup: React.FC<SettingsPopupProps> = ({
                 }}>
                     <Headphones style={{ fontSize: '18px', color: Colors.ACCENT_COLOR }} />
                     <span style={{
-                        fontSize: '14px',
+                        fontSize: isMobile ? '12px' : '14px',
                         fontWeight: '500',
                         color: Colors.PRIMARY_COLOR
                     }}>
@@ -130,7 +132,7 @@ const SettingsPopup: React.FC<SettingsPopupProps> = ({
                         borderRadius: '8px',
                         border: '1px solid rgba(139, 21, 255, 0.2)',
                         background: 'white',
-                        fontSize: '14px',
+                        fontSize: isMobile ? '12px' : '14px',
                         fontWeight: '500',
                         color: Colors.PRIMARY_COLOR,
                         cursor: 'pointer',
@@ -158,7 +160,7 @@ const SettingsPopup: React.FC<SettingsPopupProps> = ({
                         color: 'white',
                         border: 'none',
                         borderRadius: '8px',
-                        width: '200px',
+                        width: isMobile ? '150px' : '200px',
                         fontSize: '14px',
                         fontWeight: '500',
                         cursor: 'pointer',

@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { getChatHistoryBySessionToken } from "../../actions/interviewAction";
 import type { RootState } from "../../reducers/rootReducer";
 import Colors from "../../assets/styles/Color";
+import { useContextProvider } from "../layout/ContextProvider";
 
 interface ChatHistoryProps {
     session_token: string;
@@ -25,6 +26,7 @@ const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_toke
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const [chatMap, setChatMap] = useState<Map<string, ChatMessage>>(new Map());
     const [chatOrder, setChatOrder] = useState<string[]>([]);
+    const { isMobile, isTablet } = useContextProvider();
 
     useEffect(() => {
         if (chatContainerRef.current) {
@@ -65,12 +67,11 @@ const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_toke
     }));
     
     return (
-        <div style={{ height: '100%', display: 'flex',marginRight: '20px', flexDirection: 'column', backgroundColor: Colors.ACCENT_COLOR_LIGHT, borderRadius: '20px' }}>
+        <div style={{ height: '40vh', display: 'flex',marginRight: '20px', flexDirection: 'column', borderRadius: '20px', width: isMobile || isTablet ? '100%' : '50vw'}}>
             <div style={{
-                fontSize: '25px',
+                fontSize: isMobile ? '16px' : '20px',
                 fontWeight: '600',
-                marginBottom: '12px',
-                marginTop: '20px',
+                marginBottom: '10px',
                 textAlign: 'center',
                 flexShrink: 0,
             }}>
@@ -81,8 +82,8 @@ const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_toke
                 borderBottomColor: Colors.SECONDARY_TEXT_COLOR,
                 borderBottomWidth: '1px',
                 borderBottomStyle: 'solid',
+                width: '100%',
             }}>
-
             </div>
 
             <div ref={chatContainerRef} style={{
@@ -123,7 +124,7 @@ const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_toke
                             }}>
                                 {chat.actor === 'user' ? 'You' : 'Interviewer'}
                             </div>
-                            <div style={{ fontSize: '14px', lineHeight: '1.4' }}>
+                            <div style={{ fontSize: isMobile ? '12px' : '14px', lineHeight: '1.4' }}>
                                 {chat.transcript_text}
                             </div>
                             <div style={{

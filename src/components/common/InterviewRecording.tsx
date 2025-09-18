@@ -6,6 +6,7 @@ import CircularIconButton from './CircularIconButton';
 import SettingsPopup from '../dialog/SettingsPopup';
 import { downloadResumeBySessionToken } from "../../actions/resumeAction";
 import profileImage from "../../assets/images/profile.png";
+import { useContextProvider } from "../layout/ContextProvider";
 
 interface InterviewRecordingProps {
     websocketUrl?: string;
@@ -71,6 +72,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     const mediaStreamRef = useRef<MediaStream | null>(null);
     const gainNodeRef = useRef<GainNode | null>(null);
     const dispatch = useDispatch();
+    const { isMobile, isTablet } = useContextProvider();
 
     const formatTime = (milliseconds: number): string => {
         const totalSeconds = Math.floor(milliseconds / 1000);
@@ -182,7 +184,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 
                 updateAudioLevel();
             } catch (error) {
-                console.error('❌ Failed to initialize audio analysis:', error);
             }
         };
 
@@ -243,43 +244,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
             }));
         }
     };
-
-    // const WaveformVisualization: React.FC<{ audioLevel: number; isActive: boolean }> = ({ audioLevel, isActive }) => {
-    //     const bars = Array.from({ length: 12 }, (_, i) => {
-    //         const height = isActive ? Math.max(0.1, audioLevel + Math.random() * 0.3) : 0.1;
-    //         const delay = i * 0.1;
-            
-    //         return (
-    //             <div
-    //                 key={i}
-    //                 style={{
-    //                     width: '3px',
-    //                     height: `${height * 30 + 5}px`,
-    //                     backgroundColor: isActive ? Colors.ACCENT_COLOR : Colors.SECONDARY_TEXT_COLOR,
-    //                     borderRadius: '2px',
-    //                     animation: isActive ? `waveformBounce 0.8s ease-in-out infinite ${delay}s` : 'none',
-    //                     opacity: isActive ? 0.8 + height * 0.2 : 0.3,
-    //                     transition: 'all 0.2s ease'
-    //                 }}
-    //             />
-    //         );
-    //     });
-
-    //     return (
-    //         <div style={{
-    //             display: 'flex',
-    //             alignItems: 'end',
-    //             gap: '2px',
-    //             height: '40px',
-    //             padding: '5px 10px',
-    //             background: 'rgba(255, 255, 255, 0.1)',
-    //             borderRadius: '8px',
-    //             backdropFilter: 'blur(5px)'
-    //         }}>
-    //             {bars}
-    //         </div>
-    //     );
-    // };
 
     const handleDownloadResume = () => {
         dispatch(downloadResumeBySessionToken(sessionToken || ''));
@@ -393,8 +357,8 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
 
     return (
         <div style={{ 
-            width: '50vw',
-            height: '40vh',
+            width: isMobile || isTablet ? '100%' : '50vw',
+            height: isMobile ? '30vh' : isTablet ? '35vh' : '40vh',
             position: 'relative',
             background: `${Colors.CONTENT_HOVER_COLOR}`,
             borderRadius: '24px',
@@ -441,7 +405,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 gap: '12px',
                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
-                minWidth: '180px'
+                minWidth: isMobile ? '0px' : '180px'
             }}>
                 <div style={{
                     width: '48px',
@@ -460,33 +424,38 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                         }}
                     />
                 </div>
-                <div style={{ flex: 1 }}>
-                    <div style={{
-                        fontSize: '16px',
-                        fontWeight: '600',
-                        color: Colors.PRIMARY_COLOR,
-                        marginBottom: '2px',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                    }}>
-                        AI Assistant
-                    </div>
-                    <div style={{
-                        fontSize: '14px',
-                        color: Colors.SECONDARY_TEXT_COLOR,
-                        fontWeight: '500'
-                    }}>
-                        Software Engineer
-                    </div>
-                </div>
-                <div style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    backgroundColor: '#4CAF50',
-                    boxShadow: '0 0 8px rgba(76, 175, 80, 0.5)'
-                }}></div>
+
+                {!isMobile && (
+                    <>
+                        <div style={{ flex: 1 }}>
+                            <div style={{
+                                fontSize: '16px',
+                                fontWeight: '600',
+                                color: Colors.PRIMARY_COLOR,
+                                marginBottom: '2px',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                            }}>
+                                AI Assistant
+                            </div>
+                            <div style={{
+                                fontSize: '14px',
+                                color: Colors.SECONDARY_TEXT_COLOR,
+                                fontWeight: '500'
+                            }}>
+                                Software Engineer
+                            </div>
+                        </div>
+                        <div style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: '#4CAF50',
+                            boxShadow: '0 0 8px rgba(76, 175, 80, 0.5)'
+                        }}></div>
+                    </>
+                )}
             </div>
 
             <div style={{
@@ -552,14 +521,14 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 transform: 'translateX(-50%)',
                 display: 'flex',
                 gap: '12px',
-                padding: '15px 20px',
+                padding: isMobile ? '10px 15px' : '15px 20px',
                 background: `${Colors.TEXT_WHITE_COLOR}`,
                 backdropFilter: 'blur(20px)',
                 borderRadius: '20px',
                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
                 border: '1px solid rgba(255, 255, 255, 0.2)'
             }}>
-                <CircularIconButton 
+                <CircularIconButton
                     icon={<RotateCcw />}
                     buttonId="reconnect"
                     onClick={handleReconnect}
@@ -569,7 +538,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                     iconSize="38px"
                 />
                 
-                <CircularIconButton 
+                <CircularIconButton
                     icon={isMicMuted ? <MicOff /> : <Mic />}
                     buttonId="mic"
                     onClick={isConnected ? toggleMicMute : undefined}
@@ -579,7 +548,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                     iconSize="38px"
                 />
                 
-                <CircularIconButton 
+                <CircularIconButton
                     icon={isHeadphonesMuted ? <HeadphoneOff /> : <Headphones />}
                     buttonId="headphones"
                     onClick={isConnected ? toggleHeadphonesMute : undefined}
@@ -611,7 +580,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 />
             </div>
             
-            <SettingsPopup 
+            <SettingsPopup
                 isVisible={showSettings}
                 onClose={() => setShowSettings(false)}
                 availableMicrophones={availableMicrophones}

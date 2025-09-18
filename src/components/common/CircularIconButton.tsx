@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Colors from '../../assets/styles/Color';
+import { useContextProvider } from '../layout/ContextProvider';
 
 interface CircularIconButtonProps {
     icon: React.ReactElement<any>;
@@ -24,8 +25,8 @@ const CircularIconButton: React.FC<CircularIconButtonProps> = ({
 }) => {
     const [hoveredButton, setHoveredButton] = useState<string | null>(null);
     const isHovered = hoveredButton === buttonId;
-    
-    // Define colors based on variant
+    const { isMobile } = useContextProvider();
+
     const isDanger = variant === 'danger';
     const borderColor = isDanger 
         ? (isHovered ? '#FF4444' : Colors.TEXT_ERROR_COLOR)
@@ -37,21 +38,21 @@ const CircularIconButton: React.FC<CircularIconButtonProps> = ({
 
     return (
         <div style={{ position: 'relative', display: 'inline-block' }}>
-            <div 
-                style={{ 
-                    display: 'flex', 
-                    flexDirection: 'row', 
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'row',
                     justifyContent: 'center',
                     alignItems: 'center',
                     border: `1px solid ${borderColor}`,
-                    padding: '10px',
+                    padding: isMobile ? '5px' : '10px',
                     borderRadius: '50%',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
-                    width: size,
-                    height: size,
-                    minWidth: size,
-                    minHeight: size,
+                    width: isMobile ? '25px' : size,
+                    height: isMobile ? '25px' : size,
+                    minWidth: isMobile ? '25px' : size,
+                    minHeight: isMobile ? '25px' : size,
                     backgroundColor: backgroundColor
                 }}
                 onMouseEnter={() => {

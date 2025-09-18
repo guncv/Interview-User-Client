@@ -26,7 +26,8 @@ const SideBarItem = ({ icon, text , isActive, onClick, isMenu }: SideBarItemProp
         backgroundColor: hover ? isActive ? Colors.ACCENT_COLOR_LIGHT : Colors.CONTENT_HOVER_COLOR : '',
         paddingTop: '15px',
         paddingBottom: '15px',
-        color: isActive ? Colors.ACCENT_COLOR : Colors.PRIMARY_COLOR,
+        color: isActive ? isTablet || isMobile ? Colors.TEXT_WHITE_COLOR : Colors.ACCENT_COLOR :
+            isTablet || isMobile ? isMenu ? Colors.PRIMARY_COLOR : Colors.TEXT_WHITE_COLOR : Colors.PRIMARY_COLOR ,
     };
 
     const iconContainerStyle: CSSProperties = {
@@ -43,6 +44,7 @@ const SideBarItem = ({ icon, text , isActive, onClick, isMenu }: SideBarItemProp
         display: 'flex',
         flexDirection: 'row',
         justifyContent: 'start',
+        color: isMobile || isTablet ? Colors.TEXT_WHITE_COLOR : Colors.PRIMARY_COLOR,
         alignItems: 'center',
         width: '70%',
         fontSize: '15px',

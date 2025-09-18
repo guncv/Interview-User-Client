@@ -174,6 +174,7 @@ const CreateInterviewPage = () => {
           gap: isMobile ? Size.Small : isTablet ? Size.Medium : Size.Medium,
           overflow: 'auto',
           minHeight: '100vh',
+          padding: "20px",
           width: '100%',
           maxWidth: '100vw',
           paddingBottom: (isMobile || isTablet) ? '80px' : '40px',
