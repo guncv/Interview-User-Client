@@ -89,7 +89,7 @@ const InterviewSimulation = () => {
     const chatHistoryRef = useRef<ChatHistoryRef>(null);
     const dispatch = useDispatch();
     const [elapsedTime, setElapsedTime] = useState<number>(0);
-    const [startTime] = useState<number>(Date.now());
+    const [serverStartTime, setServerStartTime] = useState<string | null>(null);
     const { isMobile, isTablet } = useContextProvider();
 
     const getConnectionStatusMessage = (): string => {
@@ -130,13 +130,18 @@ const InterviewSimulation = () => {
 
     useEffect(() => {
         const timer = setInterval(() => {
-            setElapsedTime(Date.now() - startTime);
+            if (serverStartTime) {
+                const serverStartDate = new Date(serverStartTime);
+                const now = new Date();
+                const elapsed = now.getTime() - serverStartDate.getTime();
+                setElapsedTime(elapsed);
+            }
         }, 1000);
 
         return () => {
             clearInterval(timer);
         };
-    }, [startTime]);
+    }, [serverStartTime]);
 
     const handleUserSpeakingChange = useCallback((speaking: boolean) => {
         setIsUserSpeaking(speaking && !isMicMuted);
@@ -164,7 +169,9 @@ const InterviewSimulation = () => {
         switch (response.type) {
             case WEBSOCKET_TYPES.CONNECTION_ESTABLISHED:
                 setSessionId(response.session_id);
+                setServerStartTime(response.started_at);
                 setConnectionState('connected');
+                console.log('Interview session started at:', response.started_at);
                 break;
             case WEBSOCKET_TYPES.USER_PARTIAL_TRANSCRIPT:
                 chatHistoryRef.current?.handlePartialTranscript(response.segment_id, response.transcript, "user");
