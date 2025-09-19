@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { STORAGE_KEYS, WEBSOCKET_TYPES } from "../constants";
 import InterviewRecording from "../components/common/InterviewRecording";
 import { useVoiceStreaming } from "../hook/useVoiceStreaming";
-import { generateSegmentId } from "../utils/generator";
 import { Colors } from "../assets/styles";
 import ContentLayout from "../components/layout/ContentLayout";
 import { useDispatch } from "react-redux";
@@ -170,17 +169,15 @@ const InterviewSimulation = () => {
                 setConnectionState('connected');
                 break;
             case WEBSOCKET_TYPES.USER_PARTIAL_TRANSCRIPT:
-                chatHistoryRef.current?.handlePartialTranscript(response.segment_id, response.transcript, "user");
+                chatHistoryRef.current?.handleFinalTranscript(response.transcript, "user");
                 break;
             case WEBSOCKET_TYPES.CONVERSATION_STARTED:
                 setIsConversationStarted(true);
                 break;
             case WEBSOCKET_TYPES.INTERVIWER_RESPONSE:
-                if (sessionId) {
-                    const segment_id = generateSegmentId(sessionId);
-                    chatHistoryRef.current?.handlePartialTranscript(segment_id, response.message, "interviewer");
-                } else {
-                }
+                console.log("Received interviewer response:", response);
+                chatHistoryRef.current?.handleFinalTranscript(response.message, "interviewer");
+                
                 break;
             case "error":
                 console.error("Server error:", response.message || response);
@@ -207,7 +204,7 @@ const InterviewSimulation = () => {
             websocketRef.current.onopen = () => {
             };
 
-            websocketRef.current.onclose = (event) => {
+            websocketRef.current.onclose = (_event) => {
                 setConnectionState('disconnected');
                 setSessionId(null);
                 
