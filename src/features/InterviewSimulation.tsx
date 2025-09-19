@@ -16,7 +16,6 @@ const audioCtx = new AudioContext();
 
 async function playBinaryAudio(buffer: ArrayBuffer, setIsAiSpeaking: (speaking: boolean) => void, isHeadphonesMuted: boolean, isConnected: boolean) {
     if (!isConnected) {
-        console.warn("⚠️ Skipping audio playback - not connected to server");
         audioQueue.length = 0;
         return;
     }
@@ -90,6 +89,7 @@ const InterviewSimulation = () => {
     const dispatch = useDispatch();
     const [elapsedTime, setElapsedTime] = useState<number>(0);
     const [serverStartTime, setServerStartTime] = useState<string | null>(null);
+    const [isConversationStarted, setIsConversationStarted] = useState<boolean>(false);
     const { isMobile, isTablet } = useContextProvider();
 
     const getConnectionStatusMessage = (): string => {
@@ -147,7 +147,7 @@ const InterviewSimulation = () => {
         setIsUserSpeaking(speaking && !isMicMuted);
     }, [isMicMuted]);
 
-    useVoiceStreaming(websocketRef, sessionId, handleUserSpeakingChange, isMicMuted, connectionState === 'connected');
+    useVoiceStreaming(websocketRef, sessionId, handleUserSpeakingChange, isMicMuted, connectionState === 'connected', isConversationStarted);
 
     const handleMicMuteChange = useCallback((isMuted: boolean) => {
         setIsMicMuted(isMuted);
@@ -162,24 +162,22 @@ const InterviewSimulation = () => {
     }, []);
 
     const handleWebSocketMessage = useCallback((response: any) => {
-        if (connectionState !== 'connected' && response.type !== WEBSOCKET_TYPES.CONNECTION_ESTABLISHED) {
-            return;
-        }
 
         switch (response.type) {
             case WEBSOCKET_TYPES.CONNECTION_ESTABLISHED:
                 setSessionId(response.session_id);
                 setServerStartTime(response.started_at);
                 setConnectionState('connected');
-                console.log('Interview session started at:', response.started_at);
                 break;
             case WEBSOCKET_TYPES.USER_PARTIAL_TRANSCRIPT:
                 chatHistoryRef.current?.handlePartialTranscript(response.segment_id, response.transcript, "user");
                 break;
+            case WEBSOCKET_TYPES.CONVERSATION_STARTED:
+                setIsConversationStarted(true);
+                break;
             case WEBSOCKET_TYPES.INTERVIWER_RESPONSE:
                 if (sessionId) {
                     const segment_id = generateSegmentId(sessionId);
-                    console.log("Received interviewer response", response.message);
                     chatHistoryRef.current?.handlePartialTranscript(segment_id, response.message, "interviewer");
                 } else {
                 }
@@ -207,15 +205,12 @@ const InterviewSimulation = () => {
             websocketRef.current = new WebSocket(wsUrl);
 
             websocketRef.current.onopen = () => {
-                console.log("WebSocket connection opened");
             };
 
             websocketRef.current.onclose = (event) => {
-                console.log("WebSocket closed:", event.code, event.reason);
                 setConnectionState('disconnected');
                 setSessionId(null);
                 
-                console.log("Connection closed. Use the reconnect button to reconnect manually.");
             };
 
             websocketRef.current.onerror = (error) => {
@@ -226,7 +221,6 @@ const InterviewSimulation = () => {
             websocketRef.current.onmessage = async (event) => {
                 try {
                     if (event.data instanceof Blob) {
-                        console.log("Received audio blob");
                         const buffer = await event.data.arrayBuffer();
                         const view = new DataView(buffer);
                 
@@ -236,10 +230,8 @@ const InterviewSimulation = () => {
                         const header = JSON.parse(headerJson);
                 
                         const audioData = buffer.slice(4 + headerLength);
-                        console.log("header", header);
                 
                         if (header.type === WEBSOCKET_TYPES.INTERVIEWER_AUDIO_CHUNKING) {
-                            console.log("Playing audio data");
                             await playBinaryAudio(audioData, setIsAiSpeaking, isHeadphonesMuted, connectionState === 'connected');
                         }
                     } else {
@@ -313,6 +305,20 @@ const InterviewSimulation = () => {
                             }} />
                         )}
                     </div>
+                    {connectionState === 'connected' && !isConversationStarted && (
+                        <div style={{
+                            fontSize: isMobile ? '12px' : '14px',
+                            color: '#FF9800',
+                            fontWeight: '500',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                        }}>
+                            <div>
+                                🟡 Waiting for conversation to start...
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div style={{borderBottom: `1px solid ${Colors.SECONDARY_TEXT_COLOR}`}}></div>
@@ -330,6 +336,7 @@ const InterviewSimulation = () => {
                             websocketRef={websocketRef}
                             elapsedTime={elapsedTime}
                             isConnected={connectionState === 'connected'}
+                            isConversationStarted={isConversationStarted}
                         />
                     </div>
                     <div style={{ width: isMobile ? '80%' : isTablet ? '70%' : '60%', overflow: 'hidden' }}>

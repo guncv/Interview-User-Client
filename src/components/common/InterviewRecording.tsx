@@ -19,6 +19,7 @@ interface InterviewRecordingProps {
     websocketRef?: React.MutableRefObject<WebSocket | null>;
     elapsedTime?: number;
     isConnected?: boolean;
+    isConversationStarted?: boolean;
 }
 
 type SpeakingState = 'ai' | 'user' | 'none';
@@ -46,6 +47,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     websocketRef,
     elapsedTime = 0,
     isConnected = false,
+    isConversationStarted = false,
 }) => {
     void websocketUrl;
     void sessionToken;
@@ -479,6 +481,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 }}>
                     {Array.from({ length: 20 }, (_, i) => {
                         const isActive = isConnected && ((speakingState === 'user' && !isMicMuted) || speakingState === 'ai');
+                        const isConversationReady = isConnected && isConversationStarted;
                         const baseHeight = 12;
                         const maxHeight = 80; 
                         
@@ -502,11 +505,11 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                                 style={{
                                     width: '5px',
                                     height: `${Math.max(baseHeight, Math.min(height, maxHeight + 20))}px`,
-                                    backgroundColor: Colors.ACCENT_COLOR,
+                                    backgroundColor: isConversationReady ? Colors.ACCENT_COLOR : Colors.SECONDARY_TEXT_COLOR,
                                     borderRadius: '3px',
                                     transition: 'all 0.1s ease',
-                                    opacity: (audioLevel > 0.05 || isActive) ? 1 : 0.5,
-                                    boxShadow: (audioLevel > 0.2) ? `0 0 8px ${Colors.ACCENT_COLOR}40` : 'none'
+                                    opacity: isConversationReady ? ((audioLevel > 0.05 || isActive) ? 1 : 0.5) : 0.3,
+                                    boxShadow: (audioLevel > 0.2 && isConversationReady) ? `0 0 8px ${Colors.ACCENT_COLOR}40` : 'none'
                                 }}
                             />
                         );
@@ -541,9 +544,9 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 <CircularIconButton
                     icon={isMicMuted ? <MicOff /> : <Mic />}
                     buttonId="mic"
-                    onClick={isConnected ? toggleMicMute : undefined}
-                    isActive={!isMicMuted && isConnected}
-                    tooltip={!isConnected ? "Connect to enable microphone" : (isMicMuted ? "Unmute Microphone" : "Mute Microphone")}
+                    onClick={isConnected && isConversationStarted ? toggleMicMute : undefined}
+                    isActive={isConnected && isConversationStarted}
+                    tooltip={!isConnected ? "Connect to enable microphone" : !isConversationStarted ? "Wait for conversation to start" : (isMicMuted ? "Unmute Microphone" : "Mute Microphone")}
                     size="38px"
                     iconSize="38px"
                 />
@@ -551,9 +554,9 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 <CircularIconButton
                     icon={isHeadphonesMuted ? <HeadphoneOff /> : <Headphones />}
                     buttonId="headphones"
-                    onClick={isConnected ? toggleHeadphonesMute : undefined}
-                    isActive={!isHeadphonesMuted && isConnected}
-                    tooltip={!isConnected ? "Connect to enable headphones" : (isHeadphonesMuted ? "Unmute Headphones" : "Mute Headphones")}
+                    onClick={isConnected && isConversationStarted ? toggleHeadphonesMute : undefined}
+                    isActive={isConnected && isConversationStarted}
+                    tooltip={!isConnected ? "Connect to enable headphones" : !isConversationStarted ? "Wait for conversation to start" : (isHeadphonesMuted ? "Unmute Headphones" : "Mute Headphones")}
                     size="38px"
                     iconSize="38px"
                 />
@@ -561,9 +564,9 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 <CircularIconButton
                     icon={<Settings />}
                     buttonId="settings"
-                    onClick={toggleSettings}
-                    isActive={showSettings}
-                    tooltip="Settings"
+                    onClick={isConversationStarted ? toggleSettings : undefined}
+                    isActive={isConversationStarted}
+                    tooltip={!isConversationStarted ? "Wait for conversation to start" : "Settings"}
                     size="38px"
                     iconSize="38px"
                 />
@@ -571,9 +574,9 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 <CircularIconButton
                     icon={<Square />}
                     buttonId="endInterview"
-                    onClick={handleEndInterview}
-                    isActive={showSettings}
-                    tooltip="End Interview"
+                    onClick={isConversationStarted ? handleEndInterview : undefined}
+                    isActive={isConversationStarted}
+                    tooltip={!isConversationStarted ? "Wait for conversation to start" : "End Interview"}
                     size="38px"
                     iconSize="38px"
                     variant="danger"

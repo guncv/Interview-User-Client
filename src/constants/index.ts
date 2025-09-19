@@ -36,6 +36,7 @@ export const WEBSOCKET_TYPES = {
   INTERVIEWER_AUDIO_CHUNKING: 'interviewer_audio_chunking',
   USER_PARTIAL_TRANSCRIPT: 'user_partial_transcript',
   INTERVIWER_RESPONSE: 'interviewer_response',
+  CONVERSATION_STARTED: "conversation_started"
 } as const;
 
 export const HTTP_HEADERS = {

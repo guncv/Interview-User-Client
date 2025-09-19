@@ -33,7 +33,8 @@ export function useVoiceStreaming(
     sessionId: string | null,
     onUserSpeakingChange?: (isSpeaking: boolean) => void,
     isMicMuted?: boolean,
-    isConnected?: boolean
+    isConnected?: boolean,
+    isConversationStarted?: boolean
 ) {
     const segmentIdRef = useRef<string | null>(null);
     const silenceTimerRef = useRef<number | null>(null);
@@ -43,7 +44,7 @@ export function useVoiceStreaming(
     const onSegmentStarted = useRef<boolean>(false);
 
     useEffect(() => {
-        if (!sessionId || !isConnected) {
+        if (!sessionId || !isConnected || !isConversationStarted) {
             return;
         }
 
@@ -217,5 +218,5 @@ export function useVoiceStreaming(
             if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
             if (chunkEndTimerRef.current) clearTimeout(chunkEndTimerRef.current);
         };
-    }, [websocketRef, sessionId, onUserSpeakingChange, isMicMuted, isConnected]);
+    }, [websocketRef, sessionId, onUserSpeakingChange, isMicMuted, isConnected, isConversationStarted]);
 }
