@@ -405,9 +405,11 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                minWidth: isMobile ? '0px' : '180px'
+                boxShadow: speakingState === 'ai' ? '0 8px 32px rgba(76, 175, 80, 0.3)' : '0 8px 32px rgba(0, 0, 0, 0.1)',
+                border: speakingState === 'ai' ? '2px solid #4CAF50' : '1px solid rgba(255, 255, 255, 0.2)',
+                minWidth: isMobile ? '0px' : '180px',
+                transition: 'all 0.3s ease',
+                animation: speakingState === 'ai' ? 'aiSpeakingPulse 2s ease-in-out infinite' : 'none'
             }}>
                 <div style={{
                     width: '48px',
@@ -450,11 +452,12 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                             </div>
                         </div>
                         <div style={{
-                            width: '8px',
-                            height: '8px',
+                            width: speakingState === 'ai' ? '12px' : '8px',
+                            height: speakingState === 'ai' ? '12px' : '8px',
                             borderRadius: '50%',
-                            backgroundColor: '#4CAF50',
-                            boxShadow: '0 0 8px rgba(76, 175, 80, 0.5)'
+                            backgroundColor: speakingState === 'ai' ? '#4CAF50' : '#4CAF50',
+                            boxShadow: speakingState === 'ai' ? '0 0 12px rgba(76, 175, 80, 0.8)' : '0 0 8px rgba(76, 175, 80, 0.5)',
+                            transition: 'all 0.3s ease'
                         }}></div>
                     </>
                 )}
@@ -480,8 +483,8 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                     minHeight: '120px'
                 }}>
                     {Array.from({ length: 20 }, (_, i) => {
-                        const isActive = isConnected && ((speakingState === 'user' && !isMicMuted) || speakingState === 'ai');
-                        const isConversationReady = isConnected && isConversationStarted;
+                        const isActive = isConnected && ((speakingState === 'user' && !isMicMuted));
+                        const isConversationReady = isConnected && isConversationStarted && !isAiSpeaking;
                         const baseHeight = 12;
                         const maxHeight = 80; 
                         

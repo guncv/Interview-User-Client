@@ -34,7 +34,8 @@ export function useVoiceStreaming(
     onUserSpeakingChange?: (isSpeaking: boolean) => void,
     isMicMuted?: boolean,
     isConnected?: boolean,
-    isConversationStarted?: boolean
+    isConversationStarted?: boolean,
+    isAiSpeaking?: boolean
 ) {
     const segmentIdRef = useRef<string | null>(null);
     const silenceTimerRef = useRef<number | null>(null);
@@ -128,7 +129,7 @@ export function useVoiceStreaming(
                 const rms = Math.sqrt(sum / dataArray.length);
                 const currentTime = Date.now();
 
-                if (rms > 0.05 && !isMicMuted) { // Lower threshold for more sensitive voice detection
+                if (rms > 0.05 && !isMicMuted && !isAiSpeaking) { // Lower threshold for more sensitive voice detection, but disable when AI is speaking
                     lastSpeechTimeRef.current = currentTime;
                     
                     if (!speakingRef.current && !onSegmentStarted.current) {
@@ -161,6 +162,37 @@ export function useVoiceStreaming(
                         clearTimeout(silenceTimerRef.current);
                         silenceTimerRef.current = null;
                     }
+                } else if (isAiSpeaking && speakingRef.current) {
+                    if (chunkEndTimerRef.current) {
+                        clearTimeout(chunkEndTimerRef.current);
+                        chunkEndTimerRef.current = null;
+                    }
+                    if (silenceTimerRef.current) {
+                        clearTimeout(silenceTimerRef.current);
+                        silenceTimerRef.current = null;
+                    }
+                    
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        mediaRecorder.requestData();
+                    }
+                    
+                    setTimeout(() => {
+                        if (sessionId && segmentIdRef.current && websocketRef.current?.readyState === WebSocket.OPEN) {
+                            websocketRef.current.send(
+                                JSON.stringify({
+                                    type: 'segment_end',
+                                    session_id: sessionId,
+                                    segment_id: segmentIdRef.current,
+                                    ended_at: Date.now() / 1000
+                                })
+                            );
+                        }
+                        
+                        speakingRef.current = false;
+                        onUserSpeakingChange?.(false);
+                        onSegmentStarted.current = false;
+                        segmentIdRef.current = null;
+                    }, 100);
                 } else if (speakingRef.current && segmentIdRef.current) {
                     const silenceDuration = currentTime - lastSpeechTimeRef.current;
                     
@@ -218,5 +250,5 @@ export function useVoiceStreaming(
             if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
             if (chunkEndTimerRef.current) clearTimeout(chunkEndTimerRef.current);
         };
-    }, [websocketRef, sessionId, onUserSpeakingChange, isMicMuted, isConnected, isConversationStarted]);
+    }, [websocketRef, sessionId, onUserSpeakingChange, isMicMuted, isConnected, isConversationStarted, isAiSpeaking]);
 }

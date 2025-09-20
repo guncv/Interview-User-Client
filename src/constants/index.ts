@@ -34,9 +34,21 @@ export const WEBSOCKET_TYPES = {
   START_SEGMENT: 'start_segment',
   END_SEGMENT: 'end_segment',
   INTERVIEWER_AUDIO_CHUNKING: 'interviewer_audio_chunking',
-  USER_PARTIAL_TRANSCRIPT: 'user_partial_transcript',
+  USER_FULL_TRANSCRIPT: 'user_full_transcript',
   INTERVIWER_RESPONSE: 'interviewer_response',
   CONVERSATION_STARTED: "conversation_started"
+} as const;
+
+export const ACTOR = {
+  USER: 'user',
+  INTERVIEWER: 'interviewer',
+} as const;
+
+export const CONVERSATION_STATUS = {
+  CONNECTING: 'connecting',
+  CONNECTED: 'connected',
+  DISCONNECTED: 'disconnected',
+  ERROR: 'error',
 } as const;
 
 export const HTTP_HEADERS = {

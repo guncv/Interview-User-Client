@@ -4,6 +4,7 @@ import { getChatHistoryBySessionToken } from "../../actions/interviewAction";
 import type { RootState } from "../../reducers/rootReducer";
 import Colors from "../../assets/styles/Color";
 import { useContextProvider } from "../layout/ContextProvider";
+import { ACTOR } from "../../constants";
 
 interface ChatHistoryProps {
     session_token: string;
@@ -20,7 +21,7 @@ interface ChatMessage {
 }
 
 export interface ChatHistoryRef {
-    handleFinalTranscript: (transcript: string, actor: "user" | "interviewer") => void;
+    handleFinalTranscript: (response: any, actor: typeof ACTOR.USER | typeof ACTOR.INTERVIEWER) => void;
 }
 
 const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_token }, ref) => {
@@ -43,10 +44,8 @@ const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_toke
     useEffect(() => {
         const combined = [...chatHistory.chat_history, ...chatOrder];
         const lastMsg = combined[combined.length - 1];
-        console.log("last message", lastMsg);
-        console.log("combined", combined);
         
-        if (!lastMsg || lastMsg.actor === "user") {
+        if (!lastMsg || lastMsg.actor === ACTOR.USER) {
             const typingId = "typing_bubble";
             setChatOrder(prev => {
                 if (prev.some(m => m.id === typingId)) return prev;
@@ -54,7 +53,7 @@ const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_toke
                 return [
                 ...prev,
                 {
-                    actor: "interviewer",
+                    actor: ACTOR.INTERVIEWER,
                     transcript_text: "",
                     id: typingId,
                     isTyping: true,
@@ -64,7 +63,7 @@ const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_toke
         } 
     }, [chatHistory, chatOrder]);
 
-    function handleFinalTranscript(transcript: string, actor: "user" | "interviewer") {
+    function handleFinalTranscript(response: any, actor: typeof ACTOR.USER | typeof ACTOR.INTERVIEWER) {
         const messageId = `${actor}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
         setChatOrder(prev => prev.filter(m => !m.isTyping));
@@ -72,13 +71,14 @@ const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_toke
         const newMessage: ChatMessage = {
             actor,
             transcript_text: "",
-            start_at: new Date().toLocaleTimeString(),
+            start_at: "",
+            end_at: "",
             id: messageId,
             isStreaming: true,
         };
         setChatOrder(prev => [...prev, newMessage]);
     
-        const words = transcript.split(" ");
+        const words = response.message.split(" ");
         let i = 0;
     
         const interval = setInterval(() => {
@@ -87,21 +87,34 @@ const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_toke
                 const updated = [...prev];
                 const idx = updated.findIndex(m => m.id === messageId);
                 if (idx !== -1) {
-                updated[idx] = {
-                    ...updated[idx],
-                    transcript_text: words.slice(0, i).join(" "),
-                    isStreaming: i < words.length,
-                    end_at: i === words.length ? new Date().toLocaleTimeString() : undefined,
-                };
+                    updated[idx] = {
+                        ...updated[idx],
+                        transcript_text: words.slice(0, i).join(" "),
+                        isStreaming: i < words.length,
+                    };
                 }
                 return updated;
             });
-        
+    
             if (i >= words.length) {
                 clearInterval(interval);
+                setChatOrder(prev => {
+                    const updated = [...prev];
+                    const idx = updated.findIndex(m => m.id === messageId);
+                    if (idx !== -1) {
+                        updated[idx] = {
+                            ...updated[idx],
+                            start_at: response.started_at,
+                            end_at: response.ended_at,
+                            isStreaming: false,
+                        };
+                    }
+                    return updated;
+                });
             }
         }, 100);
     }
+    
 
     useImperativeHandle(ref, () => ({
         handleFinalTranscript,
@@ -140,7 +153,7 @@ const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_toke
                         key={chat.id}
                         style={{
                             display: 'flex',
-                            justifyContent: chat.actor === 'interviewer' ? 'flex-start' : 'flex-end',
+                            justifyContent: chat.actor === ACTOR.INTERVIEWER ? 'flex-start' : 'flex-end',
                             marginBottom: '8px'
                         }}
                     >
@@ -149,8 +162,8 @@ const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_toke
                                 maxWidth: '70%',
                                 padding: '12px 16px',
                                 borderRadius: '18px',
-                                backgroundColor: chat.actor === 'user' ? Colors.ACCENT_COLOR : Colors.TEXT_WHITE_COLOR,
-                                color: chat.actor === 'user' ? Colors.TEXT_WHITE_COLOR : Colors.PRIMARY_COLOR,
+                                backgroundColor: chat.actor === ACTOR.USER ? Colors.ACCENT_COLOR : Colors.TEXT_WHITE_COLOR,
+                                color: chat.actor === ACTOR.USER ? Colors.TEXT_WHITE_COLOR : Colors.PRIMARY_COLOR,
                                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                                 wordWrap: 'break-word',
                                 position: 'relative'
@@ -162,7 +175,7 @@ const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_toke
                                 marginBottom: '4px',
                                 fontWeight: '500'
                             }}>
-                                {chat.actor === 'user' ? 'You' : 'Interviewer'}
+                                {chat.actor === ACTOR.USER ? 'You' : 'Interviewer'}
                             </div>
                             <div style={{ fontSize: isMobile ? '12px' : '14px', lineHeight: '1.4' }}>
                                 {chat.transcript_text}
@@ -228,18 +241,18 @@ const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_toke
                     }
 
                     return (
-                        <div key={chat.id || index} style={{ display: 'flex', justifyContent: chat.actor === 'interviewer' ? 'flex-start' : 'flex-end' }}>
+                        <div key={chat.id || index} style={{ display: 'flex', justifyContent: chat.actor === ACTOR.INTERVIEWER ? 'flex-start' : 'flex-end' }}>
                             <div style={{
                                 maxWidth: '70%',
                                 padding: '12px 16px',
                                 borderRadius: '18px',
-                                backgroundColor: chat.actor === 'user' ? Colors.ACCENT_COLOR : Colors.TEXT_WHITE_COLOR,
-                                color: chat.actor === 'user' ? Colors.TEXT_WHITE_COLOR : Colors.PRIMARY_COLOR,
+                                backgroundColor: chat.actor === ACTOR.USER ? Colors.ACCENT_COLOR : Colors.TEXT_WHITE_COLOR,
+                                color: chat.actor === ACTOR.USER ? Colors.TEXT_WHITE_COLOR : Colors.PRIMARY_COLOR,
                                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                                 wordWrap: 'break-word',
                             }}>
                                 <div style={{ fontSize: '12px', opacity: 0.7, marginBottom: '4px', fontWeight: 500 }}>
-                                    {chat.actor === 'user' ? 'You' : 'Interviewer'}
+                                    {chat.actor === ACTOR.USER ? 'You' : 'Interviewer'}
                                 </div>
                                 <div style={{ fontSize: '14px', lineHeight: '1.4' }}>
                                     {chat.transcript_text}
@@ -248,22 +261,20 @@ const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_toke
                                             display: 'inline-block',
                                             width: '2px',
                                             height: '16px',
-                                            backgroundColor: chat.actor === 'user' ? Colors.TEXT_WHITE_COLOR : Colors.PRIMARY_COLOR,
+                                            backgroundColor: chat.actor === ACTOR.USER ? Colors.TEXT_WHITE_COLOR : Colors.PRIMARY_COLOR,
                                             marginLeft: '2px',
                                             animation: 'blink 1s infinite'
                                         }}></span>
                                     )}
                                 </div>
-                                {chat.start_at && (
-                                    <div style={{
-                                        fontSize: '10px',
-                                        opacity: 0.6,
-                                        marginTop: '4px',
-                                        textAlign: 'right'
-                                    }}>
-                                        {chat.start_at}
-                                    </div>
-                                )}
+                                <div style={{
+                                fontSize: '10px',
+                                opacity: 0.6,
+                                marginTop: '4px',
+                                textAlign: 'right'
+                                }}>
+                                    {chat.start_at && chat.end_at ? `${chat.start_at} - ${chat.end_at}` : chat.start_at || ''}
+                                </div>
                             </div>
                         </div>
                     );
