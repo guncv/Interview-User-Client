@@ -13,6 +13,7 @@ interface InterviewRecordingProps {
     sessionToken?: string;
     isAiSpeaking?: boolean;
     isUserSpeaking?: boolean;
+    isUserTurn?: boolean;
     onMicMuteChange?: (isMuted: boolean) => void;
     onHeadphoneMuteChange?: (isMuted: boolean) => void;
     onReconnect?: () => void;
@@ -41,6 +42,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     sessionToken,
     isAiSpeaking = false,
     isUserSpeaking = false,
+    isUserTurn = false,
     onMicMuteChange,
     onHeadphoneMuteChange,
     onReconnect,
@@ -484,7 +486,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 }}>
                     {Array.from({ length: 20 }, (_, i) => {
                         const isActive = isConnected && ((speakingState === 'user' && !isMicMuted));
-                        const isConversationReady = isConnected && isConversationStarted && !isAiSpeaking;
+                        const isConversationReady = isConnected && isConversationStarted && !isAiSpeaking && isUserTurn;
                         const baseHeight = 12;
                         const maxHeight = 80; 
                         

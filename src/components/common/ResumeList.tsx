@@ -81,22 +81,6 @@ const ResumeList = ({
         wordBreak: 'break-word',
     };
 
-    const tipBoxStyle: React.CSSProperties = {
-        padding: Size.Medium,
-        backgroundColor: Colors.ACCENT_COLOR_LIGHT + '20',
-        borderRadius: Size.Small,
-        border: `1px solid ${Colors.ACCENT_COLOR_LIGHT}`,
-        textAlign: 'center',
-        marginTop: Size.Small,
-        marginBottom: Size.Medium,
-    };
-
-    const tipTextStyle: React.CSSProperties = {
-        fontSize: '12px',
-        color: Colors.SECONDARY_TEXT_COLOR,
-        fontFamily: font.Regular,
-    };
-
     const errorStyle: React.CSSProperties = {
         color: Colors.TEXT_ERROR_COLOR,
         fontSize: Size.Small,
@@ -113,6 +97,7 @@ const ResumeList = ({
         gap: Size.Medium,
         height: '100%',
         justifyContent: 'flex-start',
+        overflow: 'hidden',
     };
 
     const listContainerStyle: React.CSSProperties = {
@@ -120,20 +105,36 @@ const ResumeList = ({
         display: 'flex',
         flexDirection: 'column',
         gap: Size.Small,
-        overflowY: 'auto',
         padding: Size.Small,
         borderRadius: Size.Small,
         border: `1px solid ${Colors.LECTURE_CONTENT_PART_COLOR}`,
+        maxHeight: '300px',
+        overflowY: 'auto',
+        minHeight: '100px',
+        scrollbarWidth: 'thin',
+        scrollbarColor: `${Colors.ACCENT_COLOR} transparent`,
     };
 
     return (
         <div style={containerStyle}>
-            <div style={tipBoxStyle}>
-                <div style={tipTextStyle}>
-                    💡 Tip: Select the resume that best matches the job requirements
-                </div>
-            </div>
-
+            <style>
+                {`
+                    .resume-list-scroll::-webkit-scrollbar {
+                        width: 6px;
+                    }
+                    .resume-list-scroll::-webkit-scrollbar-track {
+                        background: transparent;
+                        border-radius: 3px;
+                    }
+                    .resume-list-scroll::-webkit-scrollbar-thumb {
+                        background: ${Colors.ACCENT_COLOR};
+                        border-radius: 3px;
+                    }
+                    .resume-list-scroll::-webkit-scrollbar-thumb:hover {
+                        background: ${Colors.ACCENT_COLOR}CC;
+                    }
+                `}
+            </style>
             {resumeCount > 0 && (
                 <>
                     <div style={{ fontSize: Size.Medium, fontFamily: font.Medium, color: Colors.PRIMARY_COLOR }}>
@@ -179,12 +180,14 @@ const ResumeList = ({
             )}
 
             {resumes.resumes.length > 0 && (
-            <div style={listContainerStyle}>
+            <>
+                <div style={{ fontSize: Size.Medium, fontFamily: font.Medium, color: Colors.PRIMARY_COLOR }}>
+                    Other Resumes
+                </div>
+            
+            <div style={listContainerStyle} className="resume-list-scroll">
                 {resumes.resumes.map((resume) => (
                     <div>
-                        <div style={{ fontSize: Size.Medium, fontFamily: font.Medium, color: Colors.PRIMARY_COLOR }}>
-                            Other Resumes
-                        </div>
                         <div
                             key={resume.id}
                             style={{
@@ -224,7 +227,9 @@ const ResumeList = ({
                         </div>
                     ))}
                 </div>
+            </>
             )}
+            
 
             {error && (
                 <div style={errorStyle}>
