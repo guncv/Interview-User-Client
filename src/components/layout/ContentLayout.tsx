@@ -10,6 +10,7 @@ import { useContextProvider } from './ContextProvider';
 import logo from '../../assets/images/logo.png';
 import { signOut } from '../../actions/userAction';
 import { useDispatch } from 'react-redux';
+import CreateAndUpdateIssuePopup from '../dialog/CreateAndUpdateIssuePopup';
 
 const ContentLayout = ({ children }: { children: React.ReactNode }) => {
     const dispatch = useDispatch();
@@ -17,6 +18,7 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
     const pathname = location.pathname;
     const { isMobile, isTablet } = useContextProvider();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isReportIssuePopupOpen, setIsReportIssuePopupOpen] = useState(false);
 
     useEffect(() => {
         if (isMenuOpen && (isMobile || isTablet)) {
@@ -186,8 +188,8 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
                             <SideBarItem
                             icon={<MessageSquareWarning style={sideBarItemStyle} />}
                             text="Report Issue"
-                            isActive={isActive('/report-issue')}
-                            onClick={() => {handleNavigate('/report-issue')}}
+                            isActive={false}
+                            onClick={() => {setIsReportIssuePopupOpen(true)}}
                             isMenu={false}
                             />
                             <SideBarItem
@@ -248,6 +250,11 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
             <div style={contentStyle}>
                 {children}
             </div>
+
+            <CreateAndUpdateIssuePopup
+                isVisible={isReportIssuePopupOpen}
+                onClose={() => setIsReportIssuePopupOpen(false)}
+            />
         </div>
     );
 };

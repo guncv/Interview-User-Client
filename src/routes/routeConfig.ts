@@ -7,7 +7,6 @@ import ResetPasswordSuccess from '../features/ResetPasswordSuccess';
 import RecordingListPage from '../features/RecordingListPage';
 import CreateInterviewPage from '../features/CreateInterviewPage';
 import InterviewSimulation from '../features/InterviewSimulation';
-import IssueReportPage from '../features/IssueReportPage';
 
 interface ComponentProps {
   title: string;
@@ -30,5 +29,4 @@ export const routes: RouteConfig[]= [
   { path: '/recordings', component: RecordingListPage, exact: true},
   { path: '/create-interview', component: CreateInterviewPage, exact: true},
   { path: '/interview', component: InterviewSimulation, exact: true}, 
-  { path: '/report-issue', component: IssueReportPage, exact: true},
 ];
