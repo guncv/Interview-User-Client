@@ -1,4 +1,5 @@
 // Common Components
+export { default as AudioDebugPanel } from './AudioDebugPanel';
 export { default as CircularIconButton } from './CircularIconButton';
 export { default as ContentError } from './ContentError';
 export { default as ContentLoadingSpinner } from './ContentLoadingSpinner';

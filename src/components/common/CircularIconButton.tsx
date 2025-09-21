@@ -28,13 +28,23 @@ const CircularIconButton: React.FC<CircularIconButtonProps> = ({
     const { isMobile } = useContextProvider();
 
     const isDanger = variant === 'danger';
-    const borderColor = isDanger 
-        ? (isHovered ? '#FF4444' : Colors.TEXT_ERROR_COLOR)
-        : (isHovered ? Colors.ACCENT_COLOR : Colors.PRIMARY_COLOR);
-    const backgroundColor = isDanger
-        ? (isHovered ? 'rgba(220, 53, 69, 0.2)' : 'rgba(220, 53, 69, 0.1)')
-        : (isHovered ? 'rgba(139, 21, 255, 0.05)' : 'transparent');
-    const iconColor = isDanger ? Colors.TEXT_ERROR_COLOR : Colors.PRIMARY_COLOR;
+    const isDisabled = !isActive;
+    
+    const borderColor = isDisabled 
+        ? Colors.SECONDARY_TEXT_COLOR
+        : isDanger 
+            ? (isHovered ? '#FF4444' : Colors.TEXT_ERROR_COLOR)
+            : (isHovered ? Colors.ACCENT_COLOR : Colors.PRIMARY_COLOR);
+    
+    const backgroundColor = isDisabled
+        ? 'rgba(128, 128, 128, 0.05)'
+        : isDanger
+            ? (isHovered ? 'rgba(220, 53, 69, 0.2)' : 'rgba(220, 53, 69, 0.1)')
+            : (isHovered ? 'rgba(139, 21, 255, 0.05)' : 'transparent');
+    
+    const iconColor = isDisabled 
+        ? Colors.SECONDARY_TEXT_COLOR 
+        : isDanger ? Colors.TEXT_ERROR_COLOR : Colors.PRIMARY_COLOR;
 
     return (
         <div style={{ position: 'relative', display: 'inline-block' }}>
@@ -47,7 +57,7 @@ const CircularIconButton: React.FC<CircularIconButtonProps> = ({
                     border: `1px solid ${borderColor}`,
                     padding: isMobile ? '5px' : '10px',
                     borderRadius: '50%',
-                    cursor: 'pointer',
+                    cursor: isDisabled ? 'not-allowed' : 'pointer',
                     transition: 'all 0.3s ease',
                     width: isMobile ? '25px' : size,
                     height: isMobile ? '25px' : size,
@@ -56,7 +66,9 @@ const CircularIconButton: React.FC<CircularIconButtonProps> = ({
                     backgroundColor: backgroundColor
                 }}
                 onMouseEnter={() => {
-                    setHoveredButton(buttonId);
+                    if (!isDisabled) {
+                        setHoveredButton(buttonId);
+                    }
                 }}
                 onMouseLeave={() => {
                     setHoveredButton(null);
@@ -73,7 +85,7 @@ const CircularIconButton: React.FC<CircularIconButtonProps> = ({
                 })}
             </div>
 
-            {tooltip && isHovered && (
+            {tooltip && isHovered && !isDisabled && (
                 <div
                     style={{
                         position: 'absolute',

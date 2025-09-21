@@ -1,8 +1,33 @@
 import { useEffect, useRef } from "react";
 import { generateSegmentId } from "../utils/generator";
 
-async function sendingAudioChunk(event: any, sessionId: string, segmentIdRef: React.MutableRefObject<string | null>, websocketRef: React.MutableRefObject<WebSocket | null>) {
+export interface AudioChunk {
+    id: string;
+    blob: Blob;
+    timestamp: number;
+    duration?: number;
+    segmentId?: string;
+}
+
+async function sendingAudioChunk(
+    event: any, 
+    sessionId: string, 
+    segmentIdRef: React.MutableRefObject<string | null>, 
+    websocketRef: React.MutableRefObject<WebSocket | null>,
+    onAudioChunk?: (chunk: AudioChunk) => void
+) {
     const audioBuffer = await event.data.arrayBuffer();
+
+    // Create debug audio chunk
+    if (onAudioChunk && event.data instanceof Blob) {
+        const audioChunk: AudioChunk = {
+            id: generateSegmentId(sessionId),
+            blob: event.data,
+            timestamp: Date.now(),
+            segmentId: segmentIdRef.current || undefined
+        };
+        onAudioChunk(audioChunk);
+    }
 
     const headerObj = {
         type: 'audio_chunk',
@@ -33,17 +58,24 @@ export function useVoiceStreaming(
     sessionId: string | null,
     onUserSpeakingChange?: (isSpeaking: boolean) => void,
     isMicMuted?: boolean,
-    isConnected?: boolean
+    isConnected?: boolean,
+    isConversationStarted?: boolean,
+    isAiSpeaking?: boolean,
+    isVoiceInputEnabled?: boolean,
+    onUserSegmentEnd?: () => void,
+    isUserTurn?: boolean,
+    onAudioChunk?: (chunk: AudioChunk) => void
 ) {
     const segmentIdRef = useRef<string | null>(null);
     const silenceTimerRef = useRef<number | null>(null);
     const chunkEndTimerRef = useRef<number | null>(null);
     const speakingRef = useRef<boolean>(false);
     const lastSpeechTimeRef = useRef<number>(0);
+    const segmentStartTimeRef = useRef<number>(0);
     const onSegmentStarted = useRef<boolean>(false);
 
     useEffect(() => {
-        if (!sessionId || !isConnected) {
+        if (!sessionId || !isConnected || !isConversationStarted) {
             return;
         }
 
@@ -83,9 +115,9 @@ export function useVoiceStreaming(
                     speakingRef.current &&
                     sessionId &&
                     segmentIdRef.current &&
-                    !isMicMuted // Don't send audio data if microphone is muted
+                    !isMicMuted
                 ) {
-                    await sendingAudioChunk(event, sessionId, segmentIdRef, websocketRef);
+                    await sendingAudioChunk(event, sessionId, segmentIdRef, websocketRef, onAudioChunk);
                 }
             };
 
@@ -127,12 +159,22 @@ export function useVoiceStreaming(
                 const rms = Math.sqrt(sum / dataArray.length);
                 const currentTime = Date.now();
 
-                if (rms > 0.05 && !isMicMuted) { // Lower threshold for more sensitive voice detection
+                if (rms > 0.05 && !isMicMuted && !isAiSpeaking && isVoiceInputEnabled && isUserTurn) {
+                    console.log('rms is greater than 0.05 threshold - user turn detected', { 
+                        rms, 
+                        isMicMuted, 
+                        isAiSpeaking, 
+                        isVoiceInputEnabled,
+                        isUserTurn,
+                        speakingRef: speakingRef.current 
+                    });
                     lastSpeechTimeRef.current = currentTime;
                     
                     if (!speakingRef.current && !onSegmentStarted.current) {
+                        console.log('User is speaking to start user speaking');
                             onSegmentStarted.current = true;
                             speakingRef.current = true;
+                            segmentStartTimeRef.current = currentTime;
                             onUserSpeakingChange?.(true);
                         
                         if (sessionId) {
@@ -162,10 +204,12 @@ export function useVoiceStreaming(
                     }
                 } else if (speakingRef.current && segmentIdRef.current) {
                     const silenceDuration = currentTime - lastSpeechTimeRef.current;
+                    const totalSpeakingTime = currentTime - segmentStartTimeRef.current;
+                    const minSpeakingTime = 2000;
                     
-                    if (silenceDuration >= 1500 && !chunkEndTimerRef.current) { // Reduced from 2000ms to 1500ms
+                    if (silenceDuration >= 2000 && totalSpeakingTime >= minSpeakingTime && !chunkEndTimerRef.current) {
                         chunkEndTimerRef.current = window.setTimeout(() => {
-
+                            console.log('Silence duration is greater than 2 seconds and total speaking time is greater than 2 seconds');
                             if (mediaRecorder && mediaRecorder.state === 'recording') {
                                 mediaRecorder.requestData();
                             }
@@ -182,16 +226,31 @@ export function useVoiceStreaming(
                                     );
                                 }
                                 
-                                speakingRef.current = false;
-                                onUserSpeakingChange?.(false);
-                                onSegmentStarted.current = false;
-                                segmentIdRef.current = null;
-                                chunkEndTimerRef.current = null;
+                        speakingRef.current = false;
+                        onUserSpeakingChange?.(false);
+                        onSegmentStarted.current = false;
+                        segmentIdRef.current = null;
+                        segmentStartTimeRef.current = 0;
+                        chunkEndTimerRef.current = null;
+                        
+                        onUserSegmentEnd?.();
                             }, 100);
                         }, 500);
                     }
                     
                 } else {
+                    // Debug why user speaking is not detected
+                    if (rms > 0.05) {
+                        console.log('Voice detected but user speaking blocked', {
+                            rms,
+                            isMicMuted,
+                            isAiSpeaking,
+                            isVoiceInputEnabled,
+                            isUserTurn,
+                            speakingRef: speakingRef.current
+                        });
+                    }
+                    
                     if (chunkEndTimerRef.current) {
                         clearTimeout(chunkEndTimerRef.current);
                         chunkEndTimerRef.current = null;
@@ -217,5 +276,5 @@ export function useVoiceStreaming(
             if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
             if (chunkEndTimerRef.current) clearTimeout(chunkEndTimerRef.current);
         };
-    }, [websocketRef, sessionId, onUserSpeakingChange, isMicMuted, isConnected]);
+    }, [websocketRef, sessionId, onUserSpeakingChange, isMicMuted, isConnected, isConversationStarted, isAiSpeaking, isVoiceInputEnabled, onUserSegmentEnd, isUserTurn]);
 }
