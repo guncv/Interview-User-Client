@@ -10,6 +10,7 @@ import { useDispatch } from "react-redux";
 import { getInterviewSessionInformation } from "../actions/interviewAction";
 import { useContextProvider } from "../components/layout/ContextProvider";
 import AudioDebugPanel from "../components/common/AudioDebugPanel";
+import { setEndInterviewSessionLoadingAction, setEndInterviewSessionFinishedAction } from "../actions/interviewAction";
 
 let audioChunks: ArrayBuffer[] = [];
 let isPlaying = false;
@@ -168,6 +169,25 @@ const InterviewSimulation = () => {
         setDebugAudioChunks([]);
     }, []);
 
+    const handleEndInterviewSession = useCallback(() => {
+        if (!sessionId || !websocketRef.current) {
+            return;
+        }
+
+        dispatch(setEndInterviewSessionLoadingAction());
+        const endSessionMessage = {
+            type: WEBSOCKET_TYPES.END_INTERVIEW_SESSION,
+            session_id: sessionId
+        };
+        
+
+        try {
+            websocketRef.current.send(JSON.stringify(endSessionMessage));
+        } catch (error) {
+            console.error('Failed to send end interview session message:', error);
+        }
+    }, [sessionId]);
+
 
     useVoiceStreaming(websocketRef, sessionId, handleUserSpeakingChange, isMicMuted, connectionState === CONVERSATION_STATUS.CONNECTED, isConversationStarted, isAiSpeaking, isVoiceInputEnabled, handleUserSegmentEnd, isUserTurn, handleAudioChunk);
 
@@ -209,6 +229,10 @@ const InterviewSimulation = () => {
                 break;
             case WEBSOCKET_TYPES.INTERVIWER_RESPONSE:
                 chatHistoryRef.current?.handleFinalTranscript(response, ACTOR.INTERVIEWER);
+                break;
+            case WEBSOCKET_TYPES.SUMMARIZE_INTERVIEW_SESSION:
+                dispatch(setEndInterviewSessionFinishedAction());
+                websocketRef.current?.close();
                 break;
             case CONVERSATION_STATUS.ERROR:
                 console.error("Server error:", response.message || response);
@@ -392,6 +416,7 @@ const InterviewSimulation = () => {
                             elapsedTime={elapsedTime}
                             isConnected={connectionState === CONVERSATION_STATUS.CONNECTED}
                             isConversationStarted={isConversationStarted}
+                            onEndInterview={handleEndInterviewSession}
                         />
                     </div>
                     <div style={{ width: isMobile ? '80%' : isTablet ? '70%' : '60%', overflow: 'hidden' }}>

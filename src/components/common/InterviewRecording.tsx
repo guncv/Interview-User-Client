@@ -19,6 +19,7 @@ interface InterviewRecordingProps {
     elapsedTime?: number;
     isConnected?: boolean;
     isConversationStarted?: boolean;
+    onEndInterview?: () => void;
 }
 
 type SpeakingState = 'ai' | 'user' | 'none';
@@ -48,6 +49,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     elapsedTime = 0,
     isConnected = false,
     isConversationStarted = false,
+    onEndInterview,
 }) => {
     void websocketUrl;
     void sessionToken;
@@ -350,6 +352,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
 
     const handleEndInterview = () => {
         setShowSettings(false);
+        onEndInterview?.();
     };
 
     return (
