@@ -18,3 +18,5 @@ export { default as ResumeList } from './ResumeList';
 export { default as FileUpload } from './FileUpload';
 export { default as IssueReportItem } from './IssueReportItem';
 export { Tooltip } from './Tooltip';
+export { default as ClickableLink } from './ClickableLink';
+export { default as RecordingRow } from './RecordingRow';

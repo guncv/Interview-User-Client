@@ -183,10 +183,6 @@ const InterviewSimulation = () => {
         setIsHeadphonesMuted(isMuted);
     }, []);
 
-    useEffect(() => {
-        console.log('isInterviewerTurn', isInterviewerTurn);
-    }, [isInterviewerTurn]);
-
     const handleWebSocketMessage = useCallback((response: any) => {
         switch (response.type) {
             case WEBSOCKET_TYPES.CONNECTION_ESTABLISHED:

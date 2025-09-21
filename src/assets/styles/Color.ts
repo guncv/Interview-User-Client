@@ -16,6 +16,9 @@ const Colors = {
     TEXT_TERTIARY_COLOR: '#9CA3AF',
     SUCCESS_COLOR: '#28A745',
     WARNING_COLOR: '#FFC107',
+
+    GREEN_COLOR: '#28A745',
+    GREEN_COLOR_LIGHT: '#05966920',
 };
 
 export default Colors;

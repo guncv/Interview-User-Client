@@ -13,7 +13,7 @@ export const API_ENDPOINTS = {
   // Resume API
   LIST_RESUME: '/api/v1/resumes/list',
   GET_RESUME_BY_ID: '/api/v1/resumes',
-  DOWNLOAD_RESUME_BY_SESSION_TOKEN: '/api/v1/resumes/download',
+  DOWNLOAD_RESUME_BY_RESUME_ID: '/api/v1/resumes/download',
 
   // Interview API
   CREATE_SESSION_WITH_NEW_RESUME: '/api/v1/sessions',

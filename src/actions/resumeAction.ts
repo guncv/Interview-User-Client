@@ -7,7 +7,7 @@ export const SET_RESUME_SUCCESS = 'SET_RESUME_SUCCESS';
 export const GET_RESUME_BY_ID = 'GET_RESUME_BY_ID';
 export const SET_RESUME_BY_ID_ERROR = 'SET_RESUME_BY_ID_ERROR';
 export const SET_RESUME_BY_ID_SUCCESS = 'SET_RESUME_BY_ID_SUCCESS';
-export const DOWNLOAD_RESUME_BY_SESSION_TOKEN = 'DOWNLOAD_RESUME_BY_SESSION_TOKEN';
+export const DOWNLOAD_RESUME_BY_RESUME_ID = 'DOWNLOAD_RESUME_BY_RESUME_ID';
 
 export const listResume = (payload: ListResumeRequest) => {
     return { type: LIST_RESUME, payload };
@@ -33,6 +33,6 @@ export const setResumeByIdSuccess = (payload: GetResumeByIdResponse) => {
     return { type: SET_RESUME_BY_ID_SUCCESS, payload: { resumeById: payload } };
 };
 
-export const downloadResumeBySessionToken = (session_token: string) => {
-    return { type: DOWNLOAD_RESUME_BY_SESSION_TOKEN, payload: { session_token: session_token } };
+export const downloadResumeByResumeId = (resume_id: string) => {
+    return { type: DOWNLOAD_RESUME_BY_RESUME_ID, payload: { resume_id: resume_id } };
 };
