@@ -5,24 +5,21 @@ import Colors from '../../assets/styles/Color';
 import Size from '../../assets/styles/Size';
 import font from '../../assets/styles/Font';
 import { useContextProvider } from '../layout/ContextProvider';
-import type { UserIssueReport, CreateUserIssueReportReq, UpdateUserIssueReportByIDReq } from '../../interface/reportIssueInterface';
+import type { CreateUserIssueReportReq } from '../../interface/reportIssueInterface';
 import { useDispatch, useSelector } from 'react-redux';
-import { createIssueReportAction, listIssueCategoriesAction, updateIssueReportAction } from '../../actions/issueReport';
+import { createIssueReportAction, listIssueCategoriesAction } from '../../actions/issueReport';
 import type { RootState } from '../../reducers/rootReducer';
 
 interface CreateAndUpdateIssuePopupProps {
     isVisible: boolean;
     onClose: () => void;
-    issueReport?: UserIssueReport;
 }
 
 const CreateAndUpdateIssuePopup: React.FC<CreateAndUpdateIssuePopupProps> = ({
     isVisible,
     onClose,
-    issueReport,
 }) => {
     const { isMobile } = useContextProvider();
-    const isUpdateMode = !!issueReport;
     const dispatch = useDispatch();
     const { listIssueCategories } = useSelector((state: RootState) => state.issueReport);
 
@@ -37,16 +34,11 @@ const CreateAndUpdateIssuePopup: React.FC<CreateAndUpdateIssuePopupProps> = ({
 
     useEffect(() => {
         if (isVisible) {
-            if (isUpdateMode && issueReport) {
-                setDescription(issueReport.description);
-                setCategoryId(issueReport.category_id);
-            } else {
-                setDescription('');
-                setCategoryId('');
-            }
+            setDescription('');
+            setCategoryId('');
             setErrors({});
         }
-    }, [isVisible, issueReport, isUpdateMode]);
+    }, [isVisible]);
 
     const validateForm = (): boolean => {
         const newErrors: { description?: string; categoryId?: string } = {};
@@ -77,22 +69,12 @@ const CreateAndUpdateIssuePopup: React.FC<CreateAndUpdateIssuePopupProps> = ({
         setIsSubmitting(true);
 
         try {
-            if (isUpdateMode && issueReport) {
-                const updateData: UpdateUserIssueReportByIDReq = {
-                    description: description.trim(),
-                    category_id: categoryId,
-                };
+            const createData: CreateUserIssueReportReq = {
+                description: description.trim(),
+                category_id: categoryId,
+            };
                 
-                console.log("updateIssueReport", issueReport);
-                dispatch(updateIssueReportAction(issueReport.id, updateData));
-            } else {
-                const createData: CreateUserIssueReportReq = {
-                    description: description.trim(),
-                    category_id: categoryId,
-                };
-                
-                dispatch(createIssueReportAction(createData));
-            }
+            dispatch(createIssueReportAction(createData));
 
             onClose();
         } catch (error) {
@@ -129,7 +111,7 @@ const CreateAndUpdateIssuePopup: React.FC<CreateAndUpdateIssuePopupProps> = ({
         backgroundColor: Colors.TEXT_WHITE_COLOR,
         borderRadius: Size.Medium,
         boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
-        padding: isMobile ? Size.Medium : Size.Large,
+        padding: isMobile ? Size.Medium : Size.LargeMedium,
         minWidth: isMobile ? '90vw' : '500px',
         maxWidth: isMobile ? '95vw' : '600px',
         maxHeight: '90vh',
@@ -193,7 +175,7 @@ const CreateAndUpdateIssuePopup: React.FC<CreateAndUpdateIssuePopupProps> = ({
             <div style={modalStyle}>
                 <div style={headerStyle}>
                     <p style={titleStyle}>
-                        {isUpdateMode ? 'Update Issue Report' : 'Create Issue Report'}
+                        Create Issue Report
                     </p>
                     <button
                         style={closeButtonStyle}
@@ -293,8 +275,8 @@ const CreateAndUpdateIssuePopup: React.FC<CreateAndUpdateIssuePopupProps> = ({
                         <PrimaryButton
                             label={
                                 isSubmitting
-                                    ? (isUpdateMode ? 'Updating...' : 'Creating...')
-                                    : (isUpdateMode ? 'Update Issue' : 'Create Issue')
+                                    ? 'Creating...'
+                                    : 'Create Issue'
                             }
                             onClick={handleSubmit}
                             isDisabled={
