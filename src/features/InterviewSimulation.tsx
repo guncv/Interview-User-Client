@@ -20,7 +20,8 @@ async function playBufferedAudio(
     isHeadphonesMuted: boolean,
     isConnected: boolean,
     onAiFinishedSpeaking?: () => void,
-    setIsUserTurn?: (turn: boolean) => void
+    isInterviewerTurn?: boolean,
+    handleInterviewerTurn?: (turn: boolean) => void,
     ) {
     if (!isConnected) return;
 
@@ -29,9 +30,7 @@ async function playBufferedAudio(
     if (isPlaying) return;
 
     isPlaying = true;
-    console.log('Setting AI speaking to true');
     setIsAiSpeaking(true);
-    setIsUserTurn?.(false);
 
     await new Promise((res) => setTimeout(res, 300));
 
@@ -60,9 +59,14 @@ async function playBufferedAudio(
     });
 
     isPlaying = false;
-    console.log('Setting AI speaking to false');
     setIsAiSpeaking(false);
     onAiFinishedSpeaking?.();
+
+    console.log('isInterviewerTurn', isInterviewerTurn);
+    if (!isInterviewerTurn) {
+        console.log('handleInterviewerTurn', false);
+        handleInterviewerTurn?.(false);
+    }
 }
 
 type WebSocketConnectionState =typeof CONVERSATION_STATUS.CONNECTING | typeof CONVERSATION_STATUS.CONNECTED | typeof CONVERSATION_STATUS.DISCONNECTED | typeof CONVERSATION_STATUS.ERROR;
@@ -71,6 +75,7 @@ const InterviewSimulation = () => {
     const [searchParams] = useSearchParams();
     const sessionTokenParam = searchParams.get('session_token');
     const [websocketUrl] = useState(`ws://localhost:8080/api/v1/ws/connect/${sessionTokenParam}`);
+    const [isInterviewerTurn, setIsInterviewerTurn] = useState<boolean>(false);
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [isAiSpeaking, setIsAiSpeaking] = useState<boolean>(false);
     const [isUserSpeaking, setIsUserSpeaking] = useState<boolean>(false);
@@ -94,7 +99,7 @@ const InterviewSimulation = () => {
             case CONVERSATION_STATUS.CONNECTING:
                 return '🟡 Connecting to Server...';
             case CONVERSATION_STATUS.CONNECTED:
-                return '🟢 Connected to Server ✓';
+                return '🟢 Connected to Server';
             case CONVERSATION_STATUS.DISCONNECTED:
                 return '🔴 Disconnected from Server';
             case CONVERSATION_STATUS.ERROR:
@@ -145,12 +150,14 @@ const InterviewSimulation = () => {
 
     const handleUserSegmentEnd = useCallback(() => {
         setIsVoiceInputEnabled(false);
-        setIsUserTurn(false);
     }, []);
 
     const handleAiFinishedSpeaking = useCallback(() => {
         setIsVoiceInputEnabled(true);
-        setIsUserTurn(true);
+    }, []);
+
+    const handleInterviewerTurn = useCallback((turn: boolean) => {
+        setIsUserTurn(!turn);
     }, []);
 
     const handleAudioChunk = useCallback((chunk: AudioChunk) => {
@@ -161,13 +168,6 @@ const InterviewSimulation = () => {
         setDebugAudioChunks([]);
     }, []);
 
-    useEffect(() => {
-        console.log('isAiSpeaking changed to:', isAiSpeaking);
-    }, [isAiSpeaking]);
-
-    useEffect(() => {
-        console.log('isUserTurn changed to:', isUserTurn);
-    }, [isUserTurn]);
 
     useVoiceStreaming(websocketRef, sessionId, handleUserSpeakingChange, isMicMuted, connectionState === CONVERSATION_STATUS.CONNECTED, isConversationStarted, isAiSpeaking, isVoiceInputEnabled, handleUserSegmentEnd, isUserTurn, handleAudioChunk);
 
@@ -183,6 +183,10 @@ const InterviewSimulation = () => {
         setIsHeadphonesMuted(isMuted);
     }, []);
 
+    useEffect(() => {
+        console.log('isInterviewerTurn', isInterviewerTurn);
+    }, [isInterviewerTurn]);
+
     const handleWebSocketMessage = useCallback((response: any) => {
         switch (response.type) {
             case WEBSOCKET_TYPES.CONNECTION_ESTABLISHED:
@@ -197,6 +201,15 @@ const InterviewSimulation = () => {
             case WEBSOCKET_TYPES.CONVERSATION_STARTED:
                 setIsConversationStarted(true);
                 setIsUserTurn(true);
+                break;
+            case WEBSOCKET_TYPES.INTERVIEWER_TURN_START:
+                console.log('INTERVIEWER_TURN_START');
+                setIsInterviewerTurn(true);
+                setIsUserTurn(false);
+                break;
+            case WEBSOCKET_TYPES.INTERVIEWER_TURN_END:
+                console.log('INTERVIEWER_TURN_END');
+                setIsInterviewerTurn(false);
                 break;
             case WEBSOCKET_TYPES.INTERVIWER_RESPONSE:
                 chatHistoryRef.current?.handleFinalTranscript(response, ACTOR.INTERVIEWER);
@@ -252,8 +265,7 @@ const InterviewSimulation = () => {
                 
                         if (header.type === WEBSOCKET_TYPES.INTERVIEWER_AUDIO_CHUNKING) {
                             const isConnected = connectionState === CONVERSATION_STATUS.CONNECTED || connectionState === CONVERSATION_STATUS.CONNECTING;
-                        
-                            await playBufferedAudio(audioData, setIsAiSpeaking, isHeadphonesMuted, isConnected, handleAiFinishedSpeaking, setIsUserTurn);
+                            await playBufferedAudio(audioData, setIsAiSpeaking, isHeadphonesMuted, isConnected, handleAiFinishedSpeaking, isInterviewerTurn, handleInterviewerTurn);
                         }
                     } else {
                         const data = JSON.parse(event.data);

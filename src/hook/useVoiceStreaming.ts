@@ -160,18 +160,9 @@ export function useVoiceStreaming(
                 const currentTime = Date.now();
 
                 if (rms > 0.05 && !isMicMuted && !isAiSpeaking && isVoiceInputEnabled && isUserTurn) {
-                    console.log('rms is greater than 0.05 threshold - user turn detected', { 
-                        rms, 
-                        isMicMuted, 
-                        isAiSpeaking, 
-                        isVoiceInputEnabled,
-                        isUserTurn,
-                        speakingRef: speakingRef.current 
-                    });
                     lastSpeechTimeRef.current = currentTime;
                     
                     if (!speakingRef.current && !onSegmentStarted.current) {
-                        console.log('User is speaking to start user speaking');
                             onSegmentStarted.current = true;
                             speakingRef.current = true;
                             segmentStartTimeRef.current = currentTime;
@@ -209,7 +200,6 @@ export function useVoiceStreaming(
                     
                     if (silenceDuration >= 2000 && totalSpeakingTime >= minSpeakingTime && !chunkEndTimerRef.current) {
                         chunkEndTimerRef.current = window.setTimeout(() => {
-                            console.log('Silence duration is greater than 2 seconds and total speaking time is greater than 2 seconds');
                             if (mediaRecorder && mediaRecorder.state === 'recording') {
                                 mediaRecorder.requestData();
                             }
@@ -239,16 +229,7 @@ export function useVoiceStreaming(
                     }
                     
                 } else {
-                    // Debug why user speaking is not detected
                     if (rms > 0.05) {
-                        console.log('Voice detected but user speaking blocked', {
-                            rms,
-                            isMicMuted,
-                            isAiSpeaking,
-                            isVoiceInputEnabled,
-                            isUserTurn,
-                            speakingRef: speakingRef.current
-                        });
                     }
                     
                     if (chunkEndTimerRef.current) {

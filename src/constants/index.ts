@@ -36,7 +36,9 @@ export const WEBSOCKET_TYPES = {
   INTERVIEWER_AUDIO_CHUNKING: 'interviewer_audio_chunking',
   USER_FULL_TRANSCRIPT: 'user_full_transcript',
   INTERVIWER_RESPONSE: 'interviewer_response',
-  CONVERSATION_STARTED: "conversation_started"
+  CONVERSATION_STARTED: "conversation_started",
+  INTERVIEWER_TURN_START: "interviewer_turn_start",
+  INTERVIEWER_TURN_END: "interviewer_turn_end",
 } as const;
 
 export const ACTOR = {
