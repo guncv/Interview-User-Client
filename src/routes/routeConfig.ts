@@ -7,6 +7,7 @@ import ResetPasswordSuccess from '../features/ResetPasswordSuccess';
 import RecordingListPage from '../features/RecordingListPage';
 import CreateInterviewPage from '../features/CreateInterviewPage';
 import InterviewSimulation from '../features/InterviewSimulation';
+import InterviewEvaluationPage from '../features/InterviewEvaluationPage';
 
 interface ComponentProps {
   title: string;
@@ -28,5 +29,6 @@ export const routes: RouteConfig[]= [
   { path: '/reset-password-success', component: ResetPasswordSuccess, exact: true},
   { path: '/recordings', component: RecordingListPage, exact: true},
   { path: '/create-interview', component: CreateInterviewPage, exact: true},
-  { path: '/interview', component: InterviewSimulation, exact: true}, 
+  { path: '/interview', component: InterviewSimulation, exact: true},
+  { path: '/evaluation/:sessionId', component: InterviewEvaluationPage, exact: true}, 
 ];

@@ -177,4 +177,77 @@ export interface ChatHistory {
 	start_at: string;
 	end_at: string;
 	created_at: string;
+
+	feedback_score?: number;
+	max_feedback_score?: number;
+	improved_sentence?: string;
+	feedback_categories?: TurnFeedbackCategory[];
+}
+
+export interface TurnFeedbackCategory {
+	category: string;
+	score: number;
+	max_score: number;
+	description: string;
+	improvement_suggestion?: string;
+}
+
+// Evaluation interfaces
+export interface InterviewEvaluation {
+	id: string;
+	session_id: string;
+	overall_score: number;
+	status: 'completed' | 'processing' | 'failed';
+	created_at: string;
+	feedback: EvaluationFeedback;
+	analytics: EvaluationAnalytics;
+}
+
+export interface EvaluationFeedback {
+	coaching: CoachingFeedback[];
+	strengths: string[];
+	improvements: string[];
+	general_feedback: string;
+}
+
+export interface CoachingFeedback {
+	category: string;
+	score: number;
+	max_score: number;
+	description: string;
+	insights: string[];
+	subcategories?: SubCategoryScore[];
+}
+
+export interface SubCategoryScore {
+	name: string;
+	score: number;
+	max_score: number;
+	description: string;
+}
+
+export interface EvaluationAnalytics {
+	total_duration: number; // in seconds
+	speaking_time: {
+		user: number;
+		interviewer: number;
+	};
+	response_times: number[]; // average response times
+	keywords_used: string[];
+	confidence_score: number;
+	clarity_score: number;
+}
+
+export interface VideoPlayerProps {
+	sessionId: string;
+	videoUrl?: string;
+	transcript: ChatHistory[];
+	onTimeUpdate?: (time: number) => void;
+}
+
+export interface EvaluationTabsProps {
+	feedback: EvaluationFeedback;
+	analytics: EvaluationAnalytics;
+	activeTab: 'coaching' | 'analytics';
+	onTabChange: (tab: 'coaching' | 'analytics') => void;
 }

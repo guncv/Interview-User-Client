@@ -4,6 +4,7 @@ import Colors from '../../assets/styles/Color';
 import Size from '../../assets/styles/Size';
 import { ClickableLink } from './';
 import type { InterviewSessionSummary } from '../../interface/interviewInterface';
+import { safeNavigate } from '../../utils/navigation';
 
 interface RecordingRowProps {
     interview: InterviewSessionSummary;
@@ -30,7 +31,7 @@ const RecordingRow: React.FC<RecordingRowProps> = ({ interview, onDownloadResume
     };
 
     const handleRowClick = () => {
-        console.log('Row clicked:', interview.id);
+        safeNavigate(`/evaluation/${interview.id}`);
     };
 
     return (

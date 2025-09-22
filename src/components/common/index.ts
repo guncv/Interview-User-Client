@@ -21,3 +21,6 @@ export { Tooltip } from './Tooltip';
 export { default as ClickableLink } from './ClickableLink';
 export { default as RecordingRow } from './RecordingRow';
 export { default as Pagination } from './Pagination';
+export { default as TranscriptMessage } from './TranscriptMessage';
+export { default as TranscriptFeed } from './FeedBack';
+export { default as ChatContainer } from './ChatContainer';
