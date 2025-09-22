@@ -113,6 +113,7 @@ export interface InterviewSessionSummary {
 	total_time: string;
 	overall_score: number;
 	created_at: string;
+    created_at_display: string;
 }
 
 export interface Cursor {
@@ -133,7 +134,6 @@ export interface GetInterviewSessionListCursorReq {
 	cursor_created_at?: string;
 	limit?: number;
 	search_text?: string;
-	status?: string;
     type?: string;
 }
 
@@ -141,8 +141,6 @@ export interface GetInterviewSessionListPageReq {
 	offset?: number;
 	limit?: number;
 	search_text?: string;
-	status?: string;
-    type?: string;
 }
 
 export interface InterviewSession {

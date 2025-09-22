@@ -21,7 +21,7 @@ export const API_ENDPOINTS = {
   GET_CHAT_HISTORY_BY_SESSION_TOKEN: '/api/v1/sessions/chat-history',
   GET_INTERVIEW_SESSION_INFORMATION: '/api/v1/sessions/information',
   LIST_INTERVIEW_SESSIONS_CURSOR: '/api/v1/sessions/cursor',
-  LIST_INTERVIEW_SESSIONS_PAGE: '/api/v1/sessions/page',
+  LIST_INTERVIEW_SESSIONS_PAGE: '/api/v1/sessions/jump',
 
   // Issue Report API
   LIST_ISSUE_REPORTS: '/api/v1/issue-reports',
@@ -29,6 +29,11 @@ export const API_ENDPOINTS = {
   UPDATE_ISSUE_REPORT: '/api/v1/issue-reports',
 
   LIST_ISSUE_CATEGORIES: '/api/v1/issue-categories',
+} as const;
+
+export const CURSOR_TYPE = {
+  PREV: 'prev',
+  NEXT: 'next',
 } as const;
 
 export const WEBSOCKET_TYPES = {

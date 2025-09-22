@@ -82,6 +82,7 @@ export const apiGetInterviewSessionInformation = async (session_token: string, t
 };
 
 export const apiGetInterviewSessionListCursor = async (payload: GetInterviewSessionListCursorReq, token: string) => {
+    console.log("payload get interview session list cursor", payload);
     try {
         const filteredParams = Object.entries(payload).reduce((acc, [key, value]) => {
             if (value !== undefined && value !== null) {
@@ -109,6 +110,7 @@ export const apiGetInterviewSessionListCursor = async (payload: GetInterviewSess
 };
 
 export const apiGetInterviewSessionListPage = async (payload: GetInterviewSessionListPageReq, token: string) => {
+    console.log("payload get interview session list page", payload);
     try {
         const filteredParams = Object.entries(payload).reduce((acc, [key, value]) => {
             if (value !== undefined && value !== null) {

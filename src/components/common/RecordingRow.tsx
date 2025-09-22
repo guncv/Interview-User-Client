@@ -92,9 +92,9 @@ const RecordingRow: React.FC<RecordingRowProps> = ({ interview, onDownloadResume
                 </span>
             </td>
             
-            <td style={{...dataCellStyle, textAlign: 'center'}}>
+            <td style={{...dataCellStyle, textAlign: 'center', fontSize: Size.Small}}>
                 <span style={{ color: Colors.SECONDARY_TEXT_COLOR }}>
-                    {interview.created_at}
+                    {interview.created_at_display}
                 </span>
             </td>
         </tr>

@@ -20,3 +20,4 @@ export { default as IssueReportItem } from './IssueReportItem';
 export { Tooltip } from './Tooltip';
 export { default as ClickableLink } from './ClickableLink';
 export { default as RecordingRow } from './RecordingRow';
+export { default as Pagination } from './Pagination';

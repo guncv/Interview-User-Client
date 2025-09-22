@@ -195,7 +195,6 @@ function* workerGetInterviewSessionListCursor(payload: GetInterviewSessionListCu
         yield call(showSpinner);
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         const response = yield call(apiGetInterviewSessionListCursor, payload, token || '');
-        console.log("response with cursor", response);
         if (response && response.success) {
             yield put(setInterviewSessionList(response.data));
         } else {
@@ -225,7 +224,6 @@ function* workerGetInterviewSessionListPage(payload: GetInterviewSessionListPage
         yield call(showSpinner);
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         const response = yield call(apiGetInterviewSessionListPage, payload, token || '');
-        console.log("response with page", response);
         if (response && response.success) {
             yield put(setInterviewSessionList(response.data));
         } else {

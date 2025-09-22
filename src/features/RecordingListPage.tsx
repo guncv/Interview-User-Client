@@ -1,20 +1,25 @@
 import ContentLayout from "../components/layout/ContentLayout";
 import type { CSSProperties } from "react";
-import { PrimaryButton } from "../components/common";
+import { PrimaryButton, Pagination } from "../components/common";
 import RecordingRow from "../components/common/RecordingRow";
 import Colors from "../assets/styles/Color";
 import Size from "../assets/styles/Size";
 import font from "../assets/styles/Font";
-import { useNavigate } from "react-router-dom";
+import { safeNavigate } from "../utils/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { downloadResumeByResumeId } from "../actions/resumeAction";
-import { getInterviewSessionListCursorAction } from "../actions/interviewAction";
-import { useEffect } from "react";
+import { getInterviewSessionListCursorAction, getInterviewSessionListPageAction } from "../actions/interviewAction";
+import { useEffect, useState, useCallback } from "react";
 import type { RootState } from "../reducers/rootReducer";
+import type { GetInterviewSessionListCursorReq, GetInterviewSessionListPageReq } from "../interface";
+import { CURSOR_TYPE } from "../constants";
 
 const RecordingListPage = () => {
-    const navigate = useNavigate();
     const dispatch = useDispatch();
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [searchText, setSearchText] = useState("");
+    const [debouncedSearchText, setDebouncedSearchText] = useState("");
 
     const handleDownloadResume = (resumeId: string) => {
         dispatch(downloadResumeByResumeId(resumeId));
@@ -25,14 +30,125 @@ const RecordingListPage = () => {
     console.log("interviewSessionList", interviewSessionList);
 
     useEffect(() => {
-        dispatch(getInterviewSessionListCursorAction({}));
-    }, []);
+        const timer = setTimeout(() => {
+            setDebouncedSearchText(searchText);
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [searchText]);
+
+    const performSearch = useCallback((searchQuery: string) => {
+        setCurrentPage(1);
+        if (searchQuery.trim() === "") {
+            dispatch(getInterviewSessionListCursorAction({}));
+        } else {
+            dispatch(getInterviewSessionListPageAction({ 
+                offset: 0, 
+                search_text: searchQuery.trim() 
+            }));
+        }
+    }, [dispatch]);
+
+    useEffect(() => {
+        performSearch(debouncedSearchText);
+    }, [debouncedSearchText, performSearch]);
+
+    const handlePageChange = (page: number) => {
+        if (page === currentPage - 1 ) {
+            const req: GetInterviewSessionListCursorReq = {
+                cursor_id: interviewSessionList.prev_cursor?.id,
+                cursor_created_at: interviewSessionList.prev_cursor?.created_at,
+                type: CURSOR_TYPE.PREV,
+                search_text: debouncedSearchText.trim() || undefined
+            }
+            dispatch(getInterviewSessionListCursorAction(req));
+        } else if (page === currentPage + 1) {
+            const req: GetInterviewSessionListCursorReq = {
+                cursor_id: interviewSessionList.next_cursor?.id,
+                cursor_created_at: interviewSessionList.next_cursor?.created_at,
+                type: CURSOR_TYPE.NEXT,
+                search_text: debouncedSearchText.trim() || undefined
+            }
+            dispatch(getInterviewSessionListCursorAction(req));
+        } else {
+            const req: GetInterviewSessionListPageReq = {
+                offset: page,
+                search_text: debouncedSearchText.trim() || undefined
+            }
+            dispatch(getInterviewSessionListPageAction(req));
+        }
+        setCurrentPage(page);
+    };
+
+    const handlePrevious = (currentPage: number) => {
+        if (currentPage > 1) {
+            const req: GetInterviewSessionListCursorReq = {
+                cursor_id: interviewSessionList.prev_cursor?.id,
+                cursor_created_at: interviewSessionList.prev_cursor?.created_at,
+                type: CURSOR_TYPE.PREV,
+                search_text: debouncedSearchText.trim() || undefined
+            }
+            dispatch(getInterviewSessionListCursorAction(req));
+            setCurrentPage(currentPage - 1);
+        }
+    };
+
+    const handleNext = (currentPage: number) => {
+        if (currentPage < interviewSessionList.total_pages) {
+            const req: GetInterviewSessionListCursorReq = {
+                cursor_id: interviewSessionList.next_cursor?.id,
+                cursor_created_at: interviewSessionList.next_cursor?.created_at,
+                search_text: debouncedSearchText.trim() || undefined
+            }
+            dispatch(getInterviewSessionListCursorAction(req));
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    const handleFirst = () => {
+        if (currentPage === 1) return;
+        else if (currentPage - 1 === 1) {
+            const req: GetInterviewSessionListCursorReq = {
+                cursor_id: interviewSessionList.prev_cursor?.id,
+                cursor_created_at: interviewSessionList.prev_cursor?.created_at,
+                type: CURSOR_TYPE.PREV,
+                search_text: debouncedSearchText.trim() || undefined
+            }
+            dispatch(getInterviewSessionListCursorAction(req));
+        } else {
+            const req: GetInterviewSessionListPageReq = {
+                offset: 0,
+                search_text: debouncedSearchText.trim() || undefined
+            }
+            dispatch(getInterviewSessionListPageAction(req));
+        } setCurrentPage(1);
+    };
+
+    const handleLast = () => {
+        if (currentPage === interviewSessionList.total_pages) return;
+        else if (currentPage + 1 === interviewSessionList.total_pages) {
+            const req: GetInterviewSessionListCursorReq = {
+                cursor_id: interviewSessionList.next_cursor?.id,
+                cursor_created_at: interviewSessionList.next_cursor?.created_at,
+                search_text: debouncedSearchText.trim() || undefined
+            }
+            dispatch(getInterviewSessionListCursorAction(req));
+        } else {
+            const req: GetInterviewSessionListPageReq = {
+                offset: interviewSessionList.total_pages,
+                search_text: debouncedSearchText.trim() || undefined
+            }
+            dispatch(getInterviewSessionListPageAction(req));
+        }
+        setCurrentPage(interviewSessionList.total_pages);
+    };
     
     const titleStyle:CSSProperties = {
         fontSize: '24px',
         fontWeight: 'bold',
         color: 'black',
         width: '100%',
+        maxHeight: '10vh',
         display: 'flex',
         justifyContent: 'space-between',
     }
@@ -85,8 +201,9 @@ const RecordingListPage = () => {
     }
 
     const handleStartNewInterviews = () => {
-        navigate('/create-interview');
+        safeNavigate('/create-interview');
     }
+
 
     return (
         <ContentLayout>
@@ -98,8 +215,8 @@ const RecordingListPage = () => {
                         <input
                             style={searchInputStyle}
                             placeholder="Search Recordings..."
-                            onChange={() => {}}
-                            value=""
+                            onChange={(e) => setSearchText(e.target.value)}
+                            value={searchText}
                         />
                     </div>
                 </div>
@@ -143,6 +260,18 @@ const RecordingListPage = () => {
                         
                     </table>
                 </div>
+
+                {interviewSessionList.total_pages > 0 && (
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={interviewSessionList.total_pages || 1}
+                        onPageChange={handlePageChange}
+                        onPrevious={() => handlePrevious(currentPage)}
+                        onNext={() => handleNext(currentPage)}
+                        onFirst={handleFirst}
+                        onLast={handleLast}
+                    />
+                )}
             </div>
         </ContentLayout>
     );
