@@ -1,4 +1,4 @@
-import type { CreateInterviewSessionResponse, CreateInterviewSessionWithExistingResumeRequest, GetChatHistoryBySessionTokenResp, GetInterviewSessionInformationResp } from "../interface/interviewInterface";
+import type { CreateInterviewSessionResponse, CreateInterviewSessionWithExistingResumeRequest, GetChatHistoryBySessionTokenResp, GetInterviewSessionInformationResp, GetInterviewSessionListResp, GetInterviewSessionListCursorReq, GetInterviewSessionListPageReq } from "../interface/interviewInterface";
 
 export const CREATE_SESSION_WITH_NEW_RESUME = 'CREATE_SESSION_WITH_NEW_RESUME';
 export const CREATE_SESSION_WITH_EXISTING_RESUME = 'CREATE_SESSION_WITH_EXISTING_RESUME';
@@ -12,6 +12,10 @@ export const SET_END_INTERVIEW_SESSION_FINISHED = 'SET_END_INTERVIEW_SESSION_FIN
 
 export const SET_CREATE_INTERVIEW_ERROR = 'SET_CREATE_INTERVIEW_ERROR';
 export const SET_CREATE_INTERVIEW_SUCCESS = 'SET_CREATE_INTERVIEW_SUCCESS';
+
+export const GET_INTERVIEW_SESSION_LIST_CURSOR = 'GET_INTERVIEW_SESSION_LIST_CURSOR';
+export const GET_INTERVIEW_SESSION_LIST_PAGE = 'GET_INTERVIEW_SESSION_LIST_PAGE';
+export const SET_INTERVIEW_SESSION_LIST = 'SET_INTERVIEW_SESSION_LIST';
 
 
 export const setCreateInterviewError = (message: string) => {
@@ -55,4 +59,16 @@ export const setEndInterviewSessionLoadingAction = () => {
 
 export const setEndInterviewSessionFinishedAction = () => {
     return { type: SET_END_INTERVIEW_SESSION_FINISHED};
+};
+
+export const getInterviewSessionListCursorAction = (params: GetInterviewSessionListCursorReq) => {
+    return { type: GET_INTERVIEW_SESSION_LIST_CURSOR, payload: params };
+};
+
+export const getInterviewSessionListPageAction = (params: GetInterviewSessionListPageReq) => {
+    return { type: GET_INTERVIEW_SESSION_LIST_PAGE, payload: params };
+};
+
+export const setInterviewSessionList = (payload: GetInterviewSessionListResp) => {
+    return { type: SET_INTERVIEW_SESSION_LIST, payload: { interviewSessionList: payload  } };
 };

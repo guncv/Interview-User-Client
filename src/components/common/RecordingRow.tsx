@@ -3,20 +3,10 @@ import type { CSSProperties } from 'react';
 import Colors from '../../assets/styles/Color';
 import Size from '../../assets/styles/Size';
 import { ClickableLink } from './';
-
-interface Interview {
-    id: number;
-    position: string;
-    resume_id: string;
-    resume_file_name: string;
-    score: string;
-    totalTime: string;
-    status: string;
-    createdAt: string;
-}
+import type { InterviewSessionSummary } from '../../interface/interviewInterface';
 
 interface RecordingRowProps {
-    interview: Interview;
+    interview: InterviewSessionSummary;
     onDownloadResume: (resumeId: string) => void;
 }
 
@@ -75,11 +65,11 @@ const RecordingRow: React.FC<RecordingRowProps> = ({ interview, onDownloadResume
             <td style={{...dataCellStyle, textAlign: 'center'}}>
                 <span style={{ 
                     fontWeight: 'bold',
-                    color: parseInt(interview.score) >= 80 ? Colors.SUCCESS_COLOR :
-                        parseInt(interview.score) >= 60 ? Colors.WARNING_COLOR :
+                    color: interview.overall_score >= 80 ? Colors.SUCCESS_COLOR :
+                        interview.overall_score >= 60 ? Colors.WARNING_COLOR :
                         Colors.TEXT_ERROR_COLOR
                 }}>
-                    {interview.score}
+                    {interview.overall_score}
                 </span>
             </td>
             
@@ -98,13 +88,13 @@ const RecordingRow: React.FC<RecordingRowProps> = ({ interview, onDownloadResume
             
             <td style={{...dataCellStyle, textAlign: 'center'}}>
                 <span style={{ fontFamily: 'monospace', fontWeight: '500' }}>
-                    {interview.totalTime}
+                    {interview.total_time}
                 </span>
             </td>
             
             <td style={{...dataCellStyle, textAlign: 'center'}}>
                 <span style={{ color: Colors.SECONDARY_TEXT_COLOR }}>
-                    {interview.createdAt}
+                    {interview.created_at}
                 </span>
             </td>
         </tr>

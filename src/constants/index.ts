@@ -20,6 +20,8 @@ export const API_ENDPOINTS = {
   CREATE_SESSION_WITH_EXISTING_RESUME: '/api/v1/sessions/existing',
   GET_CHAT_HISTORY_BY_SESSION_TOKEN: '/api/v1/sessions/chat-history',
   GET_INTERVIEW_SESSION_INFORMATION: '/api/v1/sessions/information',
+  LIST_INTERVIEW_SESSIONS_CURSOR: '/api/v1/sessions/cursor',
+  LIST_INTERVIEW_SESSIONS_PAGE: '/api/v1/sessions/page',
 
   // Issue Report API
   LIST_ISSUE_REPORTS: '/api/v1/issue-reports',

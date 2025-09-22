@@ -104,6 +104,53 @@ export interface GetInterviewSessionInformationResp {
 	file_name:   string;
 }
 
+export interface InterviewSessionSummary {
+	id: string;
+	resume_id: string;
+	resume_file_name: string;
+	position: string;
+	status: string;
+	total_time: string;
+	overall_score: number;
+	created_at: string;
+}
+
+export interface Cursor {
+	created_at: string;
+	id: string;
+}
+
+export interface GetInterviewSessionListResp {
+	sessions   : InterviewSessionSummary[];
+	prev_cursor: Cursor | null;
+	next_cursor: Cursor | null;
+	total_pages: number;
+	page_size: number;
+}
+
+export interface GetInterviewSessionListCursorReq {	
+	cursor_id?: string;
+	cursor_created_at?: string;
+	limit?: number;
+	search_text?: string;
+	status?: string;
+    type?: string;
+}
+
+export interface GetInterviewSessionListPageReq {
+	offset?: number;
+	limit?: number;
+	search_text?: string;
+	status?: string;
+    type?: string;
+}
+
+export interface InterviewSession {
+    id: string;
+    session_token: string;
+    position: string;
+    file_name: string;
+}
 
 export interface JobRequirement {
     id: string;
