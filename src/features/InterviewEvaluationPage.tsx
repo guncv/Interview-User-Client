@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import font from '../assets/styles/Font';
 import type { CSSProperties } from 'react';
@@ -13,7 +13,7 @@ import { Colors } from '../assets/styles';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../reducers/rootReducer';
 import { createReviewComment } from '../actions/reviewCommenAction';
-import { deleteInterviewSessionByIdAction } from '../actions/interviewAction';
+import { deleteInterviewSessionByIdAction, getInterviewSessionInformationById } from '../actions/interviewAction';
 
 const InterviewEvaluationPage: React.FC = () => {
     const { sessionId } = useParams<{ sessionId: string }>();
@@ -23,6 +23,11 @@ const InterviewEvaluationPage: React.FC = () => {
 
     const alreadyFeedback = useSelector((state: RootState) => state.reviewComment.alreadyFeedback);
     const feedBackError = useSelector((state: RootState) => state.reviewComment.error);
+    const interviewSessionInformationById = useSelector((state: RootState) => state.interview.interviewSessionInformationById);
+
+    useEffect(() => {
+        dispatch(getInterviewSessionInformationById(sessionId || ''));
+    }, [sessionId, dispatch]);
 
     const mockEvaluation: InterviewEvaluation = {
         id: '1',
@@ -259,7 +264,7 @@ const InterviewEvaluationPage: React.FC = () => {
                                 color: '#6B7280', 
                                 fontSize: '14px' 
                             }}>
-                                September 23, 2025 at 12:25 AM
+                                {interviewSessionInformationById.created_at_full_name}
                             </p>
                         </div>
 
@@ -299,7 +304,7 @@ const InterviewEvaluationPage: React.FC = () => {
                     </div>
                 </div>
 
-                <EvaluationResultsPanel 
+                <EvaluationResultsPanel
                     evaluation={mockEvaluation}
                 />
             </div>

@@ -6,6 +6,8 @@ import { Colors } from '../../assets/styles';
 import AnalyticsTab from './AnalyticsTab';
 import CriteriaTab from './CriteriaTab';
 import InfoTab from './InfoTab';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../../reducers/rootReducer';
 
 interface EvaluationResultsPanelProps {
     evaluation: InterviewEvaluation;
@@ -16,13 +18,7 @@ const EvaluationResultsPanel: React.FC<EvaluationResultsPanelProps> = ({
 }) => {
     const [activeTab, setActiveTab] = useState<'analytics' | 'details' | 'criteria'>('analytics');
     const [showOverallFeedbackModal, setShowOverallFeedbackModal] = useState<boolean>(false);
-
-    const getStatusColor = (status: string) => {
-        if (status === 'completed') return '#10B981';
-        if (status === 'processing') return '#F59E0B';
-        return '#EF4444';
-    };
-
+    const interviewSessionInformationById = useSelector((state: RootState) => state.interview.interviewSessionInformationById);
 
     const truncateTextToLines = (text: string, maxLines: number = 2) => {
         const words = text.split(' ');
@@ -89,30 +85,30 @@ const EvaluationResultsPanel: React.FC<EvaluationResultsPanelProps> = ({
                     marginBottom: '8px',
                     color: '#1F2937'
                 }}>
-                    Session Status: <span style={{ color: getStatusColor(evaluation.status) }}>{evaluation.status}</span>
+                    Session Status: <span style={{ color: interviewSessionInformationById.status_color }}>{interviewSessionInformationById.status_display_name}</span>
                 </div>
                 <div style={{ 
                     fontFamily: font.Medium,
                     fontSize: '14px',
                     marginBottom: '12px',
-                    color: '#6B7280'
+                    color: `${interviewSessionInformationById.overall_score_color}`
                 }}>
-                    Your score was {evaluation.overall_score}%
+                    <span style={{color:'#6B7280'}}>Your score was </span> {interviewSessionInformationById.overall_score_percent}
                 </div>
 
                 <div style={{ marginTop: '8px' }}>
-                    <div style={{ 
-                        fontSize: '12px', 
-                        color: '#6B7280',
+                    <div style={{
+                        fontSize: '12px',
+                        color:'#6B7280',
                         lineHeight: '1.4'
                     }}>
-                        Overall feedback: {showOverallFeedbackModal 
-                            ? evaluation.feedback.general_feedback 
-                            : truncateTextToLines(evaluation.feedback.general_feedback).text
+                        Overall feedback: {showOverallFeedbackModal
+                            ? interviewSessionInformationById.summary_md
+                            : truncateTextToLines(interviewSessionInformationById.summary_md).text
                         }
                     </div>
                     
-                    {truncateTextToLines(evaluation.feedback.general_feedback).isTruncated && (
+                    {truncateTextToLines(interviewSessionInformationById.summary_md).isTruncated && (
                         <button 
                             onClick={() => setShowOverallFeedbackModal(!showOverallFeedbackModal)}
                             style={{ 

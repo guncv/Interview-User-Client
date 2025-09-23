@@ -7,7 +7,6 @@ import { useVoiceStreaming, type AudioChunk } from "../hook/useVoiceStreaming";
 import { Colors } from "../assets/styles";
 import ContentLayout from "../components/layout/ContentLayout";
 import { useDispatch } from "react-redux";
-import { getInterviewSessionInformation } from "../actions/interviewAction";
 import { useContextProvider } from "../components/layout/ContextProvider";
 import AudioDebugPanel from "../components/common/AudioDebugPanel";
 import { setEndInterviewSessionLoadingAction, setEndInterviewSessionFinishedAction } from "../actions/interviewAction";
@@ -121,12 +120,6 @@ const InterviewSimulation = () => {
                 return Colors.PRIMARY_COLOR;
         }
     };
-
-    useEffect(() => {
-        if (sessionTokenParam) {
-            dispatch(getInterviewSessionInformation(sessionTokenParam));
-        }
-    }, [sessionTokenParam, dispatch]);
 
     useEffect(() => {
         const timer = setInterval(() => {

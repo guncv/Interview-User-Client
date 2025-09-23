@@ -100,8 +100,20 @@ export interface GetInterviewSessionInformationReq {
 }
 
 export interface GetInterviewSessionInformationResp {
-	position:    string;
-	file_name:   string;
+	resume_id: string;
+	resume_file_name: string;
+	position: string;
+	status: string;
+	status_display_name: string;
+	status_color: string;
+	started_at: string;
+	ended_at: string;
+	overall_score: number;
+	overall_score_percent: string;
+	overall_score_color: string;
+	summary_md: string;
+	created_at: string;
+	created_at_full_name: string;
 }
 
 export interface InterviewSessionSummary {

@@ -1,14 +1,15 @@
-import type { CreateInterviewSessionResponse, CreateInterviewSessionWithExistingResumeRequest, GetChatHistoryBySessionTokenResp, GetInterviewSessionInformationResp, GetInterviewSessionListResp, GetInterviewSessionListCursorReq, GetInterviewSessionListPageReq } from "../interface/interviewInterface";
+import type { CreateInterviewSessionResponse, CreateInterviewSessionWithExistingResumeRequest, GetChatHistoryBySessionTokenResp, GetInterviewSessionListResp, GetInterviewSessionListCursorReq, GetInterviewSessionListPageReq, GetInterviewSessionInformationResp } from "../interface/interviewInterface";
 
 export const CREATE_SESSION_WITH_NEW_RESUME = 'CREATE_SESSION_WITH_NEW_RESUME';
 export const CREATE_SESSION_WITH_EXISTING_RESUME = 'CREATE_SESSION_WITH_EXISTING_RESUME';
 export const GET_CHAT_HISTORY_BY_SESSION_TOKEN = 'GET_CHAT_HISTORY_BY_SESSION_TOKEN';
 export const SET_CHAT_HISTORY = 'SET_CHAT_HISTORY';
-export const GET_INTERVIEW_SESSION_INFORMATION = 'GET_INTERVIEW_SESSION_INFORMATION';
-export const SET_INTERVIEW_SESSION_INFORMATION = 'SET_INTERVIEW_SESSION_INFORMATION';
 
 export const SET_END_INTERVIEW_SESSION_LOADING = 'SET_END_INTERVIEW_SESSION_LOADING';
 export const SET_END_INTERVIEW_SESSION_FINISHED = 'SET_END_INTERVIEW_SESSION_FINISHED';
+
+export const GET_INTERVIEW_SESSION_INFORMATION_BY_ID = 'GET_INTERVIEW_SESSION_INFORMATION_BY_ID';
+export const SET_INTERVIEW_SESSION_INFORMATION_BY_ID = 'SET_INTERVIEW_SESSION_INFORMATION_BY_ID';
 
 export const SET_CREATE_INTERVIEW_ERROR = 'SET_CREATE_INTERVIEW_ERROR';
 export const SET_CREATE_INTERVIEW_SUCCESS = 'SET_CREATE_INTERVIEW_SUCCESS';
@@ -45,13 +46,6 @@ export const setChatHistory = (payload: GetChatHistoryBySessionTokenResp) => {
     return { type: SET_CHAT_HISTORY, payload: { chatHistory: payload } };
 };
 
-export const getInterviewSessionInformation = (session_token: string) => {
-    return { type: GET_INTERVIEW_SESSION_INFORMATION, payload: { session_token } };
-};
-
-export const setInterviewSessionInformation = (payload: GetInterviewSessionInformationResp) => {
-    return { type: SET_INTERVIEW_SESSION_INFORMATION, payload: { interviewSessionInformation: payload } };
-};
 
 export const setEndInterviewSessionLoadingAction = () => {
     return { type: SET_END_INTERVIEW_SESSION_LOADING };
@@ -75,4 +69,12 @@ export const setInterviewSessionList = (payload: GetInterviewSessionListResp) =>
 
 export const deleteInterviewSessionByIdAction = (payload: string) => {
     return { type: DELETE_INTERVIEW_SESSION_BY_ID, payload };
+};
+
+export const getInterviewSessionInformationById = (session_id: string) => {
+    return { type: GET_INTERVIEW_SESSION_INFORMATION_BY_ID, payload: { session_id } };
+};
+
+export const setInterviewSessionInformationById = (payload: GetInterviewSessionInformationResp) => {
+    return { type: SET_INTERVIEW_SESSION_INFORMATION_BY_ID, payload: { interviewSessionInformationById: payload } };
 };

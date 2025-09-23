@@ -3,7 +3,7 @@ import {
     SET_CREATE_INTERVIEW_ERROR,
     SET_CREATE_INTERVIEW_SUCCESS,
     SET_CHAT_HISTORY,
-    SET_INTERVIEW_SESSION_INFORMATION,
+    SET_INTERVIEW_SESSION_INFORMATION_BY_ID,
     SET_INTERVIEW_SESSION_LIST,
 } from '../actions/interviewAction';
 import type { RootState } from './rootReducer';
@@ -13,7 +13,7 @@ type InterviewState = {
     error: string;
     success: CreateInterviewSessionResponse;
     chatHistory: GetChatHistoryBySessionTokenResp;
-    interviewSessionInformation: GetInterviewSessionInformationResp;
+    interviewSessionInformationById: GetInterviewSessionInformationResp;
     interviewSessionList: GetInterviewSessionListResp;
 }
 type InterviewStateAction = {
@@ -22,7 +22,7 @@ type InterviewStateAction = {
         error: string;
         success: CreateInterviewSessionResponse;
         chatHistory: GetChatHistoryBySessionTokenResp;
-        interviewSessionInformation: GetInterviewSessionInformationResp;
+        interviewSessionInformationById: GetInterviewSessionInformationResp;
         interviewSessionList: GetInterviewSessionListResp;
     }
 }
@@ -34,9 +34,21 @@ const initialState: InterviewState = {
     chatHistory: {
         chat_history: [],
     },
-    interviewSessionInformation: {
+    interviewSessionInformationById: {
+        resume_id: '',
+        resume_file_name: '',
         position: '',
-        file_name: '',
+        status: '',
+        status_display_name: '',
+        status_color: '',
+        overall_score_percent: '',
+        overall_score_color: '',
+        started_at: '',
+        ended_at: '',
+        overall_score: 0,
+        summary_md: '',
+        created_at: '',
+        created_at_display: '',
     },
     interviewSessionList: {
         sessions: [],
@@ -67,10 +79,10 @@ export const interviewReducer = (
             ...state,
             chatHistory: action.payload.chatHistory,
             };
-        case SET_INTERVIEW_SESSION_INFORMATION:
+        case SET_INTERVIEW_SESSION_INFORMATION_BY_ID:
             return {
             ...state,
-            interviewSessionInformation: action.payload.interviewSessionInformation,
+            interviewSessionInformationById: action.payload.interviewSessionInformationById,
             };
         case SET_INTERVIEW_SESSION_LIST:
             return {
@@ -90,6 +102,6 @@ export const interviewReducer = (
             error: interview.error,
             success: interview.success,
             chatHistory: interview.chatHistory,
-            interviewSessionInformation: interview.interviewSessionInformation,
+            interviewSessionInformationById: interview.interviewSessionInformationById,
         }),
     );
