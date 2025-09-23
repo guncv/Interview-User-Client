@@ -182,7 +182,7 @@ const FeedBack: React.FC<FeedBackProps> = ({
             {isExpanded && !alreadyFeedback && (
                 <div style={expandableContainerStyle}>
                     <div style={ratingContainerStyle}>
-                        <label style={ratingLabelStyle}>Rate this response (1-5):</label>
+                        <label style={ratingLabelStyle}>Rate this experience (1-5):</label>
                         <div style={ratingButtonsStyle}>
                             {[1, 2, 3, 4, 5].map((star) => (
                                 <button
@@ -209,7 +209,7 @@ const FeedBack: React.FC<FeedBackProps> = ({
                     <div style={commentContainerStyle}>
                         <label style={commentLabelStyle}>Additional comments (optional):</label>
                         <textarea
-                            placeholder="Share your thoughts about this response..."
+                            placeholder="Share your thoughts about this experience..."
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
                             style={commentTextareaStyle}

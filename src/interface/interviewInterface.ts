@@ -177,6 +177,7 @@ export interface ChatHistory {
 	start_at: string;
 	end_at: string;
 	created_at: string;
+	phrase_name?: string;
 
 	feedback_score?: number;
 	max_feedback_score?: number;

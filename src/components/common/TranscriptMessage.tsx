@@ -88,7 +88,18 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
         marginBottom: '6px',
         display: 'flex',
         alignItems: 'center',
-        gap: '6px'
+        gap: '6px',
+        flexWrap: 'wrap'
+    };
+
+    const phraseNameStyle: CSSProperties = {
+        fontSize: '9px',
+        color: Colors.ACCENT_COLOR,
+        backgroundColor: Colors.ACCENT_COLOR_LIGHT,
+        padding: '2px 6px',
+        borderRadius: '8px',
+        fontFamily: font.Medium,
+        marginLeft: '4px'
     };
 
     const timestampStyle: CSSProperties = {
@@ -100,7 +111,7 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
 
     const feedbackContainerStyle: CSSProperties = {
         marginTop: '8px',
-        padding: '12px',
+        padding: '20px',
         backgroundColor: Colors.LECTURE_CONTENT_PART_COLOR,
         borderRadius: '8px',
         border: `1px solid ${Colors.BORDER_COLOR}`,
@@ -152,6 +163,11 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
                 <div style={contentStyle}>
                     <div style={headerStyle}>
                         <span>{isUser ? 'You' : 'Mike'}</span>
+                        {message.phrase_name && (
+                            <span style={phraseNameStyle}>
+                                {message.phrase_name}
+                            </span>
+                        )}
                         {hasFeedback && (
                             <button
                                 onClick={() => onFeedbackToggle?.(message.id)}
