@@ -1,7 +1,7 @@
 import { all } from 'redux-saga/effects';
 import { watcherForgotPassword, watcherSignOut, watcherSignIn, watcherVerifyEmail, watcherSignUp, watcherResetVerifyEmail, watcherResetPassword } from './userSaga';
 import { watcherGetResumeById, watcherListResume, watcherDownloadResumeBySessionToken } from './resumeSaga';
-import { watcherCreateSessionWithNewResume, watcherCreateSessionWithExistingResume, watcherGetChatHistoryBySessionToken, watcherGetInterviewSessionInformation, watcherEndInterviewSessionLoading, watcherEndInterviewSessionFinished, watcherGetInterviewSessionListCursor, watcherGetInterviewSessionListPage } from './interviewSaga';
+import { watcherCreateSessionWithNewResume, watcherCreateSessionWithExistingResume, watcherGetChatHistoryBySessionToken, watcherGetInterviewSessionInformation, watcherEndInterviewSessionLoading, watcherEndInterviewSessionFinished, watcherGetInterviewSessionListCursor, watcherGetInterviewSessionListPage, watcherDeleteInterviewSessionById } from './interviewSaga';
 import { watcherListIssueCategories, watcherCreateIssueReport } from './issueReport';
 import { watcherCreateReviewComment } from './reviewCommentSaga';
 
@@ -30,6 +30,7 @@ export default function* rootSaga() {
         watcherEndInterviewSessionFinished(),
         watcherGetInterviewSessionListCursor(),
         watcherGetInterviewSessionListPage(),
+        watcherDeleteInterviewSessionById(),
         
         // ===== ISSUE REPORTING MODULE =====
         watcherListIssueCategories(),

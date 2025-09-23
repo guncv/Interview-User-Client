@@ -16,7 +16,7 @@ export const SET_CREATE_INTERVIEW_SUCCESS = 'SET_CREATE_INTERVIEW_SUCCESS';
 export const GET_INTERVIEW_SESSION_LIST_CURSOR = 'GET_INTERVIEW_SESSION_LIST_CURSOR';
 export const GET_INTERVIEW_SESSION_LIST_PAGE = 'GET_INTERVIEW_SESSION_LIST_PAGE';
 export const SET_INTERVIEW_SESSION_LIST = 'SET_INTERVIEW_SESSION_LIST';
-
+export const DELETE_INTERVIEW_SESSION_BY_ID = 'DELETE_INTERVIEW_SESSION_BY_ID';
 
 export const setCreateInterviewError = (message: string) => {
     return { type: SET_CREATE_INTERVIEW_ERROR, payload: { error: message } };
@@ -71,4 +71,8 @@ export const getInterviewSessionListPageAction = (params: GetInterviewSessionLis
 
 export const setInterviewSessionList = (payload: GetInterviewSessionListResp) => {
     return { type: SET_INTERVIEW_SESSION_LIST, payload: { interviewSessionList: payload  } };
+};
+
+export const deleteInterviewSessionByIdAction = (payload: string) => {
+    return { type: DELETE_INTERVIEW_SESSION_BY_ID, payload };
 };

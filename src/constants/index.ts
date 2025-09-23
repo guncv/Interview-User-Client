@@ -22,7 +22,8 @@ export const API_ENDPOINTS = {
   GET_INTERVIEW_SESSION_INFORMATION: '/api/v1/sessions/information',
   LIST_INTERVIEW_SESSIONS_CURSOR: '/api/v1/sessions/cursor',
   LIST_INTERVIEW_SESSIONS_PAGE: '/api/v1/sessions/jump',
-
+  DELETE_INTERVIEW_SESSION_BY_ID: '/api/v1/sessions',
+  
   // Issue Report API
   LIST_ISSUE_REPORTS: '/api/v1/issue-reports',
   CREATE_ISSUE_REPORT: '/api/v1/issue-reports',

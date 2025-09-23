@@ -6,15 +6,13 @@ import { handleApiError } from "./errorApi";
 
 export const apiCreateReviewComment = async (payload: CreateReviewCommentRequest, token: string) => {
     try {
-        console.log("token", `${HTTP_HEADERS.BEARER} ${token}`);
-        console.log("payload", payload);
-        const response = await axiosInstance.post(API_ENDPOINTS.CREATE_REVIEW_COMMENT, {
-            payload,
+        const response = await axiosInstance.post(API_ENDPOINTS.CREATE_REVIEW_COMMENT, payload,
+            {
             headers: {
                 [HTTP_HEADERS.AUTHORIZATION]: `${HTTP_HEADERS.BEARER} ${token}`,
                 [HTTP_HEADERS.CONTENT_TYPE]: CONTENT_TYPES.APPLICATION_JSON,
             },
-        });
+            });
 
         return { success: true, data: response.data };
     }

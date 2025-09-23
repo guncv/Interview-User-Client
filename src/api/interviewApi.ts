@@ -135,3 +135,20 @@ export const apiGetInterviewSessionListPage = async (payload: GetInterviewSessio
         return handleApiError(error as AxiosError);
     }
 };
+
+export const apiDeleteInterviewSessionById = async (payload: string, token: string) => {
+    try {
+        const response = await axiosInstance.delete(`${API_ENDPOINTS.DELETE_INTERVIEW_SESSION_BY_ID}/${payload}`,
+            {
+                headers: {
+                    [HTTP_HEADERS.CONTENT_TYPE]: CONTENT_TYPES.APPLICATION_JSON,
+                    [HTTP_HEADERS.AUTHORIZATION]: `${HTTP_HEADERS.BEARER} ${token}`,
+                },
+            }
+        );
+        return { success: true, data: response.data as GetInterviewSessionListResp };
+    }
+    catch (error) {
+        return handleApiError(error as AxiosError);
+    }
+};
