@@ -204,7 +204,6 @@ const RecordingListPage = () => {
         safeNavigate('/create-interview');
     }
 
-
     return (
         <ContentLayout>
             <div style={{ width: '100%', padding: '20px 40px' }}>
@@ -220,7 +219,7 @@ const RecordingListPage = () => {
                         />
                     </div>
                 </div>
-                
+
                 <div style={tableContainerStyle}>
                     <table style={tableStyle}>
                         <thead>
@@ -237,8 +236,8 @@ const RecordingListPage = () => {
                         <tbody>
                             {interviewSessionList.sessions.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} style={{ 
-                                        textAlign: 'center', 
+                                    <td colSpan={6} style={{
+                                        textAlign: 'center',
                                         padding: '40px 16px',
                                         fontSize: Size.Medium,
                                         color: Colors.SECONDARY_TEXT_COLOR,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import font from '../assets/styles/Font';
 import type { CSSProperties } from 'react';
 import type { InterviewEvaluation, ChatHistory } from '../interface/interviewInterface';
@@ -8,15 +8,21 @@ import FeedBack from '../components/common/FeedBack';
 import ChatContainer from '../components/common/ChatContainer';
 import { Trash } from 'lucide-react';
 import { Colors } from '../assets/styles';
+import { useDispatch, useSelector } from 'react-redux';
+import type { RootState } from '../reducers/rootReducer';
+import { createReviewComment } from '../actions/reviewCommenAction';
+import { safeNavigate } from '../utils/navigation';
 
 const InterviewEvaluationPage: React.FC = () => {
-    const { sessionId } = useParams<{ sessionId: string }>();
-    const navigate = useNavigate();
+    const { sessionId } = useParams<{ sessionId: string }>(); 
+    const dispatch = useDispatch();
     
     const [activeTab, setActiveTab] = useState<'coaching' | 'analytics'>('coaching');
     const [showInsights, setShowInsights] = useState<{ [key: string]: boolean }>({});
     const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
-    const [alreadyFeedback, setAlreadyFeedback] = useState<boolean>(false);
+
+    const alreadyFeedback = useSelector((state: RootState) => state.reviewComment.alreadyFeedback);
+    const feedBackError = useSelector((state: RootState) => state.reviewComment.error);
 
     const mockEvaluation: InterviewEvaluation = {
         id: '1',
@@ -171,7 +177,7 @@ const InterviewEvaluationPage: React.FC = () => {
     ];
 
     const handlePracticeAgain = () => {
-        navigate('/create-interview');
+        safeNavigate('/create-interview');
     };
 
     const toggleInsights = (category: string) => {
@@ -181,10 +187,14 @@ const InterviewEvaluationPage: React.FC = () => {
         }));
     };
 
-    const handleSubmitClick = (rating: number, comment: string) => {
+    const handleSubmitClick = (rating: number, comment: string | null) => {
         console.log('rating', rating);
         console.log('comment', comment);
-        setAlreadyFeedback(true);
+        dispatch(createReviewComment({
+            session_id: sessionId || '',
+            rating,
+            comment
+        }));
     };
 
     const getScoreColor = (score: number, maxScore: number) => {
@@ -310,6 +320,7 @@ const InterviewEvaluationPage: React.FC = () => {
                             <FeedBack
                                 onSubmitClick={handleSubmitClick}
                                 alreadyFeedback={alreadyFeedback}
+                                FeedBackError={feedBackError}
                             />
                             <ChatContainer
                                 transcript={mockTranscript}

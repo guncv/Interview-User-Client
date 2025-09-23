@@ -29,6 +29,9 @@ export const API_ENDPOINTS = {
   UPDATE_ISSUE_REPORT: '/api/v1/issue-reports',
 
   LIST_ISSUE_CATEGORIES: '/api/v1/issue-categories',
+
+  // Review Comment API
+  CREATE_REVIEW_COMMENT: '/api/v1/review-comments',
 } as const;
 
 export const CURSOR_TYPE = {

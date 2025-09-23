@@ -142,14 +142,6 @@ export function* watcherGetInterviewSessionInformation(): SagaIterator {
     }
 }
 
-export function* handleStatusInterviewError(statusCode: number, message: string) {
-    if (statusCode === HTTP_STATUS.UNAUTHORIZED) {
-        safeNavigate(ROUTES.SIGN_IN);
-        return;
-    }
-    yield put(setCreateInterviewError(message));
-}
-
 function* workerEndInterviewSessionLoading(): SagaIterator {
     try {
         yield delay(0);
@@ -217,7 +209,6 @@ export function* watcherGetInterviewSessionListCursor(): SagaIterator {
     }
 }
 
-
 function* workerGetInterviewSessionListPage(payload: GetInterviewSessionListPageReq): SagaIterator {
     try {
         yield delay(0);
@@ -244,4 +235,12 @@ export function* watcherGetInterviewSessionListPage(): SagaIterator {
         const action = yield take(GET_INTERVIEW_SESSION_LIST_PAGE);
         yield call(workerGetInterviewSessionListPage, action.payload);
     }
+}
+
+export function* handleStatusInterviewError(statusCode: number, message: string) {
+    if (statusCode === HTTP_STATUS.UNAUTHORIZED) {
+        safeNavigate(ROUTES.SIGN_IN);
+        return;
+    }
+    yield put(setCreateInterviewError(message));
 }

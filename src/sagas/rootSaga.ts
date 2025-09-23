@@ -3,6 +3,7 @@ import { watcherForgotPassword, watcherSignOut, watcherSignIn, watcherVerifyEmai
 import { watcherGetResumeById, watcherListResume, watcherDownloadResumeBySessionToken } from './resumeSaga';
 import { watcherCreateSessionWithNewResume, watcherCreateSessionWithExistingResume, watcherGetChatHistoryBySessionToken, watcherGetInterviewSessionInformation, watcherEndInterviewSessionLoading, watcherEndInterviewSessionFinished, watcherGetInterviewSessionListCursor, watcherGetInterviewSessionListPage } from './interviewSaga';
 import { watcherListIssueCategories, watcherCreateIssueReport } from './issueReport';
+import { watcherCreateReviewComment } from './reviewCommentSaga';
 
 export default function* rootSaga() {
     yield all([
@@ -33,6 +34,9 @@ export default function* rootSaga() {
         // ===== ISSUE REPORTING MODULE =====
         watcherListIssueCategories(),
         watcherCreateIssueReport(),
+
+        // ===== REVIEW COMMENT MODULE =====
+        watcherCreateReviewComment(),
     ]);
 }
 

@@ -4,21 +4,23 @@ import type { CSSProperties } from 'react';
 import Colors from '../../assets/styles/Color';
 
 interface FeedBackProps {
-    onSubmitClick: (rating: number, comment: string) => void;
+    onSubmitClick: (rating: number, comment: string | null) => void;
     alreadyFeedback?: boolean;
+    FeedBackError?: string;
 }
 
 const FeedBack: React.FC<FeedBackProps> = ({
     onSubmitClick,
     alreadyFeedback = false,
-}) => { 
+    FeedBackError = '',
+}) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [rating, setRating] = useState<number | null>(null);
     const [comment, setComment] = useState('');
 
     const handleSubmitClick = () => {
         if (rating) {
-            onSubmitClick(rating, comment);
+            onSubmitClick(rating, comment || null);
         }
     };
 
@@ -221,6 +223,7 @@ const FeedBack: React.FC<FeedBackProps> = ({
                     >
                         Submit Feedback
                     </button>
+                    {FeedBackError && <div style={{ color: 'red', fontFamily: font.Regular, fontSize: '14px' }}>{FeedBackError}</div>}
                 </div>
                 )}
                 
