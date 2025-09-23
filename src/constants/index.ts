@@ -23,7 +23,10 @@ export const API_ENDPOINTS = {
   LIST_INTERVIEW_SESSIONS_CURSOR: '/api/v1/sessions/cursor',
   LIST_INTERVIEW_SESSIONS_PAGE: '/api/v1/sessions/jump',
   DELETE_INTERVIEW_SESSION_BY_ID: '/api/v1/sessions',
-  
+
+  // Evaluation API
+  LIST_ALL_RUBRICS_AND_CRITERIA: '/api/v1/evaluation/rubrics',
+
   // Issue Report API
   LIST_ISSUE_REPORTS: '/api/v1/issue-reports',
   CREATE_ISSUE_REPORT: '/api/v1/issue-reports',

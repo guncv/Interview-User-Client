@@ -63,9 +63,7 @@ async function playBufferedAudio(
     setIsAiSpeaking(false);
     onAiFinishedSpeaking?.();
 
-    console.log('isInterviewerTurn', isInterviewerTurn);
     if (!isInterviewerTurn) {
-        console.log('handleInterviewerTurn', false);
         handleInterviewerTurn?.(false);
     }
 }
@@ -219,12 +217,10 @@ const InterviewSimulation = () => {
                 setIsUserTurn(true);
                 break;
             case WEBSOCKET_TYPES.INTERVIEWER_TURN_START:
-                console.log('INTERVIEWER_TURN_START');
                 setIsInterviewerTurn(true);
                 setIsUserTurn(false);
                 break;
             case WEBSOCKET_TYPES.INTERVIEWER_TURN_END:
-                console.log('INTERVIEWER_TURN_END');
                 setIsInterviewerTurn(false);
                 break;
             case WEBSOCKET_TYPES.INTERVIWER_RESPONSE:

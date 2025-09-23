@@ -16,7 +16,7 @@ import { createReviewComment } from '../actions/reviewCommenAction';
 import { deleteInterviewSessionByIdAction } from '../actions/interviewAction';
 
 const InterviewEvaluationPage: React.FC = () => {
-    const { sessionId } = useParams<{ sessionId: string }>(); 
+    const { sessionId } = useParams<{ sessionId: string }>();
     const dispatch = useDispatch();
     
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);

@@ -132,12 +132,13 @@ const EvaluationResultsPanel: React.FC<EvaluationResultsPanelProps> = ({
             </div>
 
             <div style={{ display: 'flex', marginBottom: '16px', flexShrink: 0 }}>
-                <button 
+                <button
                     onClick={() => setActiveTab('analytics')}
                     style={activeTab === 'analytics' ? activeTabStyle : tabStyle}
                 >
                     Analytics
                 </button>
+                
                 <button
                     onClick={() => setActiveTab('criteria')}
                     style={activeTab === 'criteria' ? activeTabStyle : tabStyle}

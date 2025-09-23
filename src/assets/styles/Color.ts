@@ -19,6 +19,10 @@ const Colors = {
 
     GREEN_COLOR: '#28A745',
     GREEN_COLOR_LIGHT: '#05966920',
+    
+    PERCENTAGE_LOW_COLOR: '#DC3545',
+    PERCENTAGE_MEDIUM_COLOR: '#FFC107',
+    PERCENTAGE_HIGH_COLOR: '#28A745',
 };
 
 export default Colors;

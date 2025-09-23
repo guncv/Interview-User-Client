@@ -1,240 +1,34 @@
 import React, { useState } from 'react';
 import font from '../../assets/styles/Font';
 import { Colors } from '../../assets/styles';
-
-
-interface RubricCriteria {
-    id: string;
-    code: string;
-    name: string;
-    description: string;
-}
-
-interface Rubric {
-    id: string;
-    name: string;
-    description: string;
-    criteria: RubricCriteria[];
-}
+import { useDispatch, useSelector } from 'react-redux';
+import type { RootState } from '../../reducers/rootReducer';
+import { useEffect } from 'react';
+import { getEvaluationRubricAndCriteria } from '../../actions/evaluationAction';
+import type { CriterionRow } from '../../interface/evaluationInterface';
+import { convertWeightToPercentage, getPercentageColor } from '../../utils/format';
 
 const CriteriaTab: React.FC = () => {
-    const [selectedRubric, setSelectedRubric] = useState<string>('greeting');
+    const [selectedRubric, setSelectedRubric] = useState<string>('');
+    const dispatch = useDispatch();
+    
+    const { evaluationRubricAndCriteria } = useSelector((state: RootState) => state.evaluation);
 
-    const rubrics: Rubric[] = [
-        {
-            id: 'greeting',
-            name: 'Greeting Rubric',
-            description: 'Evaluates greeting phase: friendliness, confidence, and communication style',
-            criteria: [
-                {
-                    id: '1',
-                    code: 'A',
-                    name: 'Friendliness',
-                    description: 'Was the candidate polite and welcoming?'
-                },
-                {
-                    id: '2',
-                    code: 'B',
-                    name: 'Confidence',
-                    description: 'Did the candidate sound comfortable starting the conversation?'
-                },
-                {
-                    id: '3',
-                    code: 'C',
-                    name: 'Communication Style',
-                    description: 'Was the greeting clear, professional, and appropriate?'
-                }
-            ]
-        },
-        {
-            id: 'intro',
-            name: 'Intro Rubric',
-            description: 'Evaluates candidate introduction: clarity, relevance, confidence',
-            criteria: [
-                {
-                    id: '4',
-                    code: 'A',
-                    name: 'Clarity of Background',
-                    description: 'Was the introduction clear and structured?'
-                },
-                {
-                    id: '5',
-                    code: 'B',
-                    name: 'Relevance',
-                    description: 'Did they highlight key experiences or studies relevant to the role?'
-                },
-                {
-                    id: '6',
-                    code: 'C',
-                    name: 'Confidence & Presence',
-                    description: 'Did they present themselves confidently?'
-                },
-                {
-                    id: '7',
-                    code: 'D',
-                    name: 'Communication Style',
-                    description: 'Was the tone and pacing professional?'
-                }
-            ]
-        },
-        {
-            id: 'experience',
-            name: 'Experience Rubric',
-            description: 'Evaluates candidate work experience explanations',
-            criteria: [
-                {
-                    id: '8',
-                    code: 'A',
-                    name: 'Role Clarity',
-                    description: 'Did they clearly explain their role and responsibilities?'
-                },
-                {
-                    id: '9',
-                    code: 'B',
-                    name: 'Achievements',
-                    description: 'Did they highlight measurable impact or contributions?'
-                },
-                {
-                    id: '10',
-                    code: 'C',
-                    name: 'Technical/Domain Relevance',
-                    description: 'Did their experience align with the skills needed?'
-                },
-                {
-                    id: '11',
-                    code: 'D',
-                    name: 'Reflection/Insights',
-                    description: 'Did they reflect on what they learned or improved?'
-                }
-            ]
-        },
-        {
-            id: 'project',
-            name: 'Project Rubric',
-            description: 'Evaluates candidate project explanations: problem, implementation, outcomes, and challenges',
-            criteria: [
-                {
-                    id: '12',
-                    code: 'A',
-                    name: 'Problem Definition',
-                    description: 'Did they clearly describe the project\'s goal or challenge?'
-                },
-                {
-                    id: '13',
-                    code: 'B',
-                    name: 'Implementation Details',
-                    description: 'Did they explain tools, tech stack, or design decisions?'
-                },
-                {
-                    id: '14',
-                    code: 'C',
-                    name: 'Impact/Outcome',
-                    description: 'Was there a result or value created?'
-                },
-                {
-                    id: '15',
-                    code: 'D',
-                    name: 'Challenges & Solutions',
-                    description: 'Did they describe obstacles and how they overcame them?'
-                }
-            ]
-        },
-        {
-            id: 'technical',
-            name: 'Technical Rubric',
-            description: 'Evaluates answers to technical questions on correctness, clarity, and depth',
-            criteria: [
-                {
-                    id: '16',
-                    code: 'A',
-                    name: 'Technical Correctness',
-                    description: 'Was the answer technically correct?'
-                },
-                {
-                    id: '17',
-                    code: 'B',
-                    name: 'Clarity of Reasoning',
-                    description: 'Was the explanation structured and logical?'
-                },
-                {
-                    id: '18',
-                    code: 'C',
-                    name: 'Technical Depth',
-                    description: 'Did the answer show deeper understanding or examples?'
-                },
-                {
-                    id: '19',
-                    code: 'D',
-                    name: 'Problem-Solving Approach',
-                    description: 'Did they show how they think or debug?'
-                }
-            ]
-        },
-        {
-            id: 'behavioral',
-            name: 'Behavioral Rubric',
-            description: 'Evaluates responses to behavioral questions using STAR method',
-            criteria: [
-                {
-                    id: '20',
-                    code: 'A',
-                    name: 'Situation/Task Clarity',
-                    description: 'Did they explain the context clearly?'
-                },
-                {
-                    id: '21',
-                    code: 'B',
-                    name: 'Actions Taken',
-                    description: 'Did they describe their role and specific actions?'
-                },
-                {
-                    id: '22',
-                    code: 'C',
-                    name: 'Outcome',
-                    description: 'Was there a clear result/impact?'
-                },
-                {
-                    id: '23',
-                    code: 'D',
-                    name: 'Reflection/Learning',
-                    description: 'Did they reflect on what they learned or improved?'
-                }
-            ]
-        },
-        {
-            id: 'general',
-            name: 'General Rubric',
-            description: 'Used when step is UNKNOWN. Evaluates general communication and technical accuracy',
-            criteria: [
-                {
-                    id: '24',
-                    code: 'A',
-                    name: 'Clarity of Explanation',
-                    description: 'Was the explanation easy to follow and well-structured?'
-                },
-                {
-                    id: '25',
-                    code: 'B',
-                    name: 'Technical Accuracy',
-                    description: 'Was the content technically accurate and complete?'
-                },
-                {
-                    id: '26',
-                    code: 'C',
-                    name: 'Communication Style',
-                    description: 'Was the tone, pacing, and language professional and effective?'
-                },
-                {
-                    id: '27',
-                    code: 'D',
-                    name: 'Technical Depth',
-                    description: 'Did the answer show deep understanding, reasoning, or examples?'
-                }
-            ]
+    useEffect(() => {
+        dispatch(getEvaluationRubricAndCriteria());
+    }, [dispatch]);
+
+    useEffect(() => {
+        if (evaluationRubricAndCriteria.rubrics.length > 0) {
+            setSelectedRubric(evaluationRubricAndCriteria.rubrics[0].id);
         }
-    ];
+    }, [evaluationRubricAndCriteria]);
 
-    const selectedRubricData = rubrics.find(rubric => rubric.id === selectedRubric) || rubrics[0];
+    const selectedRubricData = evaluationRubricAndCriteria.rubrics.find(rubric => rubric.id === selectedRubric) || evaluationRubricAndCriteria.rubrics[0];
+    
+    if (evaluationRubricAndCriteria.rubrics.length === 0) {
+        return <div style={{ fontSize: '16px', color: Colors.PRIMARY_COLOR, fontFamily: font.Medium }}>Loading...</div>;
+    }
 
     return (
         <div style={{ 
@@ -274,17 +68,17 @@ const CriteriaTab: React.FC = () => {
                     gap: '8px',
                     marginBottom: '20px'
                 }}>
-                    {rubrics.map((rubric) => (
+                    {evaluationRubricAndCriteria.rubrics.map((rubric) => (
                         <button
                             key={rubric.id}
                             onClick={() => setSelectedRubric(rubric.id)}
                             style={{
                                 padding: '8px 16px',
                                 borderRadius: '20px',
-                                border: selectedRubric === rubric.id 
-                                    ? `2px solid ${Colors.ACCENT_COLOR}` 
+                                border: selectedRubric === rubric.id
+                                    ? `2px solid ${Colors.ACCENT_COLOR}`
                                     : `1px solid ${Colors.BORDER_COLOR}`,
-                                backgroundColor: selectedRubric === rubric.id 
+                                backgroundColor: selectedRubric === rubric.id
                                     ? Colors.ACCENT_COLOR_LIGHT
                                     : Colors.BACKGROUND_COLOR,
                                 color: selectedRubric === rubric.id
@@ -323,7 +117,7 @@ const CriteriaTab: React.FC = () => {
                     color: Colors.SECONDARY_TEXT_COLOR,
                     fontStyle: 'italic'
                 }}>
-                    {selectedRubricData.description}
+                    {selectedRubricData.description_md}
                 </div>
 
                 <div style={{ 
@@ -336,7 +130,7 @@ const CriteriaTab: React.FC = () => {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {selectedRubricData.criteria.map((criterion) => (
+                    {selectedRubricData.criteria.map((criterion: CriterionRow) => (
                         <div key={criterion.id} style={{ 
                             display: 'flex', 
                             alignItems: 'flex-start',
@@ -359,23 +153,37 @@ const CriteriaTab: React.FC = () => {
                                 fontWeight: 'bold',
                                 fontFamily: font.Bold
                             }}>
-                                {criterion.code}
+                                {criterion.name[0]}
                             </div>
                             <div style={{ flex: 1 }}>
                                 <div style={{ 
                                     fontSize: '12px', 
                                     marginBottom: '4px',
                                     color: Colors.PRIMARY_COLOR,
-                                    fontFamily: font.Medium
+                                    fontFamily: font.Medium,
+                                    display: 'flex',
+                                    flexDirection: 'row',
+                                    justifyContent: 'space-between'
                                 }}>
                                     {criterion.name}
+                                    <div style={{ 
+                                        fontSize: '12px', 
+                                        color: getPercentageColor(convertWeightToPercentage(criterion.weight)),
+                                        fontFamily: font.Bold,
+                                        backgroundColor: getPercentageColor(convertWeightToPercentage(criterion.weight)) + '20',
+                                        padding: '2px 8px',
+                                        borderRadius: '12px',
+                                        fontWeight: 'bold'
+                                    }}>
+                                        {convertWeightToPercentage(criterion.weight)}%
+                                    </div>
                                 </div>
                                 <div style={{ 
                                     fontSize: '12px',
                                     color: Colors.SECONDARY_TEXT_COLOR,
                                     lineHeight: '1.4'
                                 }}>
-                                    {criterion.description}
+                                    {criterion.description_md}
                                 </div>
                             </div>
                         </div>
