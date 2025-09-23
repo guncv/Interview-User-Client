@@ -13,5 +13,6 @@ export interface CriterionRow {
 	id: string;
 	name: string;
 	description_md: string;
-	weight: string;
+	percentage: string;
+	color: string;
 }

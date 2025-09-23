@@ -6,7 +6,6 @@ import type { RootState } from '../../reducers/rootReducer';
 import { useEffect } from 'react';
 import { getEvaluationRubricAndCriteria } from '../../actions/evaluationAction';
 import type { CriterionRow } from '../../interface/evaluationInterface';
-import { convertWeightToPercentage, getPercentageColor } from '../../utils/format';
 
 const CriteriaTab: React.FC = () => {
     const [selectedRubric, setSelectedRubric] = useState<string>('');
@@ -168,14 +167,14 @@ const CriteriaTab: React.FC = () => {
                                     {criterion.name}
                                     <div style={{ 
                                         fontSize: '12px', 
-                                        color: getPercentageColor(convertWeightToPercentage(criterion.weight)),
+                                        color: criterion.color,
                                         fontFamily: font.Bold,
-                                        backgroundColor: getPercentageColor(convertWeightToPercentage(criterion.weight)) + '20',
+                                        backgroundColor: criterion.color + '20',
                                         padding: '2px 8px',
                                         borderRadius: '12px',
                                         fontWeight: 'bold'
                                     }}>
-                                        {convertWeightToPercentage(criterion.weight)}%
+                                        {criterion.percentage}%
                                     </div>
                                 </div>
                                 <div style={{ 
