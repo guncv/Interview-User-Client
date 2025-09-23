@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import font from '../../assets/styles/Font';
 import type { CSSProperties } from 'react';
 import type { ChatHistory } from '../../interface/interviewInterface';
+import { Colors, Size } from '../../assets/styles';
 
 interface TranscriptMessageProps {
     message: ChatHistory;
@@ -9,22 +10,19 @@ interface TranscriptMessageProps {
     onFeedbackToggle?: (messageId: string) => void;
 }
 
-const TranscriptMessage: React.FC<TranscriptMessageProps> = ({ 
-    message, 
-    showFeedback = false, 
-    onFeedbackToggle 
+const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
+    message,
+    showFeedback = false,
+    onFeedbackToggle
 }) => {
-    const [showImprovement, setShowImprovement] = useState(false);
-    const [showDetailedFeedback, setShowDetailedFeedback] = useState(false);
-
     const isUser = message.actor === 'user';
     const hasFeedback = isUser && (message.feedback_score !== undefined || message.improved_sentence);
 
     const getScoreColor = (score: number, maxScore: number) => {
         const percentage = (score / maxScore) * 100;
-        if (percentage >= 80) return '#10B981'; // green
-        if (percentage >= 60) return '#F59E0B'; // yellow
-        return '#EF4444'; // red
+        if (percentage >= 80) return Colors.SUCCESS_COLOR;
+        if (percentage >= 60) return Colors.WARNING_COLOR;
+        return Colors.TEXT_ERROR_COLOR;
     };
 
     const getScoreLabel = (score: number, maxScore: number) => {
@@ -43,7 +41,7 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
     };
 
     const messageBubbleStyle: CSSProperties = {
-        maxWidth: '70%',
+        maxWidth: '90%',
         display: 'flex',
         flexDirection: isUser ? 'row-reverse' : 'row',
         gap: '8px',
@@ -54,7 +52,7 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
         width: '32px',
         height: '32px',
         borderRadius: '50%',
-        backgroundColor: isUser ? '#8B5CF6' : '#E5E7EB',
+        backgroundColor: isUser ? Colors.ACCENT_COLOR : Colors.BORDER_COLOR,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -71,11 +69,12 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
     };
 
     const textBubbleStyle: CSSProperties = {
-        backgroundColor: isUser ? '#8B5CF6' : '#F3F4F6',
+        backgroundColor: isUser ? Colors.ACCENT_COLOR : Colors.CONTENT_HOVER_COLOR,
         color: isUser ? 'white' : '#1F2937',
         padding: '12px 16px',
         borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
         fontFamily: font.Regular,
+        cursor: 'pointer',
         fontSize: '14px',
         lineHeight: '1.5',
         wordWrap: 'break-word',
@@ -85,7 +84,7 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
     const headerStyle: CSSProperties = {
         fontFamily: font.Medium,
         fontSize: '11px',
-        color: '#6B7280',
+        color: Colors.SECONDARY_TEXT_COLOR,
         marginBottom: '6px',
         display: 'flex',
         alignItems: 'center',
@@ -94,7 +93,7 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
 
     const timestampStyle: CSSProperties = {
         fontSize: '10px',
-        color: '#9CA3AF',
+        color: Colors.SECONDARY_TEXT_COLOR,
         marginTop: '4px',
         fontFamily: font.Regular
     };
@@ -102,9 +101,9 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
     const feedbackContainerStyle: CSSProperties = {
         marginTop: '8px',
         padding: '12px',
-        backgroundColor: '#F9FAFB',
+        backgroundColor: Colors.LECTURE_CONTENT_PART_COLOR,
         borderRadius: '8px',
-        border: '1px solid #E5E7EB',
+        border: `1px solid ${Colors.BORDER_COLOR}`,
         maxWidth: '100%',
         width: '100%'
     };
@@ -124,36 +123,24 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
         color: 'white'
     };
 
-    const improvementButtonStyle: CSSProperties = {
-        background: 'none',
-        border: '1px solid #D1D5DB',
-        padding: '4px 8px',
-        borderRadius: '4px',
-        fontSize: '11px',
-        fontFamily: font.Medium,
-        color: '#6B7280',
-        cursor: 'pointer',
-        marginRight: '8px'
-    };
-
     const improvementTextStyle: CSSProperties = {
         fontFamily: font.Regular,
         fontSize: '13px',
-        color: '#374151',
+        color: Colors.PRIMARY_COLOR,
         fontStyle: 'italic',
         marginTop: '8px',
         padding: '8px',
-        backgroundColor: '#F3F4F6',
+        backgroundColor: Colors.LECTURE_CONTENT_PART_COLOR,
         borderRadius: '4px',
-        borderLeft: '3px solid #8B5CF6'
+        borderLeft: `3px solid ${Colors.ACCENT_COLOR}`
     };
 
     const categoryItemStyle: CSSProperties = {
         display: 'flex',
-        justifyContent: 'space-between',
         alignItems: 'center',
         padding: '4px 0',
-        fontSize: '11px'
+        fontSize: '12px',
+        gap: '10px',
     };
 
     return (
@@ -171,7 +158,7 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
                                 style={{
                                     background: 'none',
                                     border: 'none',
-                                    color: '#8B5CF6',
+                                    color: Colors.ACCENT_COLOR,
                                     fontSize: '10px',
                                     cursor: 'pointer',
                                     fontFamily: font.Medium,
@@ -182,20 +169,18 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
                             </button>
                         )}
                     </div>
-                    <div style={textBubbleStyle}>
+                    <div style={textBubbleStyle} onClick={() => onFeedbackToggle?.(message.id)}>
                         {message.transcript_text}
                     </div>
                     <div style={timestampStyle}>
-                        {message.start_at}
+                        {message.start_at} - {message.end_at}
                     </div>
 
-                {/* Feedback Section - Only for user messages */}
                 {isUser && showFeedback && hasFeedback && (
                     <div style={feedbackContainerStyle}>
-                        {/* Overall Score */}
                         {message.feedback_score !== undefined && message.max_feedback_score && (
                             <div style={scoreStyle}>
-                                <span style={{ fontSize: '11px', color: '#6B7280' }}>Overall Score:</span>
+                                <span style={{ fontSize: Size.Medium, color: Colors.SECONDARY_TEXT_COLOR }}>Overall Score:</span>
                                 <div
                                     style={{
                                         ...scoreBadgeStyle,
@@ -207,37 +192,25 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
                             </div>
                         )}
 
-                        {/* Improved Sentence */}
                         {message.improved_sentence && (
-                            <div>
-                                <button
-                                    onClick={() => setShowImprovement(!showImprovement)}
-                                    style={improvementButtonStyle}
-                                >
-                                    {showImprovement ? 'Hide' : 'Show'} Improved Version
-                                </button>
-                                {showImprovement && (
-                                    <div style={improvementTextStyle}>
-                                        <strong>Improved:</strong> {message.improved_sentence}
-                                    </div>
-                                )}
+                            <div style={improvementTextStyle}>
+                                <strong>Improved:</strong> {message.improved_sentence}
                             </div>
                         )}
 
-                        {/* Detailed Category Feedback */}
                         {message.feedback_categories && message.feedback_categories.length > 0 && (
                             <div>
-                                <button
-                                    onClick={() => setShowDetailedFeedback(!showDetailedFeedback)}
-                                    style={improvementButtonStyle}
-                                >
-                                    {showDetailedFeedback ? 'Hide' : 'Show'} Detailed Feedback
-                                </button>
-                                {showDetailedFeedback && (
-                                    <div style={{ marginTop: '8px' }}>
-                                        {message.feedback_categories.map((category, index) => (
-                                            <div key={index} style={categoryItemStyle}>
-                                                <span style={{ color: '#6B7280' }}>{category.category}:</span>
+                                <div style={{ marginTop: '8px' }}>
+                                    {message.feedback_categories.map((category, index) => (
+                                        <div key={index} style={{ 
+                                            marginBottom: '12px', 
+                                            padding: '8px', 
+                                            backgroundColor: Colors.LECTURE_CONTENT_PART_COLOR,
+                                            borderRadius: '6px',
+                                            border: `1px solid ${Colors.BORDER_COLOR}`
+                                        }}>
+                                            <div style={categoryItemStyle}>
+                                                <span style={{ color: Colors.SECONDARY_TEXT_COLOR, fontFamily: font.Medium }}>{category.category}:</span>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                     <span
                                                         style={{
@@ -249,20 +222,23 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
                                                     </span>
                                                 </div>
                                             </div>
-                                        ))}
-                                        {message.feedback_categories.some(cat => cat.improvement_suggestion) && (
-                                            <div style={{ marginTop: '8px', fontSize: '10px', color: '#6B7280' }}>
-                                                {message.feedback_categories
-                                                    .filter(cat => cat.improvement_suggestion)
-                                                    .map((cat, index) => (
-                                                        <div key={index} style={{ marginBottom: '2px' }}>
-                                                            <strong>{cat.category}:</strong> {cat.improvement_suggestion}
-                                                        </div>
-                                                    ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+
+                                            {category.improvement_suggestion && (
+                                                <div style={{ 
+                                                    marginTop: '6px', 
+                                                    fontSize: "12px", 
+                                                    color: Colors.PRIMARY_COLOR,
+                                                    fontStyle: 'italic',
+                                                    padding: '6px',
+                                                    borderRadius: '4px',
+                                                    borderLeft: `3px solid ${Colors.ACCENT_COLOR}`
+                                                }}>
+                                                    <strong>Comment:</strong> {category.improvement_suggestion}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>

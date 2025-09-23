@@ -24,3 +24,4 @@ export { default as Pagination } from './Pagination';
 export { default as TranscriptMessage } from './TranscriptMessage';
 export { default as TranscriptFeed } from './FeedBack';
 export { default as ChatContainer } from './ChatContainer';
+export { default as ConfirmationModal } from './ConfirmationModal';

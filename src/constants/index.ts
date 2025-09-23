@@ -28,7 +28,6 @@ export const API_ENDPOINTS = {
   LIST_ISSUE_REPORTS: '/api/v1/issue-reports',
   CREATE_ISSUE_REPORT: '/api/v1/issue-reports',
   UPDATE_ISSUE_REPORT: '/api/v1/issue-reports',
-
   LIST_ISSUE_CATEGORIES: '/api/v1/issue-categories',
 
   // Review Comment API

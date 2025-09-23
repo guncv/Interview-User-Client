@@ -3,19 +3,16 @@ import font from '../../assets/styles/Font';
 import type { CSSProperties } from 'react';
 import type { ChatHistory } from '../../interface/interviewInterface';
 import TranscriptMessage from './TranscriptMessage';
+import { Colors } from '../../assets/styles';
 
 interface ChatContainerProps {
     transcript: ChatHistory[];
     showFeedback?: boolean;
-    onMessageClick?: (messageId: string) => void;
-    selectedMessageId?: string | null;
 }
 
 const ChatContainer: React.FC<ChatContainerProps> = ({
     transcript,
     showFeedback = false,
-    onMessageClick,
-    selectedMessageId
 }) => {
     const [expandedFeedback, setExpandedFeedback] = useState<{ [key: string]: boolean }>({});
 
@@ -26,23 +23,20 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
         }));
     };
 
-    const handleMessageClick = (messageId: string) => {
-        onMessageClick?.(messageId);
-    };
-
     const containerStyle: CSSProperties = {
-        flex: 1,
+        height: '100vh',
         overflowY: 'auto',
         padding: '16px',
         backgroundColor: 'white',
         borderRadius: '8px',
-        minHeight: '500px'
+        minHeight: '400px',
+        maxHeight: 'calc(100vh - 200px)'
     };
 
     const emptyStateStyle: CSSProperties = {
         textAlign: 'center',
         padding: '40px 20px',
-        color: '#6B7280',
+        color: Colors.SECONDARY_TEXT_COLOR,
         fontFamily: font.Regular
     };
 
@@ -52,12 +46,9 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
                 transcript.map((message) => (
                     <div
                         key={message.id}
-                        onClick={() => handleMessageClick(message.id)}
                         style={{
-                            cursor: 'pointer',
                             borderRadius: '8px',
-                            padding: selectedMessageId === message.id ? '6px' : '2px',
-                            backgroundColor: selectedMessageId === message.id ? '#F3F4F6' : 'transparent',
+                            padding: '2px',
                             transition: 'all 0.2s ease',
                             margin: '1px 0'
                         }}

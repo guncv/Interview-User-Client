@@ -6,6 +6,7 @@ import type { InterviewEvaluation, ChatHistory } from '../interface/interviewInt
 import ContentLayout from '../components/layout/ContentLayout';
 import FeedBack from '../components/common/FeedBack';
 import ChatContainer from '../components/common/ChatContainer';
+import ConfirmationModal from '../components/common/ConfirmationModal';
 import { Trash } from 'lucide-react';
 import { Colors } from '../assets/styles';
 import { useDispatch, useSelector } from 'react-redux';
@@ -20,7 +21,6 @@ const InterviewEvaluationPage: React.FC = () => {
     
     const [activeTab, setActiveTab] = useState<'coaching' | 'analytics'>('coaching');
     const [showInsights, setShowInsights] = useState<{ [key: string]: boolean }>({});
-    const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
 
     const alreadyFeedback = useSelector((state: RootState) => state.reviewComment.alreadyFeedback);
@@ -221,13 +221,16 @@ const InterviewEvaluationPage: React.FC = () => {
 
     const containerStyle: CSSProperties = {
         display: 'flex',
+        height: '100%',
+        overflow: 'hidden'
     };
 
     const mainContentStyle: CSSProperties = {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        height: '100%'
     };
 
     const rightSidebarStyle: CSSProperties = {
@@ -253,6 +256,8 @@ const InterviewEvaluationPage: React.FC = () => {
         display: 'flex',
         flexDirection: 'column',
         gap: '16px',
+        overflow: 'hidden',
+        minHeight: 0
     };
 
     const tabStyle: CSSProperties = {
@@ -333,7 +338,7 @@ const InterviewEvaluationPage: React.FC = () => {
                     </div>
 
                     <div style={feedbackContainerStyle}>
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                             <FeedBack
                                 onSubmitClick={handleSubmitClick}
                                 alreadyFeedback={alreadyFeedback}
@@ -342,8 +347,6 @@ const InterviewEvaluationPage: React.FC = () => {
                             <ChatContainer
                                 transcript={mockTranscript}
                                 showFeedback={true}
-                                onMessageClick={setSelectedMessageId}
-                                selectedMessageId={selectedMessageId}
                             />
                         </div>
                     </div>
@@ -584,83 +587,16 @@ const InterviewEvaluationPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Delete Confirmation Popup */}
-            {showDeleteConfirm && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000
-                }}>
-                    <div style={{
-                        backgroundColor: 'white',
-                        borderRadius: '12px',
-                        padding: '24px',
-                        maxWidth: '400px',
-                        width: '90%',
-                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-                    }}>
-                        <div style={{
-                            fontFamily: font.Bold,
-                            fontSize: '18px',
-                            marginBottom: '8px',
-                            color: '#1F2937'
-                        }}>
-                            Delete Interview Session
-                        </div>
-                        <div style={{
-                            fontSize: '14px',
-                            color: '#6B7280',
-                            marginBottom: '24px',
-                            lineHeight: '1.5'
-                        }}>
-                            Are you sure you want to delete this interview session? This action cannot be undone.
-                        </div>
-                        <div style={{
-                            display: 'flex',
-                            gap: '12px',
-                            justifyContent: 'flex-end'
-                        }}>
-                            <button
-                                onClick={cancelDelete}
-                                style={{
-                                    padding: '8px 16px',
-                                    border: '1px solid #D1D5DB',
-                                    backgroundColor: 'white',
-                                    color: '#374151',
-                                    borderRadius: '6px',
-                                    fontFamily: font.Medium,
-                                    fontSize: '14px',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={confirmDelete}
-                                style={{
-                                    padding: '8px 16px',
-                                    border: 'none',
-                                    backgroundColor: '#EF4444',
-                                    color: 'white',
-                                    borderRadius: '6px',
-                                    fontFamily: font.Medium,
-                                    fontSize: '14px',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ConfirmationModal
+                isOpen={showDeleteConfirm}
+                title="Delete Interview Session"
+                message="Are you sure you want to delete this interview session? This action cannot be undone."
+                confirmText="Delete"
+                cancelText="Cancel"
+                confirmButtonColor={Colors.TEXT_ERROR_COLOR}
+                onConfirm={confirmDelete}
+                onCancel={cancelDelete}
+            />
         </ContentLayout>
     );
 };
