@@ -5,6 +5,7 @@ import font from '../../assets/styles/Font';
 import { Colors } from '../../assets/styles';
 import AnalyticsTab from './AnalyticsTab';
 import CriteriaTab from './CriteriaTab';
+import InfoTab from './InfoTab';
 
 interface EvaluationResultsPanelProps {
     evaluation: InterviewEvaluation;
@@ -13,7 +14,7 @@ interface EvaluationResultsPanelProps {
 const EvaluationResultsPanel: React.FC<EvaluationResultsPanelProps> = ({
     evaluation,
 }) => {
-    const [activeTab, setActiveTab] = useState<'analytics' | 'criteria'>('analytics');
+    const [activeTab, setActiveTab] = useState<'analytics' | 'details' | 'criteria'>('analytics');
     const [showOverallFeedbackModal, setShowOverallFeedbackModal] = useState<boolean>(false);
 
     const getStatusColor = (status: string) => {
@@ -138,6 +139,13 @@ const EvaluationResultsPanel: React.FC<EvaluationResultsPanelProps> = ({
                 >
                     Analytics
                 </button>
+
+                <button
+                    onClick={() => setActiveTab('details')}
+                    style={activeTab === 'details' ? activeTabStyle : tabStyle}
+                >
+                    Details
+                </button>
                 
                 <button
                     onClick={() => setActiveTab('criteria')}
@@ -149,6 +157,7 @@ const EvaluationResultsPanel: React.FC<EvaluationResultsPanelProps> = ({
 
             <div style={tabContentStyle}>
                 {activeTab === 'analytics' && <AnalyticsTab evaluation={evaluation} />}
+                {activeTab === 'details' && <InfoTab evaluation={evaluation} />}
                 {activeTab === 'criteria' && <CriteriaTab />}
             </div>
         </div>

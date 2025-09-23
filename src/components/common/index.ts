@@ -28,3 +28,4 @@ export { default as ConfirmationModal } from './ConfirmationModal';
 export { default as EvaluationResultsPanel } from './EvaluationResultsPanel';
 export { default as AnalyticsTab } from './AnalyticsTab';
 export { default as RubricTab } from './CriteriaTab';
+export { default as InfoTab } from './InfoTab';
