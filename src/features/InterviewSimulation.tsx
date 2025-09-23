@@ -10,6 +10,7 @@ import { useDispatch } from "react-redux";
 import { getInterviewSessionInformation } from "../actions/interviewAction";
 import { useContextProvider } from "../components/layout/ContextProvider";
 import AudioDebugPanel from "../components/common/AudioDebugPanel";
+import { setEndInterviewSessionLoadingAction, setEndInterviewSessionFinishedAction } from "../actions/interviewAction";
 
 let audioChunks: ArrayBuffer[] = [];
 let isPlaying = false;
@@ -20,7 +21,8 @@ async function playBufferedAudio(
     isHeadphonesMuted: boolean,
     isConnected: boolean,
     onAiFinishedSpeaking?: () => void,
-    setIsUserTurn?: (turn: boolean) => void
+    isInterviewerTurn?: boolean,
+    handleInterviewerTurn?: (turn: boolean) => void,
     ) {
     if (!isConnected) return;
 
@@ -29,9 +31,7 @@ async function playBufferedAudio(
     if (isPlaying) return;
 
     isPlaying = true;
-    console.log('Setting AI speaking to true');
     setIsAiSpeaking(true);
-    setIsUserTurn?.(false);
 
     await new Promise((res) => setTimeout(res, 300));
 
@@ -60,9 +60,12 @@ async function playBufferedAudio(
     });
 
     isPlaying = false;
-    console.log('Setting AI speaking to false');
     setIsAiSpeaking(false);
     onAiFinishedSpeaking?.();
+
+    if (!isInterviewerTurn) {
+        handleInterviewerTurn?.(false);
+    }
 }
 
 type WebSocketConnectionState =typeof CONVERSATION_STATUS.CONNECTING | typeof CONVERSATION_STATUS.CONNECTED | typeof CONVERSATION_STATUS.DISCONNECTED | typeof CONVERSATION_STATUS.ERROR;
@@ -71,6 +74,7 @@ const InterviewSimulation = () => {
     const [searchParams] = useSearchParams();
     const sessionTokenParam = searchParams.get('session_token');
     const [websocketUrl] = useState(`ws://localhost:8080/api/v1/ws/connect/${sessionTokenParam}`);
+    const [isInterviewerTurn, setIsInterviewerTurn] = useState<boolean>(false);
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [isAiSpeaking, setIsAiSpeaking] = useState<boolean>(false);
     const [isUserSpeaking, setIsUserSpeaking] = useState<boolean>(false);
@@ -94,7 +98,7 @@ const InterviewSimulation = () => {
             case CONVERSATION_STATUS.CONNECTING:
                 return '🟡 Connecting to Server...';
             case CONVERSATION_STATUS.CONNECTED:
-                return '🟢 Connected to Server ✓';
+                return '🟢 Connected to Server';
             case CONVERSATION_STATUS.DISCONNECTED:
                 return '🔴 Disconnected from Server';
             case CONVERSATION_STATUS.ERROR:
@@ -145,12 +149,14 @@ const InterviewSimulation = () => {
 
     const handleUserSegmentEnd = useCallback(() => {
         setIsVoiceInputEnabled(false);
-        setIsUserTurn(false);
     }, []);
 
     const handleAiFinishedSpeaking = useCallback(() => {
         setIsVoiceInputEnabled(true);
-        setIsUserTurn(true);
+    }, []);
+
+    const handleInterviewerTurn = useCallback((turn: boolean) => {
+        setIsUserTurn(!turn);
     }, []);
 
     const handleAudioChunk = useCallback((chunk: AudioChunk) => {
@@ -161,13 +167,25 @@ const InterviewSimulation = () => {
         setDebugAudioChunks([]);
     }, []);
 
-    useEffect(() => {
-        console.log('isAiSpeaking changed to:', isAiSpeaking);
-    }, [isAiSpeaking]);
+    const handleEndInterviewSession = useCallback(() => {
+        if (!sessionId || !websocketRef.current) {
+            return;
+        }
 
-    useEffect(() => {
-        console.log('isUserTurn changed to:', isUserTurn);
-    }, [isUserTurn]);
+        dispatch(setEndInterviewSessionLoadingAction());
+        const endSessionMessage = {
+            type: WEBSOCKET_TYPES.END_INTERVIEW_SESSION,
+            session_id: sessionId
+        };
+        
+
+        try {
+            websocketRef.current.send(JSON.stringify(endSessionMessage));
+        } catch (error) {
+            console.error('Failed to send end interview session message:', error);
+        }
+    }, [sessionId]);
+
 
     useVoiceStreaming(websocketRef, sessionId, handleUserSpeakingChange, isMicMuted, connectionState === CONVERSATION_STATUS.CONNECTED, isConversationStarted, isAiSpeaking, isVoiceInputEnabled, handleUserSegmentEnd, isUserTurn, handleAudioChunk);
 
@@ -198,8 +216,19 @@ const InterviewSimulation = () => {
                 setIsConversationStarted(true);
                 setIsUserTurn(true);
                 break;
+            case WEBSOCKET_TYPES.INTERVIEWER_TURN_START:
+                setIsInterviewerTurn(true);
+                setIsUserTurn(false);
+                break;
+            case WEBSOCKET_TYPES.INTERVIEWER_TURN_END:
+                setIsInterviewerTurn(false);
+                break;
             case WEBSOCKET_TYPES.INTERVIWER_RESPONSE:
                 chatHistoryRef.current?.handleFinalTranscript(response, ACTOR.INTERVIEWER);
+                break;
+            case WEBSOCKET_TYPES.SUMMARIZE_INTERVIEW_SESSION:
+                dispatch(setEndInterviewSessionFinishedAction());
+                websocketRef.current?.close();
                 break;
             case CONVERSATION_STATUS.ERROR:
                 console.error("Server error:", response.message || response);
@@ -252,8 +281,7 @@ const InterviewSimulation = () => {
                 
                         if (header.type === WEBSOCKET_TYPES.INTERVIEWER_AUDIO_CHUNKING) {
                             const isConnected = connectionState === CONVERSATION_STATUS.CONNECTED || connectionState === CONVERSATION_STATUS.CONNECTING;
-                        
-                            await playBufferedAudio(audioData, setIsAiSpeaking, isHeadphonesMuted, isConnected, handleAiFinishedSpeaking, setIsUserTurn);
+                            await playBufferedAudio(audioData, setIsAiSpeaking, isHeadphonesMuted, isConnected, handleAiFinishedSpeaking, isInterviewerTurn, handleInterviewerTurn);
                         }
                     } else {
                         const data = JSON.parse(event.data);
@@ -384,6 +412,7 @@ const InterviewSimulation = () => {
                             elapsedTime={elapsedTime}
                             isConnected={connectionState === CONVERSATION_STATUS.CONNECTED}
                             isConversationStarted={isConversationStarted}
+                            onEndInterview={handleEndInterviewSession}
                         />
                     </div>
                     <div style={{ width: isMobile ? '80%' : isTablet ? '70%' : '60%', overflow: 'hidden' }}>

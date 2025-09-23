@@ -87,7 +87,8 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        height: isMobile || isTablet ? 'calc(100vh - 60px)' : '100%',
+        height: isMobile || isTablet ? 'calc(100vh - 60px)' : '100vh',
+        overflow: 'hidden',
     };
 
     const overlayStyle: CSSProperties = {

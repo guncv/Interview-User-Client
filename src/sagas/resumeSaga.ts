@@ -2,10 +2,10 @@ import type { SagaIterator } from "redux-saga";
 import { call, delay, put, take } from "redux-saga/effects";
 import { handleStatusUserError } from "./userSaga";
 import type { ListResumeRequest } from "../interface/resumeInterface";
-import { apiDownloadResumeBySessionToken, apiGetResumeById, apiListResume } from "../api/resumeApi";
+import { apiDownloadResumeByResumeId, apiGetResumeById, apiListResume } from "../api/resumeApi";
 import { hideSpinner, showSpinner } from "../components/layout/AppProvider";
 import { ERROR_MESSAGES, STORAGE_KEYS } from "../constants";
-import { LIST_RESUME, setResumeSuccess, GET_RESUME_BY_ID, setResumeByIdSuccess, DOWNLOAD_RESUME_BY_SESSION_TOKEN } from "../actions/resumeAction";
+import { LIST_RESUME, setResumeSuccess, GET_RESUME_BY_ID, setResumeByIdSuccess, DOWNLOAD_RESUME_BY_RESUME_ID } from "../actions/resumeAction";
 
 function* workerListResume(payload: ListResumeRequest): SagaIterator {
     try {
@@ -81,13 +81,13 @@ export function* watcherGetResumeById(): SagaIterator {
     }
 }
 
-function* workerDownloadResumeBySessionToken(payload: { session_token: string }): SagaIterator {
+function* workerDownloadResumeByResumeId(payload: { resume_id: string }): SagaIterator {
     try {
         yield delay(0);
         yield call(showSpinner);
         
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-        const response = yield call(apiDownloadResumeBySessionToken, payload.session_token, token || '');
+        const response = yield call(apiDownloadResumeByResumeId, payload.resume_id, token || '');
         
         if (response && !response.success) {
             yield call(handleStatusUserError, response.statusCode, response.message);
@@ -148,8 +148,8 @@ function* workerDownloadResumeBySessionToken(payload: { session_token: string })
 
 export function* watcherDownloadResumeBySessionToken(): SagaIterator {
     while (true) {
-        const action = yield take(DOWNLOAD_RESUME_BY_SESSION_TOKEN);
-        yield call(workerDownloadResumeBySessionToken, action.payload);
+        const action = yield take(DOWNLOAD_RESUME_BY_RESUME_ID);
+        yield call(workerDownloadResumeByResumeId, action.payload);
     }
 }
 

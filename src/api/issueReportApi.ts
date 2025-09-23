@@ -6,7 +6,6 @@ import type { CreateUserIssueReportReq } from "../interface/reportIssueInterface
 
 export const apiCreateIssueReport = async (token: string, request: CreateUserIssueReportReq) => {
     try {
-        console.log("apiCreateIssueReport", request);
         const response = await axiosInstance.post(`${API_ENDPOINTS.CREATE_ISSUE_REPORT}`, request, {
             headers: {
                 [HTTP_HEADERS.AUTHORIZATION]: `${HTTP_HEADERS.BEARER} ${token}`,

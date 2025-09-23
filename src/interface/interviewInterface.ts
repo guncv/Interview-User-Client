@@ -104,6 +104,51 @@ export interface GetInterviewSessionInformationResp {
 	file_name:   string;
 }
 
+export interface InterviewSessionSummary {
+	id: string;
+	resume_id: string;
+	resume_file_name: string;
+	position: string;
+	status: string;
+	total_time: string;
+	overall_score: number;
+	created_at: string;
+    created_at_display: string;
+}
+
+export interface Cursor {
+	created_at: string;
+	id: string;
+}
+
+export interface GetInterviewSessionListResp {
+	sessions   : InterviewSessionSummary[];
+	prev_cursor: Cursor | null;
+	next_cursor: Cursor | null;
+	total_pages: number;
+	page_size: number;
+}
+
+export interface GetInterviewSessionListCursorReq {	
+	cursor_id?: string;
+	cursor_created_at?: string;
+	limit?: number;
+	search_text?: string;
+    type?: string;
+}
+
+export interface GetInterviewSessionListPageReq {
+	offset?: number;
+	limit?: number;
+	search_text?: string;
+}
+
+export interface InterviewSession {
+    id: string;
+    session_token: string;
+    position: string;
+    file_name: string;
+}
 
 export interface JobRequirement {
     id: string;
@@ -132,4 +177,78 @@ export interface ChatHistory {
 	start_at: string;
 	end_at: string;
 	created_at: string;
+	phrase_name?: string;
+
+	feedback_score?: number;
+	max_feedback_score?: number;
+	improved_sentence?: string;
+	feedback_categories?: TurnFeedbackCategory[];
+}
+
+export interface TurnFeedbackCategory {
+	category: string;
+	score: number;
+	max_score: number;
+	description: string;
+	improvement_suggestion?: string;
+}
+
+// Evaluation interfaces
+export interface InterviewEvaluation {
+	id: string;
+	session_id: string;
+	overall_score: number;
+	status: 'completed' | 'processing' | 'failed';
+	created_at: string;
+	feedback: EvaluationFeedback;
+	analytics: EvaluationAnalytics;
+}
+
+export interface EvaluationFeedback {
+	coaching: CoachingFeedback[];
+	strengths: string[];
+	improvements: string[];
+	general_feedback: string;
+}
+
+export interface CoachingFeedback {
+	category: string;
+	score: number;
+	max_score: number;
+	description: string;
+	insights: string[];
+	subcategories?: SubCategoryScore[];
+}
+
+export interface SubCategoryScore {
+	name: string;
+	score: number;
+	max_score: number;
+	description: string;
+}
+
+export interface EvaluationAnalytics {
+	total_duration: number; // in seconds
+	speaking_time: {
+		user: number;
+		interviewer: number;
+	};
+	response_times: number[]; // average response times
+	keywords_used: string[];
+	confidence_score: number;
+	clarity_score: number;
+}
+
+export interface VideoPlayerProps {
+	sessionId: string;
+	videoUrl?: string;
+	transcript: ChatHistory[];
+	onTimeUpdate?: (time: number) => void;
+}
+
+export interface EvaluationTabsProps {
+	feedback: EvaluationFeedback;
+	analytics: EvaluationAnalytics;
+	activeTab: 'coaching' | 'analytics';
+	onTabChange: (tab: 'coaching' | 'analytics') => void;
 }

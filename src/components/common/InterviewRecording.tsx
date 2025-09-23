@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import Colors from "../../assets/styles/Color";
-import { useDispatch } from "react-redux";
 import { HeadphoneOff, Headphones, Mic, MicOff, Settings, RotateCcw, Square } from 'lucide-react';
 import CircularIconButton from './CircularIconButton';
 import SettingsPopup from '../dialog/SettingsPopup';
-import { downloadResumeBySessionToken } from "../../actions/resumeAction";
 import profileImage from "../../assets/images/profile.png";
 import { useContextProvider } from "../layout/ContextProvider";
 
@@ -21,6 +19,7 @@ interface InterviewRecordingProps {
     elapsedTime?: number;
     isConnected?: boolean;
     isConversationStarted?: boolean;
+    onEndInterview?: () => void;
 }
 
 type SpeakingState = 'ai' | 'user' | 'none';
@@ -50,6 +49,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     elapsedTime = 0,
     isConnected = false,
     isConversationStarted = false,
+    onEndInterview,
 }) => {
     void websocketUrl;
     void sessionToken;
@@ -75,7 +75,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     const analyserRef = useRef<AnalyserNode | null>(null);
     const mediaStreamRef = useRef<MediaStream | null>(null);
     const gainNodeRef = useRef<GainNode | null>(null);
-    const dispatch = useDispatch();
     const { isMobile, isTablet } = useContextProvider();
 
     const formatTime = (milliseconds: number): string => {
@@ -249,10 +248,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
         }
     };
 
-    const handleDownloadResume = () => {
-        dispatch(downloadResumeBySessionToken(sessionToken || ''));
-    };
-    void handleDownloadResume;
 
     const toggleMicMute = () => {
         const newMutedState = !isMicMuted;
@@ -357,6 +352,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
 
     const handleEndInterview = () => {
         setShowSettings(false);
+        onEndInterview?.();
     };
 
     return (

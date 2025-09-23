@@ -36,10 +36,10 @@ export const apiGetResumeById = async (id: string, token: string) => {
     }
 } 
 
-export const apiDownloadResumeBySessionToken = async (session_token: string, token: string) => {
+export const apiDownloadResumeByResumeId = async (resume_id: string, token: string) => {
     try {
         
-        const response = await axiosInstance.get(`${API_ENDPOINTS.DOWNLOAD_RESUME_BY_SESSION_TOKEN}/${session_token}`, {
+        const response = await axiosInstance.get(`${API_ENDPOINTS.DOWNLOAD_RESUME_BY_RESUME_ID}/${resume_id}`, {
             headers: {
                 [HTTP_HEADERS.AUTHORIZATION]: `${HTTP_HEADERS.BEARER} ${token}`,
             },

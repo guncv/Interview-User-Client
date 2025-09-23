@@ -1,18 +1,154 @@
 import ContentLayout from "../components/layout/ContentLayout";
 import type { CSSProperties } from "react";
-import { PrimaryButton } from "../components/common/PrimaryButton";
+import { PrimaryButton, Pagination } from "../components/common";
+import RecordingRow from "../components/common/RecordingRow";
 import Colors from "../assets/styles/Color";
 import Size from "../assets/styles/Size";
 import font from "../assets/styles/Font";
-import { useNavigate } from "react-router-dom";
+import { safeNavigate } from "../utils/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { downloadResumeByResumeId } from "../actions/resumeAction";
+import { getInterviewSessionListCursorAction, getInterviewSessionListPageAction } from "../actions/interviewAction";
+import { useEffect, useState, useCallback } from "react";
+import type { RootState } from "../reducers/rootReducer";
+import type { GetInterviewSessionListCursorReq, GetInterviewSessionListPageReq } from "../interface";
+import { CURSOR_TYPE } from "../constants";
 
 const RecordingListPage = () => {
-    const navigate = useNavigate();
+    const dispatch = useDispatch();
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [searchText, setSearchText] = useState("");
+    const [debouncedSearchText, setDebouncedSearchText] = useState("");
+
+    const handleDownloadResume = (resumeId: string) => {
+        dispatch(downloadResumeByResumeId(resumeId));
+    }
+
+    const { interviewSessionList } = useSelector((state: RootState) => state.interview);
+
+    console.log("interviewSessionList", interviewSessionList);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchText(searchText);
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [searchText]);
+
+    const performSearch = useCallback((searchQuery: string) => {
+        setCurrentPage(1);
+        if (searchQuery.trim() === "") {
+            dispatch(getInterviewSessionListCursorAction({}));
+        } else {
+            dispatch(getInterviewSessionListPageAction({ 
+                offset: 0, 
+                search_text: searchQuery.trim() 
+            }));
+        }
+    }, [dispatch]);
+
+    useEffect(() => {
+        performSearch(debouncedSearchText);
+    }, [debouncedSearchText, performSearch]);
+
+    const handlePageChange = (page: number) => {
+        if (page === currentPage - 1 ) {
+            const req: GetInterviewSessionListCursorReq = {
+                cursor_id: interviewSessionList.prev_cursor?.id,
+                cursor_created_at: interviewSessionList.prev_cursor?.created_at,
+                type: CURSOR_TYPE.PREV,
+                search_text: debouncedSearchText.trim() || undefined
+            }
+            dispatch(getInterviewSessionListCursorAction(req));
+        } else if (page === currentPage + 1) {
+            const req: GetInterviewSessionListCursorReq = {
+                cursor_id: interviewSessionList.next_cursor?.id,
+                cursor_created_at: interviewSessionList.next_cursor?.created_at,
+                type: CURSOR_TYPE.NEXT,
+                search_text: debouncedSearchText.trim() || undefined
+            }
+            dispatch(getInterviewSessionListCursorAction(req));
+        } else {
+            const req: GetInterviewSessionListPageReq = {
+                offset: page,
+                search_text: debouncedSearchText.trim() || undefined
+            }
+            dispatch(getInterviewSessionListPageAction(req));
+        }
+        setCurrentPage(page);
+    };
+
+    const handlePrevious = (currentPage: number) => {
+        if (currentPage > 1) {
+            const req: GetInterviewSessionListCursorReq = {
+                cursor_id: interviewSessionList.prev_cursor?.id,
+                cursor_created_at: interviewSessionList.prev_cursor?.created_at,
+                type: CURSOR_TYPE.PREV,
+                search_text: debouncedSearchText.trim() || undefined
+            }
+            dispatch(getInterviewSessionListCursorAction(req));
+            setCurrentPage(currentPage - 1);
+        }
+    };
+
+    const handleNext = (currentPage: number) => {
+        if (currentPage < interviewSessionList.total_pages) {
+            const req: GetInterviewSessionListCursorReq = {
+                cursor_id: interviewSessionList.next_cursor?.id,
+                cursor_created_at: interviewSessionList.next_cursor?.created_at,
+                search_text: debouncedSearchText.trim() || undefined
+            }
+            dispatch(getInterviewSessionListCursorAction(req));
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    const handleFirst = () => {
+        if (currentPage === 1) return;
+        else if (currentPage - 1 === 1) {
+            const req: GetInterviewSessionListCursorReq = {
+                cursor_id: interviewSessionList.prev_cursor?.id,
+                cursor_created_at: interviewSessionList.prev_cursor?.created_at,
+                type: CURSOR_TYPE.PREV,
+                search_text: debouncedSearchText.trim() || undefined
+            }
+            dispatch(getInterviewSessionListCursorAction(req));
+        } else {
+            const req: GetInterviewSessionListPageReq = {
+                offset: 0,
+                search_text: debouncedSearchText.trim() || undefined
+            }
+            dispatch(getInterviewSessionListPageAction(req));
+        } setCurrentPage(1);
+    };
+
+    const handleLast = () => {
+        if (currentPage === interviewSessionList.total_pages) return;
+        else if (currentPage + 1 === interviewSessionList.total_pages) {
+            const req: GetInterviewSessionListCursorReq = {
+                cursor_id: interviewSessionList.next_cursor?.id,
+                cursor_created_at: interviewSessionList.next_cursor?.created_at,
+                search_text: debouncedSearchText.trim() || undefined
+            }
+            dispatch(getInterviewSessionListCursorAction(req));
+        } else {
+            const req: GetInterviewSessionListPageReq = {
+                offset: interviewSessionList.total_pages,
+                search_text: debouncedSearchText.trim() || undefined
+            }
+            dispatch(getInterviewSessionListPageAction(req));
+        }
+        setCurrentPage(interviewSessionList.total_pages);
+    };
+    
     const titleStyle:CSSProperties = {
         fontSize: '24px',
         fontWeight: 'bold',
         color: 'black',
         width: '100%',
+        maxHeight: '10vh',
         display: 'flex',
         justifyContent: 'space-between',
     }
@@ -39,67 +175,33 @@ const RecordingListPage = () => {
     const tableContainerStyle: CSSProperties = {
         marginTop: '20px',
         width: '100%',
+        maxHeight: '80vh',
+        backgroundColor: "white",
+        overflowY: 'auto',
+        borderRadius: '8px',
     }
 
     const tableStyle: CSSProperties = {
         width: '100%',
         borderCollapse: 'collapse',
         backgroundColor: 'white',
-        borderRadius: '8px',
-        overflow: 'hidden',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
     }
 
     const headerCellStyle: CSSProperties = {
         padding: '16px 12px',
         textAlign: 'left',
         backgroundColor: '#f8f9fa',
-        borderBottom: `1px solid ${Colors.SECONDARY_TEXT_COLOR}`,
         fontWeight: 'bold',
         fontSize: Size.Medium,
         color: Colors.PRIMARY_COLOR,
         cursor: 'pointer',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
     }
-
-    const dataCellStyle: CSSProperties = {
-        padding: '16px 12px',
-        textAlign: 'left',
-        borderBottom: `1px solid #e9ecef`,
-        fontSize: Size.Medium,
-        color: Colors.PRIMARY_COLOR,
-    }
-
-    const scoreStyle: CSSProperties = {
-        fontWeight: 'bold',
-        color: Colors.PRIMARY_COLOR,
-    }
-
-    const pacingStyle: CSSProperties = {
-        color: '#28a745',
-        fontWeight: 'bold',
-    }
-
-    const optionsStyle: CSSProperties = {
-        cursor: 'pointer',
-        fontSize: '18px',
-        color: Colors.SECONDARY_TEXT_COLOR,
-    }
-
-    // Sample data - replace with actual data from your API
-    const interviews = [
-        {
-            id: 1,
-            title: 'Customer Handling',
-            created: 'Aug 17',
-            score: '20',
-            type: 'Interview',
-            totalTime: '2:03',
-            pacing: '120'
-        }
-    ];
 
     const handleStartNewInterviews = () => {
-        navigate('/create-interview');
+        safeNavigate('/create-interview');
     }
 
     return (
@@ -112,46 +214,63 @@ const RecordingListPage = () => {
                         <input
                             style={searchInputStyle}
                             placeholder="Search Recordings..."
-                            onChange={() => {}}
-                            value=""
+                            onChange={(e) => setSearchText(e.target.value)}
+                            value={searchText}
                         />
                     </div>
                 </div>
-                
+
                 <div style={tableContainerStyle}>
                     <table style={tableStyle}>
                         <thead>
                             <tr>
-                                <th style={headerCellStyle}>Title</th>
-                                <th style={headerCellStyle}>Created</th>
-                                <th style={headerCellStyle}>Score</th>
-                                <th style={headerCellStyle}>Type</th>
-                                <th style={headerCellStyle}>Total Time</th>
-                                <th style={headerCellStyle}>Pacing</th>
-                                <th style={headerCellStyle}></th>
+                                <th style={headerCellStyle}>Position</th>
+                                <th style={{...headerCellStyle, textAlign: 'center'}}>Resume</th>
+                                <th style={{...headerCellStyle, textAlign: 'center'}}>Score</th>
+                                <th style={{...headerCellStyle, textAlign: 'center'}}>Status</th>
+                                <th style={{...headerCellStyle, textAlign: 'center'}}>Total Time</th>
+                                <th style={{...headerCellStyle, textAlign: 'center'}}>Created At</th>
                             </tr>
                         </thead>
+
                         <tbody>
-                            {interviews.map((interview) => (
-                                <tr key={interview.id}>
-                                    <td style={dataCellStyle}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                            <span>{interview.title}</span>
-                                        </div>
-                                    </td>
-                                    <td style={dataCellStyle}>{interview.created}</td>
-                                    <td style={{...dataCellStyle, ...scoreStyle}}>{interview.score}</td>
-                                    <td style={dataCellStyle}>{interview.type}</td>
-                                    <td style={dataCellStyle}>{interview.totalTime}</td>
-                                    <td style={{...dataCellStyle, ...pacingStyle}}>{interview.pacing}</td>
-                                    <td style={dataCellStyle}>
-                                        <span style={optionsStyle}>⋯</span>
+                            {interviewSessionList.sessions.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} style={{
+                                        textAlign: 'center',
+                                        padding: '40px 16px',
+                                        fontSize: Size.Medium,
+                                        color: Colors.SECONDARY_TEXT_COLOR,
+                                        fontFamily: font.Regular
+                                    }}>
+                                        No interviews Recordings found
                                     </td>
                                 </tr>
-                            ))}
+                            ) : (
+                                interviewSessionList.sessions.map((interview) => (
+                                    <RecordingRow 
+                                        key={interview.id}
+                                        interview={interview}
+                                        onDownloadResume={handleDownloadResume}
+                                    />
+                                ))
+                            )}
                         </tbody>
+                        
                     </table>
                 </div>
+
+                {interviewSessionList.total_pages > 0 && (
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={interviewSessionList.total_pages || 1}
+                        onPageChange={handlePageChange}
+                        onPrevious={() => handlePrevious(currentPage)}
+                        onNext={() => handleNext(currentPage)}
+                        onFirst={handleFirst}
+                        onLast={handleLast}
+                    />
+                )}
             </div>
         </ContentLayout>
     );

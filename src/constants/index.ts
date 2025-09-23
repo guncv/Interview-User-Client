@@ -13,20 +13,33 @@ export const API_ENDPOINTS = {
   // Resume API
   LIST_RESUME: '/api/v1/resumes/list',
   GET_RESUME_BY_ID: '/api/v1/resumes',
-  DOWNLOAD_RESUME_BY_SESSION_TOKEN: '/api/v1/resumes/download',
+  DOWNLOAD_RESUME_BY_RESUME_ID: '/api/v1/resumes/download',
 
   // Interview API
   CREATE_SESSION_WITH_NEW_RESUME: '/api/v1/sessions',
   CREATE_SESSION_WITH_EXISTING_RESUME: '/api/v1/sessions/existing',
   GET_CHAT_HISTORY_BY_SESSION_TOKEN: '/api/v1/sessions/chat-history',
   GET_INTERVIEW_SESSION_INFORMATION: '/api/v1/sessions/information',
+  LIST_INTERVIEW_SESSIONS_CURSOR: '/api/v1/sessions/cursor',
+  LIST_INTERVIEW_SESSIONS_PAGE: '/api/v1/sessions/jump',
+  DELETE_INTERVIEW_SESSION_BY_ID: '/api/v1/sessions',
+
+  // Evaluation API
+  LIST_ALL_RUBRICS_AND_CRITERIA: '/api/v1/evaluation/rubrics',
 
   // Issue Report API
   LIST_ISSUE_REPORTS: '/api/v1/issue-reports',
   CREATE_ISSUE_REPORT: '/api/v1/issue-reports',
   UPDATE_ISSUE_REPORT: '/api/v1/issue-reports',
-
   LIST_ISSUE_CATEGORIES: '/api/v1/issue-categories',
+
+  // Review Comment API
+  CREATE_REVIEW_COMMENT: '/api/v1/review-comments',
+} as const;
+
+export const CURSOR_TYPE = {
+  PREV: 'prev',
+  NEXT: 'next',
 } as const;
 
 export const WEBSOCKET_TYPES = {
@@ -36,7 +49,11 @@ export const WEBSOCKET_TYPES = {
   INTERVIEWER_AUDIO_CHUNKING: 'interviewer_audio_chunking',
   USER_FULL_TRANSCRIPT: 'user_full_transcript',
   INTERVIWER_RESPONSE: 'interviewer_response',
-  CONVERSATION_STARTED: "conversation_started"
+  CONVERSATION_STARTED: "conversation_started",
+  INTERVIEWER_TURN_START: "interviewer_turn_start",
+  INTERVIEWER_TURN_END: "interviewer_turn_end",
+  END_INTERVIEW_SESSION: "end_interview_session",
+  SUMMARIZE_INTERVIEW_SESSION: "summarize_interview_session",
 } as const;
 
 export const ACTOR = {

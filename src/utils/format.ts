@@ -3,11 +3,6 @@ const isValidEmail = (email: string) => {
     return emailRegex.test(email);
 };
 
-/**
- * Formats a date string to ISO 8601 format that Go's time.Time can parse
- * @param dateString - Date string from date picker
- * @returns ISO 8601 formatted date string
- */
 const formatDateForBackend = (dateString: string): string => {
     if (!dateString) return '';
     
@@ -15,7 +10,6 @@ const formatDateForBackend = (dateString: string): string => {
         const date = new Date(dateString);
         if (isNaN(date.getTime())) return '';
         
-        // Format to ISO 8601 (RFC 3339) - Go's time.Time standard format
         return date.toISOString();
     } catch (error) {
         console.error('Error formatting date:', error);
@@ -23,4 +17,19 @@ const formatDateForBackend = (dateString: string): string => {
     }
 };
 
-export { isValidEmail, formatDateForBackend };
+const convertWeightToPercentage = (weight: string | number): number => {
+    const numericWeight = typeof weight === 'string' ? parseFloat(weight) : weight;
+    return Math.round(numericWeight * 100 * 10) / 10;
+};
+
+const getPercentageColor = (percentage: number): string => {
+    if (percentage <= 20) {
+        return '#DC3545';
+    } else if (percentage <= 30) {
+        return '#FFC107';
+    } else {
+        return '#28A745';
+    }
+};
+
+export { isValidEmail, formatDateForBackend, convertWeightToPercentage, getPercentageColor };

@@ -4,15 +4,17 @@ import {
     SET_CREATE_INTERVIEW_SUCCESS,
     SET_CHAT_HISTORY,
     SET_INTERVIEW_SESSION_INFORMATION,
+    SET_INTERVIEW_SESSION_LIST,
 } from '../actions/interviewAction';
 import type { RootState } from './rootReducer';
-import type { CreateInterviewSessionResponse, GetChatHistoryBySessionTokenResp, GetInterviewSessionInformationResp } from '../interface/interviewInterface';
+import type { CreateInterviewSessionResponse, GetChatHistoryBySessionTokenResp, GetInterviewSessionInformationResp, GetInterviewSessionListResp } from '../interface/interviewInterface';
 
 type InterviewState = {
     error: string;
     success: CreateInterviewSessionResponse;
     chatHistory: GetChatHistoryBySessionTokenResp;
     interviewSessionInformation: GetInterviewSessionInformationResp;
+    interviewSessionList: GetInterviewSessionListResp;
 }
 type InterviewStateAction = {
     type: string;
@@ -21,6 +23,7 @@ type InterviewStateAction = {
         success: CreateInterviewSessionResponse;
         chatHistory: GetChatHistoryBySessionTokenResp;
         interviewSessionInformation: GetInterviewSessionInformationResp;
+        interviewSessionList: GetInterviewSessionListResp;
     }
 }
 const initialState: InterviewState = {
@@ -34,6 +37,13 @@ const initialState: InterviewState = {
     interviewSessionInformation: {
         position: '',
         file_name: '',
+    },
+    interviewSessionList: {
+        sessions: [],
+        prev_cursor: null,
+        next_cursor: null,
+        total_pages: 0,
+        page_size: 0,
     },
 };
 
@@ -61,6 +71,11 @@ export const interviewReducer = (
             return {
             ...state,
             interviewSessionInformation: action.payload.interviewSessionInformation,
+            };
+        case SET_INTERVIEW_SESSION_LIST:
+            return {
+            ...state,
+            interviewSessionList: action.payload.interviewSessionList,
             };
         default:
             return state;
