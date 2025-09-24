@@ -19,10 +19,11 @@ export const API_ENDPOINTS = {
   CREATE_SESSION_WITH_NEW_RESUME: '/api/v1/sessions',
   CREATE_SESSION_WITH_EXISTING_RESUME: '/api/v1/sessions/existing',
   GET_CHAT_HISTORY_BY_SESSION_TOKEN: '/api/v1/sessions/chat-history',
-  GET_INTERVIEW_SESSION_INFORMATION: '/api/v1/sessions/information',
   LIST_INTERVIEW_SESSIONS_CURSOR: '/api/v1/sessions/cursor',
   LIST_INTERVIEW_SESSIONS_PAGE: '/api/v1/sessions/jump',
   DELETE_INTERVIEW_SESSION_BY_ID: '/api/v1/sessions',
+  GET_INTERVIEW_SESSION_BY_ID: '/api/v1/sessions',
+  GET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION: '/api/v1/sessions',
 
   // Evaluation API
   LIST_ALL_RUBRICS_AND_CRITERIA: '/api/v1/evaluation/rubrics',

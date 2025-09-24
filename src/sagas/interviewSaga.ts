@@ -2,13 +2,20 @@ import { call, delay, put, take } from "redux-saga/effects";
 import type { SagaIterator } from "redux-saga";
 import { ERROR_MESSAGES, HTTP_STATUS, ROUTES, STORAGE_KEYS } from "../constants";
 import { apiCreateSessionWithNewResume, apiCreateSessionWithExistingResume, apiGetChatHistoryBySessionToken,
-    apiGetInterviewSessionInformation, apiGetInterviewSessionListCursor, apiGetInterviewSessionListPage, apiDeleteInterviewSessionById } from "../api/interviewApi";
+    apiGetInterviewSessionListCursor, apiGetInterviewSessionListPage, apiDeleteInterviewSessionById, 
+    apiGetInterviewSessionInformationById,
+    apiGetChatHistoryBySessionIDWithEvaluation} from "../api/interviewApi";
 import { CREATE_SESSION_WITH_NEW_RESUME, CREATE_SESSION_WITH_EXISTING_RESUME, setCreateInterviewSuccess,
-    GET_CHAT_HISTORY_BY_SESSION_TOKEN, setChatHistory, setInterviewSessionInformation, GET_INTERVIEW_SESSION_INFORMATION,
+    GET_CHAT_HISTORY_BY_SESSION_TOKEN, setChatHistory,
     SET_END_INTERVIEW_SESSION_FINISHED, SET_END_INTERVIEW_SESSION_LOADING, GET_INTERVIEW_SESSION_LIST_CURSOR, setInterviewSessionList,
-    GET_INTERVIEW_SESSION_LIST_PAGE, DELETE_INTERVIEW_SESSION_BY_ID} from "../actions/interviewAction";
+    GET_INTERVIEW_SESSION_LIST_PAGE, DELETE_INTERVIEW_SESSION_BY_ID,
+    setInterviewSessionInformationById,
+    GET_INTERVIEW_SESSION_INFORMATION_BY_ID,
+    setChatHistoryBySessionIDWithEvaluation,
+    GET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION,
+    addChatHistoryBySessionIDWithEvaluation} from "../actions/interviewAction";
 import { setCreateInterviewError } from "../actions/interviewAction";
-import { hideSpinner, safeNavigate, showSpinner, type GetInterviewSessionListCursorReq, type GetInterviewSessionListPageReq } from "..";
+import { hideSpinner, safeNavigate, showSpinner, type GetChatHistoryBySessionIDWithEvaluationReq, type GetInterviewSessionListCursorReq, type GetInterviewSessionListPageReq } from "..";
 
 function* workerCreateSessionWithNewResume(payload: {
     position: string;
@@ -114,35 +121,6 @@ export function* watcherGetChatHistoryBySessionToken(): SagaIterator {
     while (true) {
         const action = yield take(GET_CHAT_HISTORY_BY_SESSION_TOKEN);
         yield call(workerGetChatHistoryBySessionToken, action.payload);
-    }
-}
-
-function* workerGetInterviewSessionInformation(payload: { session_token: string }): SagaIterator {
-    try {
-        yield delay(0);
-        yield call(showSpinner);
-        const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-        const response = yield call(apiGetInterviewSessionInformation, payload.session_token, token || '');
-        console.log("response", response);
-        if (response && response.success) {
-            yield put(setInterviewSessionInformation(response.data));
-        } else {
-            yield call(hideSpinner);
-            yield call(handleStatusInterviewError, response.statusCode, response.message);
-        }
-        yield call(hideSpinner);
-    }
-    catch (error) {
-        yield call(hideSpinner);
-        const message = (error as { message?: string })?.message || ERROR_MESSAGES.UNEXPECTED_ERROR;
-        yield call(handleStatusInterviewError, 0, message);
-    }
-}
-
-export function* watcherGetInterviewSessionInformation(): SagaIterator {
-    while (true) {
-        const action = yield take(GET_INTERVIEW_SESSION_INFORMATION);
-        yield call(workerGetInterviewSessionInformation, action.payload);
     }
 }
 
@@ -266,6 +244,69 @@ export function* watcherDeleteInterviewSessionById(): SagaIterator {
     while (true) {
         const action = yield take(DELETE_INTERVIEW_SESSION_BY_ID);
         yield call(workerDeleteInterviewSessionById, action.payload);
+    }
+}
+
+function* workerGetInterviewSessionInformationById(payload: { session_id: string }): SagaIterator {
+    try {
+        yield delay(0);
+        yield call(showSpinner);
+        const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+        const response = yield call(apiGetInterviewSessionInformationById, payload.session_id, token || '');
+
+        if (response && response.success) {
+            yield put(setInterviewSessionInformationById(response.data));
+        } else {
+            yield call(hideSpinner);
+            yield call(handleStatusInterviewError, response.statusCode, response.message);
+        }
+        yield call(hideSpinner);
+    }
+    catch (error) {
+        yield call(hideSpinner);
+        const message = (error as { message?: string })?.message || ERROR_MESSAGES.UNEXPECTED_ERROR;
+        yield call(handleStatusInterviewError, 0, message);
+    }
+}
+
+export function* watcherGetInterviewSessionInformationById(): SagaIterator {
+    while (true) {
+        const action = yield take(GET_INTERVIEW_SESSION_INFORMATION_BY_ID);
+        yield call(workerGetInterviewSessionInformationById, action.payload);
+    }
+}
+
+
+function* workerGetChatHistoryBySessionIDWithEvaluation(payload: GetChatHistoryBySessionIDWithEvaluationReq): SagaIterator {
+    try {
+        yield delay(0);
+        yield call(showSpinner);
+        const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+        const response = yield call(apiGetChatHistoryBySessionIDWithEvaluation, payload, token || '');
+
+        if (response && response.success) {
+            if (payload.turn_no === null) {
+                yield put(setChatHistoryBySessionIDWithEvaluation(response.data));
+            } else {
+                yield put(addChatHistoryBySessionIDWithEvaluation(response.data));
+            }
+        } else {
+            yield call(hideSpinner);
+            yield call(handleStatusInterviewError, response.statusCode, response.message);
+        }
+        yield call(hideSpinner);
+    }
+    catch (error) {
+        yield call(hideSpinner);
+        const message = (error as { message?: string })?.message || ERROR_MESSAGES.UNEXPECTED_ERROR;
+        yield call(handleStatusInterviewError, 0, message);
+    }
+}
+
+export function* watcherGetChatHistoryBySessionIDWithEvaluation(): SagaIterator {
+    while (true) {
+        const action = yield take(GET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION);
+        yield call(workerGetChatHistoryBySessionIDWithEvaluation, action.payload);
     }
 }
 

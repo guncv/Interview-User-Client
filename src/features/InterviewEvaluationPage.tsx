@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import font from '../assets/styles/Font';
 import type { CSSProperties } from 'react';
-import type { InterviewEvaluation, ChatHistory } from '../interface/interviewInterface';
+import type { InterviewEvaluation } from '../interface/interviewInterface';
 import ContentLayout from '../components/layout/ContentLayout';
 import FeedBack from '../components/common/FeedBack';
 import ChatContainer from '../components/common/ChatContainer';
@@ -13,7 +13,7 @@ import { Colors } from '../assets/styles';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../reducers/rootReducer';
 import { createReviewComment } from '../actions/reviewCommenAction';
-import { deleteInterviewSessionByIdAction } from '../actions/interviewAction';
+import { deleteInterviewSessionByIdAction, getInterviewSessionInformationById } from '../actions/interviewAction';
 
 const InterviewEvaluationPage: React.FC = () => {
     const { sessionId } = useParams<{ sessionId: string }>();
@@ -23,6 +23,11 @@ const InterviewEvaluationPage: React.FC = () => {
 
     const alreadyFeedback = useSelector((state: RootState) => state.reviewComment.alreadyFeedback);
     const feedBackError = useSelector((state: RootState) => state.reviewComment.error);
+    const interviewSessionInformationById = useSelector((state: RootState) => state.interview.interviewSessionInformationById);
+    
+    useEffect(() => {
+        dispatch(getInterviewSessionInformationById(sessionId || ''));
+    }, [sessionId, dispatch]);
 
     const mockEvaluation: InterviewEvaluation = {
         id: '1',
@@ -85,101 +90,6 @@ const InterviewEvaluationPage: React.FC = () => {
         }
     };
 
-    const mockTranscript: ChatHistory[] = [
-        {
-            id: '1',
-            turn_no: 1,
-            actor: 'interviewer',
-            transcript_text: 'Hi, welcome to our interview for the Sample Associate position at Costco. How are you doing today?',
-            start_at: '0:02',
-            end_at: '0:12',
-            created_at: '2025-09-23T12:25:02Z',
-            phrase_name: 'Greeting'
-        },
-        {
-            id: '2',
-            turn_no: 2,
-            actor: 'user',
-            transcript_text: 'Yeah. They also, um, um, good. Yeah.',
-            start_at: '0:12',
-            end_at: '0:27',
-            created_at: '2025-09-23T12:25:12Z',
-            phrase_name: 'Greeting',
-            feedback_score: 2,
-            max_feedback_score: 5,
-            improved_sentence: 'I\'m doing well, thank you for asking. I\'m excited about the opportunity to discuss the Sample Associate position with you today.',
-            feedback_categories: [
-                {
-                    category: 'Clarity',
-                    score: 1,
-                    max_score: 5,
-                    description: 'Response was unclear and contained many filler words',
-                    improvement_suggestion: 'Practice speaking more clearly and reduce filler words like "um" and "yeah"'
-                },
-                {
-                    category: 'Professionalism',
-                    score: 2,
-                    max_score: 5,
-                    description: 'Response lacked professional tone and structure',
-                    improvement_suggestion: 'Use a more professional greeting and express enthusiasm for the opportunity'
-                },
-                {
-                    category: 'Engagement',
-                    score: 3,
-                    max_score: 5,
-                    description: 'Showed some engagement but could be more enthusiastic',
-                    improvement_suggestion: 'Express more enthusiasm and ask a follow-up question about the role'
-                }
-            ]
-        },
-        {
-            id: '3',
-            turn_no: 3,
-            actor: 'interviewer',
-            transcript_text: 'Can you tell me about a time when you dealt with a difficult customer or situation?',
-            start_at: '0:27',
-            end_at: '0:39',
-            created_at: '2025-09-23T12:25:27Z',
-            phrase_name: 'Behavioral'
-        },
-        {
-            id: '4',
-            turn_no: 4,
-            actor: 'user',
-            transcript_text: 'Well, there was this one time when a customer was really mad about something and I just, you know, tried to help them out.',
-            start_at: '0:39',
-            end_at: '0:52',
-            created_at: '2025-09-23T12:25:39Z',
-            phrase_name: 'Behavioral',
-            feedback_score: 3,
-            max_feedback_score: 5,
-            improved_sentence: 'I recall a situation where a customer was upset about a delayed order. I listened to their concerns, apologized for the inconvenience, and worked with our team to expedite their order while offering a discount for their trouble. The customer left satisfied and even wrote a positive review about our service.',
-            feedback_categories: [
-                {
-                    category: 'STAR Method',
-                    score: 2,
-                    max_score: 5,
-                    description: 'Response lacked structure and specific details',
-                    improvement_suggestion: 'Use the STAR method: describe the Situation, Task, Action, and Result'
-                },
-                {
-                    category: 'Specificity',
-                    score: 2,
-                    max_score: 5,
-                    description: 'Response was too vague and lacked concrete details',
-                    improvement_suggestion: 'Provide specific details about what happened, what you did, and the outcome'
-                },
-                {
-                    category: 'Problem Solving',
-                    score: 4,
-                    max_score: 5,
-                    description: 'Showed willingness to help but could be more specific about actions taken',
-                    improvement_suggestion: 'Detail the specific steps you took to resolve the situation'
-                }
-            ]
-        }
-    ];
-
     const handleSubmitClick = (rating: number, comment: string | null) => {
         console.log('rating', rating);
         console.log('comment', comment);
@@ -213,6 +123,7 @@ const InterviewEvaluationPage: React.FC = () => {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
+        width: 'calc(100vw - 600px)',
         overflow: 'hidden',
         height: '100%'
     };
@@ -259,7 +170,7 @@ const InterviewEvaluationPage: React.FC = () => {
                                 color: '#6B7280', 
                                 fontSize: '14px' 
                             }}>
-                                September 23, 2025 at 12:25 AM
+                                {interviewSessionInformationById.created_at_full_name}
                             </p>
                         </div>
 
@@ -285,21 +196,21 @@ const InterviewEvaluationPage: React.FC = () => {
                     </div>
 
                     <div style={feedbackContainerStyle}>
-                        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
                             <FeedBack
                                 onSubmitClick={handleSubmitClick}
                                 alreadyFeedback={alreadyFeedback}
                                 FeedBackError={feedBackError}
                             />
                             <ChatContainer
-                                transcript={mockTranscript}
                                 showFeedback={true}
+                                session_id={sessionId || ''}
                             />
                         </div>
                     </div>
                 </div>
 
-                <EvaluationResultsPanel 
+                <EvaluationResultsPanel
                     evaluation={mockEvaluation}
                 />
             </div>

@@ -3,18 +3,21 @@ import {
     SET_CREATE_INTERVIEW_ERROR,
     SET_CREATE_INTERVIEW_SUCCESS,
     SET_CHAT_HISTORY,
-    SET_INTERVIEW_SESSION_INFORMATION,
+    SET_INTERVIEW_SESSION_INFORMATION_BY_ID,
     SET_INTERVIEW_SESSION_LIST,
+    SET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION,
+    ADD_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION,
 } from '../actions/interviewAction';
 import type { RootState } from './rootReducer';
-import type { CreateInterviewSessionResponse, GetChatHistoryBySessionTokenResp, GetInterviewSessionInformationResp, GetInterviewSessionListResp } from '../interface/interviewInterface';
+import type { CreateInterviewSessionResponse, GetChatHistoryBySessionIDWithEvaluationResp, GetChatHistoryBySessionTokenResp, GetInterviewSessionInformationResp, GetInterviewSessionListResp } from '../interface/interviewInterface';
 
 type InterviewState = {
     error: string;
     success: CreateInterviewSessionResponse;
     chatHistory: GetChatHistoryBySessionTokenResp;
-    interviewSessionInformation: GetInterviewSessionInformationResp;
+    interviewSessionInformationById: GetInterviewSessionInformationResp;
     interviewSessionList: GetInterviewSessionListResp;
+    chatHistoryBySessionIDWithEvaluation: GetChatHistoryBySessionIDWithEvaluationResp;
 }
 type InterviewStateAction = {
     type: string;
@@ -22,8 +25,9 @@ type InterviewStateAction = {
         error: string;
         success: CreateInterviewSessionResponse;
         chatHistory: GetChatHistoryBySessionTokenResp;
-        interviewSessionInformation: GetInterviewSessionInformationResp;
+        interviewSessionInformationById: GetInterviewSessionInformationResp;
         interviewSessionList: GetInterviewSessionListResp;
+        chatHistoryBySessionIDWithEvaluation: GetChatHistoryBySessionIDWithEvaluationResp;
     }
 }
 const initialState: InterviewState = {
@@ -34,9 +38,21 @@ const initialState: InterviewState = {
     chatHistory: {
         chat_history: [],
     },
-    interviewSessionInformation: {
+    interviewSessionInformationById: {
+        resume_id: '',
+        resume_file_name: '',
         position: '',
-        file_name: '',
+        status: '',
+        status_display_name: '',
+        status_color: '',
+        overall_score_percent: '',
+        overall_score_color: '',
+        started_at: '',
+        ended_at: '',
+        overall_score: 0,
+        summary_md: '',
+        created_at: '',
+        created_at_full_name: '',
     },
     interviewSessionList: {
         sessions: [],
@@ -44,6 +60,10 @@ const initialState: InterviewState = {
         next_cursor: null,
         total_pages: 0,
         page_size: 0,
+    },
+    chatHistoryBySessionIDWithEvaluation: {
+        chat_history: [],
+        cursor_turn_next: 0,
     },
 };
 
@@ -67,15 +87,32 @@ export const interviewReducer = (
             ...state,
             chatHistory: action.payload.chatHistory,
             };
-        case SET_INTERVIEW_SESSION_INFORMATION:
+        case SET_INTERVIEW_SESSION_INFORMATION_BY_ID:
             return {
             ...state,
-            interviewSessionInformation: action.payload.interviewSessionInformation,
+            interviewSessionInformationById: action.payload.interviewSessionInformationById,
             };
         case SET_INTERVIEW_SESSION_LIST:
             return {
             ...state,
             interviewSessionList: action.payload.interviewSessionList,
+            };
+        case SET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION:
+            return {
+            ...state,
+            chatHistoryBySessionIDWithEvaluation: action.payload.chatHistoryBySessionIDWithEvaluation,
+            };
+        case ADD_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION:
+            return {
+            ...state,
+            chatHistoryBySessionIDWithEvaluation: {
+                ...state.chatHistoryBySessionIDWithEvaluation,
+                chat_history: [
+                    ...state.chatHistoryBySessionIDWithEvaluation.chat_history,
+                    ...action.payload.chatHistoryBySessionIDWithEvaluation.chat_history,
+                ],
+                cursor_turn_next: action.payload.chatHistoryBySessionIDWithEvaluation.cursor_turn_next,
+            },
             };
         default:
             return state;
@@ -90,6 +127,7 @@ export const interviewReducer = (
             error: interview.error,
             success: interview.success,
             chatHistory: interview.chatHistory,
-            interviewSessionInformation: interview.interviewSessionInformation,
+            interviewSessionInformationById: interview.interviewSessionInformationById,
+            chatHistoryBySessionIDWithEvaluation: interview.chatHistoryBySessionIDWithEvaluation,
         }),
     );

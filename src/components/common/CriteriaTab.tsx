@@ -139,7 +139,7 @@ const CriteriaTab: React.FC = () => {
                             borderRadius: '6px',
                             border: `1px solid ${Colors.BORDER_COLOR}`
                         }}>
-                            <div style={{ 
+                            <div style={{
                                 minWidth: '32px',
                                 height: '32px',
                                 borderRadius: '50%',

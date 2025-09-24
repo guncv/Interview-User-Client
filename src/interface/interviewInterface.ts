@@ -100,8 +100,20 @@ export interface GetInterviewSessionInformationReq {
 }
 
 export interface GetInterviewSessionInformationResp {
-	position:    string;
-	file_name:   string;
+	resume_id: string;
+	resume_file_name: string;
+	position: string;
+	status: string;
+	status_display_name: string;
+	status_color: string;
+	started_at: string;
+	ended_at: string;
+	overall_score: number;
+	overall_score_percent: string;
+	overall_score_color: string;
+	summary_md: string;
+	created_at: string;
+	created_at_full_name: string;
 }
 
 export interface InterviewSessionSummary {
@@ -193,7 +205,6 @@ export interface TurnFeedbackCategory {
 	improvement_suggestion?: string;
 }
 
-// Evaluation interfaces
 export interface InterviewEvaluation {
 	id: string;
 	session_id: string;
@@ -251,4 +262,43 @@ export interface EvaluationTabsProps {
 	analytics: EvaluationAnalytics;
 	activeTab: 'coaching' | 'analytics';
 	onTabChange: (tab: 'coaching' | 'analytics') => void;
+}
+
+
+export interface GetChatHistoryBySessionIDWithEvaluationReq {
+	session_id: string;
+	turn_no: number | null;
+}
+
+export interface GetChatHistoryBySessionIDWithEvaluationResp {
+	chat_history: ChatHistoryWithEvaluation[];
+	cursor_turn_next: number;
+}
+
+export interface ChatHistoryWithEvaluation {
+	id: string;
+	turn_no: number;
+	actor: string;
+	content: string;
+	start_at: string;
+	end_at: string;
+	evaluation: Evaluation | null;
+	corrected_sentence: string | null;
+	current_state: string;
+	current_state_color: string;
+}
+
+export interface Evaluation {
+	overall_score: string;
+	overall_color: string;
+	summary_md: string;
+	scores: CriteriaScore[];
+}
+
+export interface CriteriaScore {
+	criterion_id: string;
+	criterion_name: string;
+	score: string;
+	score_color: string;
+	comment_md: string;
 }
