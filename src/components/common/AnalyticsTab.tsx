@@ -58,12 +58,6 @@ const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ evaluation }) => {
                 <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '8px' }}>
                     Total Duration: {formatTime(evaluation.analytics.total_duration)}
                 </div>
-                <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '8px' }}>
-                    You: {formatTime(evaluation.analytics.speaking_time.user)}
-                </div>
-                <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '8px' }}>
-                    Interviewer: {formatTime(evaluation.analytics.speaking_time.interviewer)}
-                </div>
             </div>
 
             <div style={{ fontSize: '16px', marginBottom: '16px' }}>

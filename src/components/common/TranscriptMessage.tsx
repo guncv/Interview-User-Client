@@ -1,11 +1,11 @@
 import React from 'react';
 import font from '../../assets/styles/Font';
 import type { CSSProperties } from 'react';
-import type { ChatHistory } from '../../interface/interviewInterface';
+import type { ChatHistoryWithEvaluation } from '../../interface/interviewInterface';
 import { Colors, Size } from '../../assets/styles';
 
 interface TranscriptMessageProps {
-    message: ChatHistory;
+    message: ChatHistoryWithEvaluation;
     showFeedback?: boolean;
     onFeedbackToggle?: (messageId: string) => void;
 }
@@ -16,22 +16,7 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
     onFeedbackToggle
 }) => {
     const isUser = message.actor === 'user';
-    const hasFeedback = isUser && (message.feedback_score !== undefined || message.improved_sentence);
-
-    const getScoreColor = (score: number, maxScore: number) => {
-        const percentage = (score / maxScore) * 100;
-        if (percentage >= 80) return Colors.SUCCESS_COLOR;
-        if (percentage >= 60) return Colors.WARNING_COLOR;
-        return Colors.TEXT_ERROR_COLOR;
-    };
-
-    const getScoreLabel = (score: number, maxScore: number) => {
-        const percentage = (score / maxScore) * 100;
-        if (percentage >= 80) return 'Excellent';
-        if (percentage >= 60) return 'Good';
-        if (percentage >= 40) return 'Fair';
-        return 'Needs Improvement';
-    };
+    const hasFeedback = isUser && (message.evaluation !== null || message.corrected_sentence !== null);
 
     const messageContainerStyle: CSSProperties = {
         marginBottom: '8px',
@@ -94,8 +79,6 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
 
     const phraseNameStyle: CSSProperties = {
         fontSize: '9px',
-        color: Colors.ACCENT_COLOR,
-        backgroundColor: Colors.ACCENT_COLOR_LIGHT,
         padding: '2px 6px',
         borderRadius: '8px',
         fontFamily: font.Medium,
@@ -163,9 +146,9 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
                 <div style={contentStyle}>
                     <div style={headerStyle}>
                         <span>{isUser ? 'You' : 'Mike'}</span>
-                        {message.phrase_name && (
-                            <span style={phraseNameStyle}>
-                                {message.phrase_name}
+                        {message && (
+                            <span style={{...phraseNameStyle, color: message.current_state_color, backgroundColor: message.current_state_color + "20"}}>
+                                {message.current_state}
                             </span>
                         )}
                         {hasFeedback && (
@@ -186,7 +169,7 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
                         )}
                     </div>
                     <div style={textBubbleStyle} onClick={() => onFeedbackToggle?.(message.id)}>
-                        {message.transcript_text}
+                        {message.content}
                     </div>
                     <div style={timestampStyle}>
                         {message.start_at} - {message.end_at}
@@ -194,30 +177,31 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
 
                 {isUser && showFeedback && hasFeedback && (
                     <div style={feedbackContainerStyle}>
-                        {message.feedback_score !== undefined && message.max_feedback_score && (
+                        {message.evaluation !== null && message.evaluation.overall_score !== undefined && message.evaluation.overall_score !== null && (
                             <div style={scoreStyle}>
                                 <span style={{ fontSize: Size.Medium, color: Colors.SECONDARY_TEXT_COLOR }}>Overall Score:</span>
                                 <div
                                     style={{
                                         ...scoreBadgeStyle,
-                                        backgroundColor: getScoreColor(message.feedback_score, message.max_feedback_score)
+                                        fontSize: "14px",
+                                        color: message.evaluation.overall_color
                                     }}
                                 >
-                                    {message.feedback_score}/{message.max_feedback_score} - {getScoreLabel(message.feedback_score, message.max_feedback_score)}
+                                    {message.evaluation.overall_score}/5
                                 </div>
                             </div>
                         )}
 
-                        {message.improved_sentence && (
+                        {message.corrected_sentence && (
                             <div style={improvementTextStyle}>
-                                <strong>Improved:</strong> {message.improved_sentence}
+                                <strong>Improved:</strong> {message.corrected_sentence}
                             </div>
                         )}
 
-                        {message.feedback_categories && message.feedback_categories.length > 0 && (
+                        {message.evaluation && message.evaluation.scores && message.evaluation.scores.length > 0 && (
                             <div>
                                 <div style={{ marginTop: '8px' }}>
-                                    {message.feedback_categories.map((category, index) => (
+                                    {message.evaluation.scores.map((category, index) => (
                                         <div key={index} style={{ 
                                             marginBottom: '12px', 
                                             padding: '8px', 
@@ -226,20 +210,20 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
                                             border: `1px solid ${Colors.BORDER_COLOR}`
                                         }}>
                                             <div style={categoryItemStyle}>
-                                                <span style={{ color: Colors.SECONDARY_TEXT_COLOR, fontFamily: font.Medium }}>{category.category}:</span>
+                                                <span style={{ color: Colors.SECONDARY_TEXT_COLOR, fontFamily: font.Medium }}>{category.criterion_name}:</span>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                     <span
                                                         style={{
-                                                            color: getScoreColor(category.score, category.max_score),
+                                                            color: category.score_color,
                                                             fontFamily: font.Medium
                                                         }}
                                                     >
-                                                        {category.score}/{category.max_score}
+                                                        {category.score}/5
                                                     </span>
                                                 </div>
                                             </div>
 
-                                            {category.improvement_suggestion && (
+                                            {category.comment_md && (
                                                 <div style={{ 
                                                     marginTop: '6px', 
                                                     fontSize: "12px", 
@@ -249,7 +233,7 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
                                                     borderRadius: '4px',
                                                     borderLeft: `3px solid ${Colors.ACCENT_COLOR}`
                                                 }}>
-                                                    <strong>Comment:</strong> {category.improvement_suggestion}
+                                                    <strong>Comment:</strong> {category.comment_md}
                                                 </div>
                                             )}
                                         </div>
