@@ -1,32 +1,30 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
-import type { InterviewEvaluation } from '../../interface/interviewInterface';
 import font from '../../assets/styles/Font';
-import { Colors } from '../../assets/styles';
+import { useDispatch, useSelector } from 'react-redux';
+import { getPhraseEvaluationsWithCriteriaBySessionID } from '../../actions/evaluationAction';
+import type { RootState } from '../../reducers/rootReducer';
+import InsiderLoadingSpinner from './InsiderLoadingSpinner';
 
-interface AnalyticsTabProps {
-    evaluation: InterviewEvaluation;
+type AnalyticsTabProps = {
+    sessionID: string;
 }
 
-const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ evaluation }) => {
+const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ sessionID }) => {
     const [showInsights, setShowInsights] = useState<{ [key: string]: boolean }>({});
+    const dispatch = useDispatch();
+
+    const { phraseEvaluationsWithCriteriaBySessionID, phraseEvaluationsWithCriteriaBySessionIDLoading, phraseEvaluationsWithCriteriaBySessionIDError } = useSelector((state: RootState) => state.evaluation);
+
+    useEffect(() => {
+        dispatch(getPhraseEvaluationsWithCriteriaBySessionID(sessionID));
+    }, [dispatch]);
 
     const toggleInsights = (category: string) => {
         setShowInsights(prev => ({
             ...prev,
             [category]: !prev[category]
         }));
-    };
-
-    const getScoreColor = (score: number, maxScore: number) => {
-        const percentage = (score / maxScore) * 100;
-        if (percentage >= 80) return '#10B981';
-        if (percentage >= 60) return '#F59E0B';
-        return '#EF4444';
-    };
-
-    const formatTime = (seconds: number) => {
-        return `${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, '0')}`;
     };
 
     const rubricItemStyle: CSSProperties = {
@@ -37,13 +35,17 @@ const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ evaluation }) => {
         border: '1px solid #E5E7EB'
     };
 
-    const categoryItemStyle: CSSProperties = {
-        display: 'flex',
-        alignItems: 'center',
-        padding: '4px 0',
-        fontSize: '12px',
-        gap: '10px',
-    };
+
+    if (phraseEvaluationsWithCriteriaBySessionIDLoading) {
+        return <InsiderLoadingSpinner 
+        isVisible={phraseEvaluationsWithCriteriaBySessionIDLoading} 
+        wrapperStyle={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%' }} 
+        />;
+    }
+
+    if (phraseEvaluationsWithCriteriaBySessionIDError) {
+        return <div>Error: {phraseEvaluationsWithCriteriaBySessionIDError}</div>;
+    }
 
     return (
         <div>
@@ -56,7 +58,7 @@ const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ evaluation }) => {
                     Performance Metrics
                 </div>
                 <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '8px' }}>
-                    Total Duration: {formatTime(evaluation.analytics.total_duration)}
+                    Total Duration: 0.01
                 </div>
             </div>
 
@@ -64,7 +66,7 @@ const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ evaluation }) => {
                 Score Analysis
             </div>
 
-            {evaluation.feedback.coaching.map((item, index) => (
+            {phraseEvaluationsWithCriteriaBySessionID.phrase_evaluations.map((item, index) => (
                 <div key={index} style={rubricItemStyle}>
                     <div style={{ 
                         display: 'flex', 
@@ -73,45 +75,32 @@ const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ evaluation }) => {
                         marginBottom: '8px'
                         }}>
                             <div style={{ fontFamily: font.Medium, fontSize: '14px' }}>
-                                Greeting Phrase
+                                {item.state_name} Phrase
                             </div>
                             <div style={{ 
                                 fontFamily: font.Bold, 
                                 fontSize: '14px',
-                                color: getScoreColor(item.score, item.max_score)
+                                color: item.overall_color
                             }}>
-                                {item.score}/{item.max_score}
-                            </div>
-                    </div>
-                    
-                    <div style={categoryItemStyle}>
-                        <span style={{ color: Colors.SECONDARY_TEXT_COLOR, fontFamily: font.Medium }}>Clarity:</span>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <span
-                                    style={{
-                                    color: getScoreColor(4, item.max_score),
-                                    fontFamily: font.Medium
-                                }}>
-                                    4/{item.max_score}
-                                </span>
+                                {item.overall_score}/{item.max_score}
                             </div>
                     </div>
 
-                    {item.subcategories && (
+                    {item.criteria && (
                         <div style={{ marginBottom: '8px' }}>
-                            {item.subcategories.map((sub, subIndex) => (
+                            {item.criteria.map((sub, subIndex) => (
                                 <div key={subIndex} style={{ 
                                     display: 'flex', 
                                     justifyContent: 'space-between',
                                     fontSize: '12px',
                                     marginBottom: '4px'
                                 }}>
-                                    <span style={{ color: '#6B7280' }}>{sub.name}:</span>
+                                    <span style={{ color: '#6B7280' }}>{sub.criteria_name}:</span>
                                     <span style={{ 
-                                        color: getScoreColor(sub.score, sub.max_score),
+                                        color: sub.criteria_color,
                                         fontFamily: font.Medium
                                     }}>
-                                        {sub.score}/{sub.max_score}
+                                        {sub.criteria_score}/{sub.max_score}
                                     </span>
                                 </div>
                             ))}
@@ -119,7 +108,7 @@ const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ evaluation }) => {
                     )}
 
                     <button 
-                        onClick={() => toggleInsights(item.category)}
+                        onClick={() => toggleInsights(item.state_name)}
                         style={{ 
                             background: 'none', 
                             border: 'none', 
@@ -129,23 +118,23 @@ const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ evaluation }) => {
                             fontFamily: font.Medium
                         }}
                     >
-                        {showInsights[item.category] ? 'Hide insights ↑' : 'Show insights ↓'} 
+                        {showInsights[item.state_name] ? 'Hide insights ↑' : 'Show insights ↓'} 
                     </button>
 
-                    {showInsights[item.category] && (
+                    {showInsights[item.state_name] && (
                         <div style={{ 
                             marginTop: '8px', 
                             padding: '8px', 
                             backgroundColor: '#F9FAFB',
                             borderRadius: '4px'
                         }}>
-                            {item.insights.map((insight, insightIndex) => (
+                            {item.criteria.map((insight, insightIndex) => (
                                 <div key={insightIndex} style={{ 
                                     fontSize: '12px', 
                                     marginBottom: '4px',
                                     color: '#374151'
                                 }}>
-                                    • {insight}
+                                    • {insight.criteria_comment}
                                 </div>
                             ))}
                         </div>

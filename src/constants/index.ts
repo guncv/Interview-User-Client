@@ -27,6 +27,7 @@ export const API_ENDPOINTS = {
 
   // Evaluation API
   LIST_ALL_RUBRICS_AND_CRITERIA: '/api/v1/evaluation/rubrics',
+  GET_PHRASE_EVALUATIONS_WITH_CRITERIA_BY_SESSION_ID: '/api/v1/evaluation/phrase-evaluations',
 
   // Issue Report API
   LIST_ISSUE_REPORTS: '/api/v1/issue-reports',

@@ -1,24 +1,23 @@
 import React, { useState } from 'react';
 import type { CSSProperties } from 'react';
-import type { InterviewEvaluation } from '../../interface/interviewInterface';
 import font from '../../assets/styles/Font';
 import { Colors } from '../../assets/styles';
 import AnalyticsTab from './AnalyticsTab';
 import CriteriaTab from './CriteriaTab';
-import InfoTab from './InfoTab';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../reducers/rootReducer';
 
-interface EvaluationResultsPanelProps {
-    evaluation: InterviewEvaluation;
+type EvaluationResultsPanelProps = {
+    sessionID: string;
 }
 
 const EvaluationResultsPanel: React.FC<EvaluationResultsPanelProps> = ({
-    evaluation,
+    sessionID
 }) => {
     const [activeTab, setActiveTab] = useState<'analytics' | 'details' | 'criteria'>('analytics');
     const [showOverallFeedbackModal, setShowOverallFeedbackModal] = useState<boolean>(false);
     const interviewSessionInformationById = useSelector((state: RootState) => state.interview.interviewSessionInformationById);
+
 
     const truncateTextToLines = (text: string, maxLines: number = 2) => {
         const words = text.split(' ');
@@ -152,8 +151,8 @@ const EvaluationResultsPanel: React.FC<EvaluationResultsPanelProps> = ({
             </div>
 
             <div style={tabContentStyle}>
-                {activeTab === 'analytics' && <AnalyticsTab evaluation={evaluation} />}
-                {activeTab === 'details' && <InfoTab evaluation={evaluation} />}
+                {activeTab === 'analytics' && <AnalyticsTab sessionID={sessionID}/>}
+                {/* {activeTab === 'details' && <InfoTab evaluation={evaluation} />} */}
                 {activeTab === 'criteria' && <CriteriaTab />}
             </div>
         </div>

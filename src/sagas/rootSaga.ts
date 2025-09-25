@@ -4,7 +4,7 @@ import { watcherGetResumeById, watcherListResume, watcherDownloadResumeBySession
 import { watcherCreateSessionWithNewResume, watcherCreateSessionWithExistingResume, watcherGetChatHistoryBySessionToken, watcherEndInterviewSessionLoading, watcherEndInterviewSessionFinished, watcherGetInterviewSessionListCursor, watcherGetInterviewSessionListPage, watcherDeleteInterviewSessionById, watcherGetInterviewSessionInformationById, watcherGetChatHistoryBySessionIDWithEvaluation } from './interviewSaga';
 import { watcherListIssueCategories, watcherCreateIssueReport } from './issueReport';
 import { watcherCreateReviewComment } from './reviewCommentSaga';
-import { watcherGetEvaluationRubricAndCriteria } from './evaluationSaga';
+import { watcherGetEvaluationRubricAndCriteria, watcherGetPhraseEvaluationsWithCriteriaBySessionID } from './evaluationSaga';
 
 export default function* rootSaga() {
     yield all([
@@ -36,7 +36,8 @@ export default function* rootSaga() {
         
         // ===== EVALUATION MODULE =====
         watcherGetEvaluationRubricAndCriteria(),
-        
+        watcherGetPhraseEvaluationsWithCriteriaBySessionID(),
+
         // ===== ISSUE REPORTING MODULE =====
         watcherListIssueCategories(),
         watcherCreateIssueReport(),

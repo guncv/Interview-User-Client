@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import font from '../assets/styles/Font';
 import type { CSSProperties } from 'react';
-import type { InterviewEvaluation } from '../interface/interviewInterface';
 import ContentLayout from '../components/layout/ContentLayout';
 import FeedBack from '../components/common/FeedBack';
 import ChatContainer from '../components/common/ChatContainer';
@@ -28,67 +27,6 @@ const InterviewEvaluationPage: React.FC = () => {
     useEffect(() => {
         dispatch(getInterviewSessionInformationById(sessionId || ''));
     }, [sessionId, dispatch]);
-
-    const mockEvaluation: InterviewEvaluation = {
-        id: '1',
-        session_id: sessionId || '',
-        overall_score: 20,
-        status: 'completed',
-        created_at: '2025-09-23T12:25:00Z',
-        feedback: {
-            coaching: [
-                {
-                    category: 'Active Listening',
-                    score: 1,
-                    max_score: 5,
-                    description: 'You did not demonstrate active listening during this brief conversation, as you didn\'t engage with the content your conversation partner shared or ask any follow-up questions.',
-                    insights: [
-                        'Try to ask clarifying questions when you don\'t understand something',
-                        'Show engagement by nodding or providing verbal acknowledgments',
-                        'Paraphrase what the interviewer said to confirm understanding'
-                    ]
-                },
-                {
-                    category: 'Use STAR',
-                    score: 1,
-                    max_score: 5,
-                    description: 'Your responses lacked structure and specific examples.',
-                    insights: [
-                        'Structure your answers using Situation, Task, Action, Result',
-                        'Provide specific examples from your experience',
-                        'Quantify your achievements when possible'
-                    ],
-                    subcategories: [
-                        { name: 'Situation', score: 1, max_score: 5, description: 'No clear situation described' },
-                        { name: 'Task', score: 1, max_score: 5, description: 'No specific task identified' },
-                        { name: 'Action', score: 1, max_score: 5, description: 'No clear actions taken' },
-                        { name: 'Result', score: 1, max_score: 5, description: 'No measurable results provided' }
-                    ]
-                }
-            ],
-            strengths: [
-                'Showed enthusiasm for the position',
-                'Maintained professional demeanor'
-            ],
-            improvements: [
-                'Practice the STAR method for behavioral questions',
-                'Work on active listening skills',
-                'Prepare specific examples from your experience'
-            ],
-            general_feedback: 'Overall, your interview performance showed some positive aspects but requires significant improvement in several key areas. Your enthusiasm for the position was evident, which is a great starting point. '
-        },
-        analytics: {
-            total_duration: 39,
-            speaking_time: {
-                user: 15,
-                interviewer: 24
-            },
-            response_times: [2.5, 3.2, 1.8],
-            keywords_used: ['good', 'yeah', 'um'],
-            confidence_score: 3.2,
-            clarity_score: 2.8
-        }
-    };
 
     const handleSubmitClick = (rating: number, comment: string | null) => {
         console.log('rating', rating);
@@ -210,9 +148,7 @@ const InterviewEvaluationPage: React.FC = () => {
                     </div>
                 </div>
 
-                <EvaluationResultsPanel
-                    evaluation={mockEvaluation}
-                />
+                <EvaluationResultsPanel sessionID={sessionId || ''}/>
             </div>
 
             <ConfirmationModal
