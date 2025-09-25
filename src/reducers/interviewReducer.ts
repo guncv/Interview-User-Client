@@ -18,6 +18,7 @@ type InterviewState = {
     interviewSessionInformationById: GetInterviewSessionInformationResp;
     interviewSessionList: GetInterviewSessionListResp;
     chatHistoryBySessionIDWithEvaluation: GetChatHistoryBySessionIDWithEvaluationResp;
+    chatHistoryBySessionIDWithEvaluationLoading: boolean;
 }
 type InterviewStateAction = {
     type: string;
@@ -28,6 +29,7 @@ type InterviewStateAction = {
         interviewSessionInformationById: GetInterviewSessionInformationResp;
         interviewSessionList: GetInterviewSessionListResp;
         chatHistoryBySessionIDWithEvaluation: GetChatHistoryBySessionIDWithEvaluationResp;
+        chatHistoryBySessionIDWithEvaluationLoading: boolean;
     }
 }
 const initialState: InterviewState = {
@@ -65,6 +67,7 @@ const initialState: InterviewState = {
         chat_history: [],
         cursor_turn_next: 0,
     },
+    chatHistoryBySessionIDWithEvaluationLoading: true,
 };
 
 export const interviewReducer = (
@@ -101,6 +104,7 @@ export const interviewReducer = (
             return {
             ...state,
             chatHistoryBySessionIDWithEvaluation: action.payload.chatHistoryBySessionIDWithEvaluation,
+            chatHistoryBySessionIDWithEvaluationLoading: false,
             };
         case ADD_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION:
             return {

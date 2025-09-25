@@ -1,5 +1,4 @@
-import { call, delay, put, take } from 'redux-saga/effects';
-import { showSpinner, hideSpinner } from '../components/layout/AppProvider';
+import { call, put, take } from 'redux-saga/effects';
 import { STORAGE_KEYS } from '../constants';
 import { safeNavigate } from '../utils/navigation';
 import { ROUTES } from '../constants';
@@ -11,24 +10,19 @@ import { apiGetPhraseEvaluationsWithCriteriaBySessionID, apiListAllRubricsAndCri
 
 function* workerGetEvaluationRubricAndCriteria(): SagaIterator {
     try {
-        yield delay(0);
-        yield call(showSpinner);
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         const response = yield call(apiListAllRubricsAndCriteria, token || '');
         if (response && response.success) {
             yield put(setEvaluationRubricAndCriteria(response.data));
         } else {
-            yield call(hideSpinner);
             if (response.statusCode === HTTP_STATUS.UNAUTHORIZED) {
                 safeNavigate(ROUTES.SIGN_IN);
                 return;
             }
             yield put(setEvaluationRubricAndCriteriaError(response.message));
         }
-        yield call(hideSpinner);
     }
     catch (error) {
-        yield call(hideSpinner);
         const message = (error as { message?: string })?.message || ERROR_MESSAGES.UNEXPECTED_ERROR;
         yield put(setEvaluationRubricAndCriteriaError(message));
     }

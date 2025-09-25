@@ -1,7 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 import {
     SET_EVALUATION_RUBRIC_AND_CRITERIA,
-    SET_EVALUATION_RUBRIC_AND_CRITERIA_ERROR,
+    SET_EVALUATION_RUBRIC_AND_CRITERIA_ERROR, 
     SET_PHRASE_EVALUATIONS_WITH_CRITERIA_BY_SESSION_ID,
     SET_PHRASE_EVALUATIONS_WITH_CRITERIA_BY_SESSION_ID_ERROR,
 } from '../actions/evaluationAction';
@@ -11,6 +11,7 @@ import type { GetPhraseEvaluationsWithCriteriaResp, ListAllRubricsAndCriteriaRes
 type EvaluationState = {
     evaluationRubricAndCriteriaError: string;
     evaluationRubricAndCriteria: ListAllRubricsAndCriteriaResp;
+    evaluationRubricAndCriteriaLoading: boolean;
     phraseEvaluationsWithCriteriaBySessionID: GetPhraseEvaluationsWithCriteriaResp;
     phraseEvaluationsWithCriteriaBySessionIDError: string;
     phraseEvaluationsWithCriteriaBySessionIDLoading: boolean;
@@ -20,6 +21,7 @@ type EvaluationStateAction = {
     payload: {
         evaluationRubricAndCriteriaError: string;
         evaluationRubricAndCriteria: ListAllRubricsAndCriteriaResp;
+        evaluationRubricAndCriteriaLoading: boolean;
         phraseEvaluationsWithCriteriaBySessionIDError: string;
         phraseEvaluationsWithCriteriaBySessionID: GetPhraseEvaluationsWithCriteriaResp;
         phraseEvaluationsWithCriteriaBySessionIDLoading: boolean;
@@ -29,6 +31,7 @@ const initialState: EvaluationState = {
     evaluationRubricAndCriteria: {
         rubrics: [],
     },
+    evaluationRubricAndCriteriaLoading: true,
     phraseEvaluationsWithCriteriaBySessionID: {
         phrase_evaluations: [],
     },
@@ -46,6 +49,7 @@ export const evaluationReducer = (
             return {
             ...state,
             evaluationRubricAndCriteria: action.payload.evaluationRubricAndCriteria,
+            evaluationRubricAndCriteriaLoading: false,
             };
         case SET_EVALUATION_RUBRIC_AND_CRITERIA_ERROR:
             return {

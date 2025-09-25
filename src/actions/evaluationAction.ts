@@ -31,3 +31,4 @@ export const setPhraseEvaluationsWithCriteriaBySessionID = (phraseEvaluationsWit
 export const setPhraseEvaluationsWithCriteriaBySessionIDError = (error: string) => {
     return { type: SET_PHRASE_EVALUATIONS_WITH_CRITERIA_BY_SESSION_ID_ERROR, payload: error };
 };
+

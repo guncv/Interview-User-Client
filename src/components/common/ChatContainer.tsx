@@ -8,6 +8,8 @@ import { getChatHistoryBySessionIDWithEvaluation } from '../../actions/interview
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../../reducers/rootReducer';
 import { MessageCircle, Clock, Mic } from 'lucide-react';
+import { useContextProvider } from '../layout/ContextProvider';
+import InsiderLoadingSpinner from './InsiderLoadingSpinner';
 
 interface ChatContainerProps {
     showFeedback?: boolean;
@@ -21,7 +23,9 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
     const [expandedFeedback, setExpandedFeedback] = useState<{ [key: string]: boolean }>({});
     const dispatch = useDispatch();
 
-    const { chatHistoryBySessionIDWithEvaluation } = useSelector((state: RootState) => state.interview);
+    const {isMobile} = useContextProvider();
+
+    const { chatHistoryBySessionIDWithEvaluation, chatHistoryBySessionIDWithEvaluationLoading } = useSelector((state: RootState) => state.interview);
 
     useEffect(() => {
         dispatch(getChatHistoryBySessionIDWithEvaluation({ session_id: session_id, turn_no: null }));
@@ -60,7 +64,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
         width: '80px',
         height: '80px',
         borderRadius: '50%',
-        backgroundColor: Colors.ACCENT_COLOR_LIGHT,
+        backgroundColor: isMobile ? '' : Colors.ACCENT_COLOR_LIGHT ,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -69,7 +73,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
     };
 
     const titleStyle: CSSProperties = {
-        fontSize: '20px',
+        fontSize: isMobile ? '16px' : '20px',
         fontFamily: font.Medium,
         color: Colors.PRIMARY_COLOR,
         marginBottom: '12px',
@@ -77,7 +81,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
     };
 
     const subtitleStyle: CSSProperties = {
-        fontSize: '14px',
+        fontSize: isMobile ? '12px' : '14px',
         fontFamily: font.Regular,
         color: Colors.SECONDARY_TEXT_COLOR,
         marginBottom: '20px',
@@ -89,7 +93,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
     const featureListStyle: CSSProperties = {
         display: 'flex',
         flexDirection: 'column',
-        gap: '8px',
+        gap: isMobile ? '6px' : '8px',
         alignItems: 'center',
         marginTop: '20px'
     };
@@ -98,10 +102,16 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
-        fontSize: '12px',
+        fontSize: isMobile ? '10px' : '12px',
         color: Colors.SECONDARY_TEXT_COLOR,
         fontFamily: font.Regular
     };
+
+    if (chatHistoryBySessionIDWithEvaluationLoading) {
+        return <InsiderLoadingSpinner 
+        isVisible={chatHistoryBySessionIDWithEvaluationLoading} 
+        wrapperStyle={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%' }} />;
+    }
 
     return (
         <div style={containerStyle}>
@@ -126,7 +136,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
             ) : (
                 <div style={emptyStateStyle}>
                     <div style={iconContainerStyle}>
-                        <MessageCircle size={40} color={Colors.ACCENT_COLOR} />
+                        <MessageCircle size={isMobile ? 30 : 40} color={Colors.ACCENT_COLOR} />
                     </div>
                     
                     <h3 style={titleStyle}>
