@@ -163,7 +163,7 @@ const CreateAndUpdateIssuePopup: React.FC<CreateAndUpdateIssuePopupProps> = ({
     };
 
     const characterCountStyle: CSSProperties = {
-        fontSize: Size.Medium,
+        fontSize: isMobile ? Size.Small : Size.Medium,
         color: description.length > 900 ? Colors.TEXT_ERROR_COLOR : Colors.SECONDARY_TEXT_COLOR,
         textAlign: 'right',
         marginTop: Size.Small,

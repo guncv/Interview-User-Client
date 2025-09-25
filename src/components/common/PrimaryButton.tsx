@@ -30,7 +30,7 @@ export const PrimaryButton = ({ label, onClick, style, isCancel = false, isDisab
 
     return (
         <button disabled={isDisabled} style={{...buttonStyle, ...style, opacity: 1}} onClick={onClick}>
-        {label}
+            {label}
         </button>
     );
 };

@@ -4,6 +4,7 @@ import Colors from '../../assets/styles/Color';
 import font from '../../assets/styles/Font';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import Size from '../../assets/styles/Size';
+import { useContextProvider } from '../layout/ContextProvider';
 
 interface PaginationProps {
     currentPage: number;
@@ -24,6 +25,7 @@ const Pagination: React.FC<PaginationProps> = ({
     onFirst,
     onLast,
 }) => {
+    const {isMobile} = useContextProvider();
 
     const handleOnClickChangePage = (page: number) => {
         if (page === currentPage) {
@@ -65,14 +67,14 @@ const Pagination: React.FC<PaginationProps> = ({
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        gap: '8px',
+        gap: isMobile ? "4px" : "8px",
         marginTop: '20px',
         padding: '16px',
     };
 
     const iconStyle: CSSProperties = {
-        width: '20px',
-        height: '20px',
+        width: isMobile ? "16px" : "20px",
+        height: isMobile ? "16px" : "20px",
     };
 
     const paginationButtonStyle: CSSProperties = {
@@ -86,7 +88,7 @@ const Pagination: React.FC<PaginationProps> = ({
         outline: 'none',
         gap: '4px',
         cursor: 'pointer',
-        fontSize: Size.Medium,
+        fontSize: isMobile ? "11px" : Size.Medium,
         fontFamily: font.Regular,
         transition: 'all 0.2s ease',
     };

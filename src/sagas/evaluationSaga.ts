@@ -43,7 +43,6 @@ export function* watcherGetEvaluationRubricAndCriteria(): SagaIterator {
 
 function* workerGetPhraseEvaluationsWithCriteriaBySessionID(payload: { sessionID: string }): SagaIterator {
     try {
-        yield delay(2000);
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         const response = yield call(apiGetPhraseEvaluationsWithCriteriaBySessionID, payload.sessionID, token || '');
         if (response && response.success) {

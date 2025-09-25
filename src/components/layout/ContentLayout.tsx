@@ -137,7 +137,7 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
     };
 
     const logoStyle: CSSProperties = {
-        height: '50px',
+        height: isMobile || isTablet ? '40px' : '50px',
         width: 'auto',
         objectFit: 'contain',
     };
@@ -236,14 +236,34 @@ const ContentLayout = ({ children }: { children: React.ReactNode }) => {
                             />
                         ))}
                         </div>
+                        
+                        <div>
+                            <SideBarItem
+                            icon={<MessageSquareWarning style={sideBarItemStyle} />}
+                                text="Report Issue"
+                                isActive={false}
+                                onClick={() => {setIsReportIssuePopupOpen(true)}}
+                                isMenu={false}
+                            />
 
-                        <SideBarItem
-                        icon={<LogOut style={sideBarItemStyle} />}
-                        text="Sign Out"
-                        isActive={false}
-                        onClick={handleSignOut}
-                        isMenu={false}
-                        />
+                            <SideBarItem
+                            icon={<Settings style={sideBarItemStyle} />}
+                            text="Settings"
+                            isActive={false}
+                            onClick={() => {}}
+                            isMenu={false}
+                            />
+                            
+                            <SideBarItem
+                            icon={<LogOut style={sideBarItemStyle} />}
+                            text="Sign Out"
+                            isActive={false}
+                            onClick={handleSignOut}
+                            isMenu={false}
+                            />
+                        </div>
+
+                        
                     </div>
                 </>
             )}

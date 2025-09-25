@@ -6,15 +6,20 @@ import AnalyticsTab from './AnalyticsTab';
 import CriteriaTab from './CriteriaTab';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../reducers/rootReducer';
+import { useContextProvider } from '../layout/ContextProvider';
 
 type EvaluationResultsPanelProps = {
     sessionID: string;
+    activeTab?: 'analytics' | 'details' | 'criteria';
 }
 
 const EvaluationResultsPanel: React.FC<EvaluationResultsPanelProps> = ({
-    sessionID
+    sessionID,
+    activeTab: propActiveTab
 }) => {
-    const [activeTab, setActiveTab] = useState<'analytics' | 'details' | 'criteria'>('analytics');
+    const { isSpecialMobile } = useContextProvider();
+    const [internalActiveTab, setInternalActiveTab] = useState<'analytics' | 'details' | 'criteria'>('analytics');
+    const activeTab = propActiveTab || internalActiveTab;
     const [showOverallFeedbackModal, setShowOverallFeedbackModal] = useState<boolean>(false);
     const interviewSessionInformationById = useSelector((state: RootState) => state.interview.interviewSessionInformationById);
 
@@ -35,7 +40,7 @@ const EvaluationResultsPanel: React.FC<EvaluationResultsPanelProps> = ({
     };
 
     const rightSidebarStyle: CSSProperties = {
-        width: '400px',
+        width: isSpecialMobile ? '100vw' : '400px',
         backgroundColor: 'white',
         borderLeft: '1px solid #E5E7EB',
         padding: '24px',
@@ -126,29 +131,31 @@ const EvaluationResultsPanel: React.FC<EvaluationResultsPanelProps> = ({
                     )}
                 </div>
             </div>
-
-            <div style={{ display: 'flex', marginBottom: '16px', flexShrink: 0 }}>
-                <button
-                    onClick={() => setActiveTab('analytics')}
-                    style={activeTab === 'analytics' ? activeTabStyle : tabStyle}
-                >
-                    Analytics
-                </button>
-
-                <button
-                    onClick={() => setActiveTab('details')}
-                    style={activeTab === 'details' ? activeTabStyle : tabStyle}
-                >
-                    Details
-                </button>
                 
-                <button
-                    onClick={() => setActiveTab('criteria')}
-                    style={activeTab === 'criteria' ? activeTabStyle : tabStyle}
-                >
-                    Criteria
-                </button>
-            </div>
+            {!isSpecialMobile && (
+                <div style={{ display: 'flex', marginBottom: '16px', flexShrink: 0 }}>
+                    <button
+                        onClick={() => setInternalActiveTab('analytics')}
+                        style={activeTab === 'analytics' ? activeTabStyle : tabStyle}
+                    >
+                        Analytics
+                    </button>
+
+                    <button
+                        onClick={() => setInternalActiveTab('details')}
+                        style={activeTab === 'details' ? activeTabStyle : tabStyle}
+                    >
+                        Details
+                    </button>
+                    
+                    <button
+                        onClick={() => setInternalActiveTab('criteria')}
+                        style={activeTab === 'criteria' ? activeTabStyle : tabStyle}
+                    >
+                        Criteria
+                    </button>
+                </div>
+            )}
 
             <div style={tabContentStyle}>
                 {activeTab === 'analytics' && <AnalyticsTab sessionID={sessionID}/>}

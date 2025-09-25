@@ -13,9 +13,11 @@ import { useEffect, useState, useCallback } from "react";
 import type { RootState } from "../reducers/rootReducer";
 import type { GetInterviewSessionListCursorReq, GetInterviewSessionListPageReq } from "../interface";
 import { CURSOR_TYPE } from "../constants";
+import { useContextProvider } from "../components/layout/ContextProvider";
 
 const RecordingListPage = () => {
     const dispatch = useDispatch();
+    const {isMobile, isTablet} = useContextProvider();
 
     const [currentPage, setCurrentPage] = useState(1);
     const [searchText, setSearchText] = useState("");
@@ -144,38 +146,45 @@ const RecordingListPage = () => {
     };
     
     const titleStyle:CSSProperties = {
-        fontSize: '24px',
+        fontSize: isMobile || isTablet ? "20px" : "24px",
         fontWeight: 'bold',
         color: 'black',
         width: '100%',
-        maxHeight: '10vh',
         display: 'flex',
+        flexDirection: isMobile ? "column" : "row",
         justifyContent: 'space-between',
+        alignItems: isMobile ? "stretch" : "center",
+        gap: isMobile || isTablet ? "16px" : "0px",
+        marginBottom: isMobile ? "8px" : "0px",
     }
 
     const buttonSearchContainerStyle: CSSProperties = {
         display: 'flex',
         gap: '16px',
         alignItems: 'center',
+        justifyContent: "flex-end",
+        flexWrap: 'wrap',
+        width: isMobile ? "100%" : "auto",
+        minHeight: isMobile ? "45px" : "auto",
     }
 
     const searchInputStyle: CSSProperties = {
-        height: '45px',
-        paddingLeft: '16px',
-        paddingRight: '16px',
+        height: isMobile || isTablet ? "35px" : "45px",
+        paddingLeft: isMobile ? "8px" : "16px",
+        paddingRight: isMobile ? "8px" : "16px",
         border: `1px solid ${Colors.SECONDARY_TEXT_COLOR}`,
         borderRadius: Size.Small,
         fontFamily: font.Regular,
         outline: 'none',
-        fontSize: Size.Medium,
-        width: '200px',
+        fontSize: isMobile ? "11px" : isTablet ? "13px" : Size.Medium,
+        width: isMobile ? "150px" : "200px",
         backgroundColor: 'white',
     }
 
     const tableContainerStyle: CSSProperties = {
         marginTop: '20px',
         width: '100%',
-        maxHeight: '80vh',
+        maxHeight: isMobile ? 'calc(100vh - 200px)' : isTablet ? 'calc(100vh - 180px)' : '80vh',
         backgroundColor: "white",
         overflowY: 'auto',
         borderRadius: '8px',
@@ -192,12 +201,17 @@ const RecordingListPage = () => {
         textAlign: 'left',
         backgroundColor: '#f8f9fa',
         fontWeight: 'bold',
-        fontSize: Size.Medium,
+        fontSize: isMobile ? "11px" : isTablet ? "13px" : Size.Medium,
         color: Colors.PRIMARY_COLOR,
         cursor: 'pointer',
         position: 'sticky',
         top: 0,
         zIndex: 10,
+    }
+
+    const buttonStartNewInterviewsStyle: CSSProperties = {
+        fontSize: isMobile ? "11px" : isTablet ? "13px" : Size.Medium,
+        width: isMobile ? "auto" : "auto",
     }
 
     const handleStartNewInterviews = () => {
@@ -210,7 +224,7 @@ const RecordingListPage = () => {
                 <div style={titleStyle}>
                     <div>Interview Recordings</div>
                     <div style={buttonSearchContainerStyle}>
-                        <PrimaryButton label="Start New Interviews" onClick={handleStartNewInterviews} />
+                        <PrimaryButton style={buttonStartNewInterviewsStyle} label="Start New Interviews" onClick={handleStartNewInterviews} />
                         <input
                             style={searchInputStyle}
                             placeholder="Search Recordings..."
@@ -225,7 +239,7 @@ const RecordingListPage = () => {
                         <thead>
                             <tr>
                                 <th style={headerCellStyle}>Position</th>
-                                <th style={{...headerCellStyle, textAlign: 'center'}}>Resume</th>
+                                {isMobile ? null : <th style={{...headerCellStyle, textAlign: 'center'}}>Resume</th>}
                                 <th style={{...headerCellStyle, textAlign: 'center'}}>Score</th>
                                 <th style={{...headerCellStyle, textAlign: 'center'}}>Status</th>
                                 <th style={{...headerCellStyle, textAlign: 'center'}}>Total Time</th>

@@ -5,6 +5,7 @@ import Size from '../../assets/styles/Size';
 import { ClickableLink } from './';
 import type { InterviewSessionSummary } from '../../interface/interviewInterface';
 import { safeNavigate } from '../../utils/navigation';
+import { useContextProvider } from '../layout/ContextProvider';
 
 interface RecordingRowProps {
     interview: InterviewSessionSummary;
@@ -13,6 +14,7 @@ interface RecordingRowProps {
 
 const RecordingRow: React.FC<RecordingRowProps> = ({ interview, onDownloadResume }) => {
     const [isHovered, setIsHovered] = useState(false);
+    const {isTablet, isMobile} = useContextProvider();
 
     const rowStyle: CSSProperties = {
         transition: 'background-color 0.3s ease, transform 0.2s ease',
@@ -22,10 +24,10 @@ const RecordingRow: React.FC<RecordingRowProps> = ({ interview, onDownloadResume
     };
 
     const dataCellStyle: CSSProperties = {
-        padding: '16px 12px',
+        padding: isMobile ? "8px 10px" : "16px 12px",
         textAlign: 'left',
         borderBottom: `1px solid #e9ecef`,
-        fontSize: Size.Medium,
+        fontSize: isMobile ? "11px" : isTablet ? "13px" : Size.Medium,
         color: Colors.PRIMARY_COLOR,
         transition: 'all 0.3s ease',
     };
@@ -48,20 +50,20 @@ const RecordingRow: React.FC<RecordingRowProps> = ({ interview, onDownloadResume
                 </div>
             </td>
             
-            <td style={{...dataCellStyle, textAlign: 'center'}}>
+            {isMobile ? null : <td style={{...dataCellStyle, textAlign: 'center'}}>
                 <ClickableLink
                     onClick={(e: React.MouseEvent<HTMLSpanElement>) => {
                         e.stopPropagation();
                         onDownloadResume(interview.resume_id);
                     }}
-                    style={{ fontSize: Size.Medium }}
+                    style={{ fontSize: isTablet ? "10px" : Size.Medium }}
                     hoverColor={Colors.ACCENT_COLOR}
                     underlineOnHover={true}
                     scaleOnHover={true}
                 >
                     {interview.resume_file_name}
                 </ClickableLink>
-            </td>
+            </td>}
             
             <td style={{...dataCellStyle, textAlign: 'center'}}>
                 <span style={{ 
@@ -76,9 +78,9 @@ const RecordingRow: React.FC<RecordingRowProps> = ({ interview, onDownloadResume
             
             <td style={{...dataCellStyle, textAlign: 'center'}}>
                 <span style={{
-                    padding: '4px 12px',
+                    padding: isMobile ? "4px 8px" : "4px 12px",
                     borderRadius: '16px',
-                    fontSize: '12px',
+                    fontSize: isMobile ? "8px" : isTablet ? "10px" : "12px",
                     fontWeight: 'bold',
                     backgroundColor: interview.status === 'Completed' ? Colors.GREEN_COLOR_LIGHT : Colors.BORDER_COLOR,
                     color: interview.status === 'Completed' ? Colors.GREEN_COLOR : Colors.SECONDARY_TEXT_COLOR,

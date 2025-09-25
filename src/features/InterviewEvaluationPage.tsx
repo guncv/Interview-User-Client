@@ -13,12 +13,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../reducers/rootReducer';
 import { createReviewComment } from '../actions/reviewCommenAction';
 import { deleteInterviewSessionByIdAction, getInterviewSessionInformationById } from '../actions/interviewAction';
+import { useContextProvider } from '../components/layout/ContextProvider';
 
 const InterviewEvaluationPage: React.FC = () => {
     const { sessionId } = useParams<{ sessionId: string }>();
     const dispatch = useDispatch();
-    
+    const { isTablet, isSpecialMobile, isMobile } = useContextProvider();
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
+    const [activeMobileTab, setActiveMobileTab] = useState<'chat' | 'analytics' | 'details' | 'criteria'>('chat');
 
     const alreadyFeedback = useSelector((state: RootState) => state.reviewComment.alreadyFeedback);
     const feedBackError = useSelector((state: RootState) => state.reviewComment.error);
@@ -61,7 +63,7 @@ const InterviewEvaluationPage: React.FC = () => {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        width: 'calc(100vw - 600px)',
+        width: isSpecialMobile ? '100vw' : isTablet ? 'calc(100vw - 400px)' : 'calc(100vw - 600px)',
         overflow: 'hidden',
         height: '100%'
     };
@@ -73,12 +75,12 @@ const InterviewEvaluationPage: React.FC = () => {
         justifyContent: 'space-between',
         backgroundColor: 'white',
         borderBottom: '1px solid #E5E7EB',
-        padding: '20px 40px'
+        padding: isMobile ? '15px 20px' : '20px 40px'
     };
 
     const feedbackContainerStyle: CSSProperties = {
         flex: 1,
-        padding: '24px',
+        padding: isSpecialMobile ? '16px' : '24px',
         display: 'flex',
         flexDirection: 'column',
         gap: '16px',
@@ -86,6 +88,74 @@ const InterviewEvaluationPage: React.FC = () => {
         minHeight: 0
     };
 
+    // Mobile Tab Styles
+    const mobileTabContainerStyle: CSSProperties = {
+        display: 'flex',
+        backgroundColor: 'white',
+        borderBottom: '1px solid #E5E7EB',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        paddingTop: '10px',
+        alignItems: 'center',
+        padding: '0 16px',
+        overflowX: 'auto',
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+    };
+
+    const mobileTabStyle: CSSProperties = {
+        padding: '12px 16px',
+        border: 'none',
+        backgroundColor: 'transparent',
+        cursor: 'pointer',
+        fontFamily: font.Medium,
+        fontSize: '14px',
+        color: '#6B7280',
+        whiteSpace: 'nowrap',
+        borderBottom: '2px solid transparent',
+        transition: 'all 0.2s ease',
+        minWidth: '80px',
+        textAlign: 'center',
+    };
+
+    const activeMobileTabStyle: CSSProperties = {
+        ...mobileTabStyle,
+        borderBottom: '2px solid ' + Colors.ACCENT_COLOR,
+        color: Colors.ACCENT_COLOR,
+    };
+
+    const mobileTabContentStyle: CSSProperties = {
+        flex: 1,
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+    };
+
+
+    const renderMobileTabContent = () => {
+        switch (activeMobileTab) {
+            case 'chat':
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
+                        <FeedBack
+                            onSubmitClick={handleSubmitClick}
+                            alreadyFeedback={alreadyFeedback}
+                            FeedBackError={feedBackError}
+                        />
+                        <ChatContainer
+                            showFeedback={true}
+                            session_id={sessionId || ''}
+                        />
+                    </div>
+                );
+            case 'analytics':
+            case 'details':
+            case 'criteria':
+                return <EvaluationResultsPanel sessionID={sessionId || ''} activeTab={activeMobileTab} />;
+            default:
+                return null;
+        }
+    };
 
     return (
         <ContentLayout>
@@ -96,7 +166,7 @@ const InterviewEvaluationPage: React.FC = () => {
                             <h1 style={{ 
                                 margin: 0, 
                                 fontFamily: font.Regular, 
-                                fontSize: '24px',
+                                fontSize: isSpecialMobile ? '20px' : '24px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '8px'
@@ -106,7 +176,7 @@ const InterviewEvaluationPage: React.FC = () => {
                             <p style={{ 
                                 margin: '4px 0 0 0', 
                                 color: '#6B7280', 
-                                fontSize: '14px' 
+                                fontSize: isSpecialMobile ? '12px' : '14px' 
                             }}>
                                 {interviewSessionInformationById.created_at_full_name}
                             </p>
@@ -133,22 +203,58 @@ const InterviewEvaluationPage: React.FC = () => {
                         </div>
                     </div>
 
-                    <div style={feedbackContainerStyle}>
-                        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-                            <FeedBack
-                                onSubmitClick={handleSubmitClick}
-                                alreadyFeedback={alreadyFeedback}
-                                FeedBackError={feedBackError}
-                            />
-                            <ChatContainer
-                                showFeedback={true}
-                                session_id={sessionId || ''}
-                            />
-                        </div>
-                    </div>
+                    {isSpecialMobile ? (
+                        <>
+                            <div style={mobileTabContainerStyle}>
+                                <button
+                                    onClick={() => setActiveMobileTab('chat')}
+                                    style={activeMobileTab === 'chat' ? activeMobileTabStyle : mobileTabStyle}
+                                >
+                                    Chat
+                                </button>
+                                <button
+                                    onClick={() => setActiveMobileTab('analytics')}
+                                    style={activeMobileTab === 'analytics' ? activeMobileTabStyle : mobileTabStyle}
+                                >
+                                    Analytics
+                                </button>
+                                <button
+                                    onClick={() => setActiveMobileTab('details')}
+                                    style={activeMobileTab === 'details' ? activeMobileTabStyle : mobileTabStyle}
+                                >
+                                    Details
+                                </button>
+                                <button
+                                    onClick={() => setActiveMobileTab('criteria')}
+                                    style={activeMobileTab === 'criteria' ? activeMobileTabStyle : mobileTabStyle}
+                                >
+                                    Criteria
+                                </button>
+                            </div>
+                            <div style={mobileTabContentStyle}>
+                                {renderMobileTabContent()}
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div style={feedbackContainerStyle}>
+                                <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
+                                    <FeedBack
+                                        onSubmitClick={handleSubmitClick}
+                                        alreadyFeedback={alreadyFeedback}
+                                        FeedBackError={feedBackError}
+                                    />
+                                    <ChatContainer
+                                        showFeedback={true}
+                                        session_id={sessionId || ''}
+                                    />
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </div>
 
-                <EvaluationResultsPanel sessionID={sessionId || ''}/>
+                {!isSpecialMobile && <EvaluationResultsPanel sessionID={sessionId || ''}/>}
             </div>
 
             <ConfirmationModal
