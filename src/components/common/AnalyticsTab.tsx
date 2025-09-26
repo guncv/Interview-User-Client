@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import font from '../../assets/styles/Font';
+import { Colors } from '../../assets/styles';
 import { useDispatch, useSelector } from 'react-redux';
 import { getPhraseEvaluationsWithCriteriaBySessionID } from '../../actions/evaluationAction';
 import type { RootState } from '../../reducers/rootReducer';
 import InsiderLoadingSpinner from './InsiderLoadingSpinner';
+import { downloadResumeByResumeId } from '../../actions/resumeAction';
 
 type AnalyticsTabProps = {
     sessionID: string;
@@ -15,10 +17,12 @@ const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ sessionID }) => {
     const dispatch = useDispatch();
 
     const { phraseEvaluationsWithCriteriaBySessionID, phraseEvaluationsWithCriteriaBySessionIDLoading, phraseEvaluationsWithCriteriaBySessionIDError } = useSelector((state: RootState) => state.evaluation);
+    const interviewSessionInformationById = useSelector((state: RootState) => state.interview.interviewSessionInformationById);
 
     useEffect(() => {
         dispatch(getPhraseEvaluationsWithCriteriaBySessionID(sessionID));
     }, [dispatch]);
+    
 
     const toggleInsights = (category: string) => {
         setShowInsights(prev => ({
@@ -47,18 +51,126 @@ const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ sessionID }) => {
         return <div>Error: {phraseEvaluationsWithCriteriaBySessionIDError}</div>;
     }
 
+    const infoItems = [
+        {
+            label: 'Position Applied For',
+            value: interviewSessionInformationById?.position || 'N/A',
+        },
+        {
+            label: 'Interview Duration',
+            value: interviewSessionInformationById?.total_time || 'N/A',
+        },
+        {
+            label: 'Overall Score',
+            value: `${interviewSessionInformationById?.overall_score}/5`,
+        },
+        {
+            label: 'Status',
+            value: interviewSessionInformationById?.status_display_name || 'N/A',
+        },
+        {
+            label: 'Created Date',
+            value: interviewSessionInformationById?.created_at || 'N/A',
+        },
+        {
+            label: 'Ended At',
+            value: interviewSessionInformationById?.ended_at || 'N/A',
+        }
+    ];
+
     return (
         <div>
-            <div style={{ fontSize: '16px', marginBottom: '16px' }}>
-                Overall Analysis
+            <div style={{ 
+                fontSize: '16px', 
+                marginBottom: '16px',
+                color: Colors.PRIMARY_COLOR,
+            }}>
+                Interview Information
             </div>
 
-            <div style={rubricItemStyle}>
-                <div style={{ fontFamily: font.Medium, fontSize: '14px', marginBottom: '8px' }}>
-                    Performance Metrics
+            <div style={{ 
+                backgroundColor: Colors.BACKGROUND_COLOR,
+                border: `1px solid ${Colors.BORDER_COLOR}`,
+                borderRadius: '8px',
+                fontFamily: font.Regular,
+                marginBottom: '15px',
+                padding: '16px',
+            }}>
+                <div style={{ 
+                    fontSize: '12px', 
+                    marginBottom: '15px',
+                    color: Colors.PRIMARY_COLOR,
+                    lineHeight: '1.5'
+                }}>
+                    Comprehensive details about your interview session, including performance metrics and session metadata.
                 </div>
-                <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '8px' }}>
-                    Total Duration: 0.01
+                
+                <div style={{ 
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px' 
+                }}>
+
+                    <div style={{ 
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        color: Colors.PRIMARY_COLOR,
+                        gap: '12px',
+                        borderRadius: '6px',
+                    }}>
+                        <div style={{ 
+                            fontSize: '12px', 
+                            marginBottom: '2px',
+                        }}>
+                            Resume
+                        </div>
+
+                        <div style={{ 
+                            fontSize: '12px',
+                            wordBreak: 'break-word',
+                            color: Colors.LINK_COLOR,
+                            textDecoration: 'underline',
+                            cursor: 'pointer',
+                        }} onClick={() => {
+                            dispatch(downloadResumeByResumeId(interviewSessionInformationById?.resume_id || ''));
+                        }}>
+                            {interviewSessionInformationById?.resume_file_name}
+                        </div>
+                    </div>
+
+                    {infoItems.map((item, index) => (
+                        <div key={index} style={{ 
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            color: Colors.PRIMARY_COLOR,
+                            gap: '12px',
+                            borderRadius: '6px',
+                        }}>
+                            <div style={{ 
+                                fontSize: '12px', 
+                                marginBottom: '2px',
+                            }}>
+                                {item.label}
+                            </div>
+
+                            <div style={{ 
+                                fontSize: '12px',
+                                wordBreak: 'break-word',
+                                color: item.label === 'Status' 
+                                    ? interviewSessionInformationById?.status_color || Colors.SECONDARY_TEXT_COLOR
+                                    : item.label === 'Overall Score'
+                                    ? interviewSessionInformationById?.overall_score_color || Colors.SECONDARY_TEXT_COLOR
+                                    : Colors.PRIMARY_COLOR,
+                                backgroundColor: item.label === 'Status'
+                                    ? `${interviewSessionInformationById?.status_color} + 20` || "" : ""
+                            }}>
+                                {item.value}
+                            </div>
+                        </div>
+                    ))}
+                    
                 </div>
             </div>
 

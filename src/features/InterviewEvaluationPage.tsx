@@ -149,9 +149,8 @@ const InterviewEvaluationPage: React.FC = () => {
                     </div>
                 );
             case 'analytics':
-            case 'details':
             case 'criteria':
-                return <EvaluationResultsPanel sessionID={sessionId || ''} activeTab={activeMobileTab} />;
+                return <EvaluationResultsPanel sessionID={sessionId || ''} />;
             default:
                 return null;
         }
@@ -217,12 +216,6 @@ const InterviewEvaluationPage: React.FC = () => {
                                     style={activeMobileTab === 'analytics' ? activeMobileTabStyle : mobileTabStyle}
                                 >
                                     Analytics
-                                </button>
-                                <button
-                                    onClick={() => setActiveMobileTab('details')}
-                                    style={activeMobileTab === 'details' ? activeMobileTabStyle : mobileTabStyle}
-                                >
-                                    Details
                                 </button>
                                 <button
                                     onClick={() => setActiveMobileTab('criteria')}

@@ -10,7 +10,7 @@ import { useContextProvider } from '../layout/ContextProvider';
 
 type EvaluationResultsPanelProps = {
     sessionID: string;
-    activeTab?: 'analytics' | 'details' | 'criteria';
+    activeTab?: 'analytics' | 'criteria';
 }
 
 const EvaluationResultsPanel: React.FC<EvaluationResultsPanelProps> = ({
@@ -18,7 +18,7 @@ const EvaluationResultsPanel: React.FC<EvaluationResultsPanelProps> = ({
     activeTab: propActiveTab
 }) => {
     const { isSpecialMobile } = useContextProvider();
-    const [internalActiveTab, setInternalActiveTab] = useState<'analytics' | 'details' | 'criteria'>('analytics');
+    const [internalActiveTab, setInternalActiveTab] = useState<'analytics' | 'criteria'>('analytics');
     const activeTab = propActiveTab || internalActiveTab;
     const [showOverallFeedbackModal, setShowOverallFeedbackModal] = useState<boolean>(false);
     const interviewSessionInformationById = useSelector((state: RootState) => state.interview.interviewSessionInformationById);
@@ -47,7 +47,7 @@ const EvaluationResultsPanel: React.FC<EvaluationResultsPanelProps> = ({
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        overflow: 'hidden'
+        overflow: 'hidden',
     };
 
     const tabStyle: CSSProperties = {
@@ -141,12 +141,6 @@ const EvaluationResultsPanel: React.FC<EvaluationResultsPanelProps> = ({
                         Analytics
                     </button>
 
-                    <button
-                        onClick={() => setInternalActiveTab('details')}
-                        style={activeTab === 'details' ? activeTabStyle : tabStyle}
-                    >
-                        Details
-                    </button>
                     
                     <button
                         onClick={() => setInternalActiveTab('criteria')}
@@ -159,7 +153,6 @@ const EvaluationResultsPanel: React.FC<EvaluationResultsPanelProps> = ({
 
             <div style={tabContentStyle}>
                 {activeTab === 'analytics' && <AnalyticsTab sessionID={sessionID}/>}
-                {/* {activeTab === 'details' && <InfoTab evaluation={evaluation} />} */}
                 {activeTab === 'criteria' && <CriteriaTab />}
             </div>
         </div>

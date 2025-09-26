@@ -68,9 +68,7 @@ const RecordingRow: React.FC<RecordingRowProps> = ({ interview, onDownloadResume
             <td style={{...dataCellStyle, textAlign: 'center'}}>
                 <span style={{ 
                     fontWeight: 'bold',
-                    color: interview.overall_score >= 80 ? Colors.SUCCESS_COLOR :
-                        interview.overall_score >= 60 ? Colors.WARNING_COLOR :
-                        Colors.TEXT_ERROR_COLOR
+                    color: `${interview.overall_score_color}`,
                 }}>
                     {interview.overall_score}
                 </span>
@@ -82,8 +80,8 @@ const RecordingRow: React.FC<RecordingRowProps> = ({ interview, onDownloadResume
                     borderRadius: '16px',
                     fontSize: isMobile ? "8px" : isTablet ? "10px" : "12px",
                     fontWeight: 'bold',
-                    backgroundColor: interview.status === 'Completed' ? Colors.GREEN_COLOR_LIGHT : Colors.BORDER_COLOR,
-                    color: interview.status === 'Completed' ? Colors.GREEN_COLOR : Colors.SECONDARY_TEXT_COLOR,
+                    backgroundColor: `${interview.status_color + '20'}`,
+                    color: `${interview.status_color}`,
                 }}>
                     {interview.status}
                 </span>
