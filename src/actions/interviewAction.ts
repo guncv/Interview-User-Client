@@ -31,6 +31,7 @@ export const DELETE_INTERVIEW_SESSION_BY_ID = 'DELETE_INTERVIEW_SESSION_BY_ID';
 export const GET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION = 'GET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION';
 export const SET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION = 'SET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION';
 export const ADD_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION = 'ADD_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION';
+export const SET_LOAD_MORE_CHAT_HISTORY_LOADING = 'SET_LOAD_MORE_CHAT_HISTORY_LOADING';
 
 export const setCreateInterviewError = (message: string) => {
     return { type: SET_CREATE_INTERVIEW_ERROR, payload: { error: message } };
@@ -101,5 +102,9 @@ export const setChatHistoryBySessionIDWithEvaluation = (req: GetChatHistoryBySes
 };
 
 export const addChatHistoryBySessionIDWithEvaluation = (payload: GetChatHistoryBySessionIDWithEvaluationReq) => {
-    return { type: ADD_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION, payload };
+    return { type: ADD_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION, payload: { chatHistoryBySessionIDWithEvaluation: payload } };
+};
+
+export const setLoadMoreChatHistoryLoading = (isLoading: boolean) => {
+    return { type: SET_LOAD_MORE_CHAT_HISTORY_LOADING, payload: { isLoading } };
 };

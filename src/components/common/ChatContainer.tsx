@@ -1,15 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import font from '../../assets/styles/Font';
 import type { CSSProperties } from 'react';
 import type { ChatHistoryWithEvaluation } from '../../interface/interviewInterface';
 import TranscriptMessage from './TranscriptMessage';
 import { Colors } from '../../assets/styles';
-import { getChatHistoryBySessionIDWithEvaluation } from '../../actions/interviewAction';
+import { getChatHistoryBySessionIDWithEvaluation, addChatHistoryBySessionIDWithEvaluation, setLoadMoreChatHistoryLoading } from '../../actions/interviewAction';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../../reducers/rootReducer';
 import { MessageCircle, Clock, Mic } from 'lucide-react';
 import { useContextProvider } from '../layout/ContextProvider';
 import InsiderLoadingSpinner from './InsiderLoadingSpinner';
+import ContentLoadingSpinner from './ContentLoadingSpinner';
 
 interface ChatContainerProps {
     showFeedback?: boolean;
@@ -21,15 +22,20 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
     session_id,
 }) => {
     const [expandedFeedback, setExpandedFeedback] = useState<{ [key: string]: boolean }>({});
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [hasMoreMessages, setHasMoreMessages] = useState(true);
+    const containerRef = useRef<HTMLDivElement>(null);
     const dispatch = useDispatch();
 
     const {isMobile} = useContextProvider();
 
-    const { chatHistoryBySessionIDWithEvaluation, chatHistoryBySessionIDWithEvaluationLoading } = useSelector((state: RootState) => state.interview);
+    const { chatHistoryBySessionIDWithEvaluation, chatHistoryBySessionIDWithEvaluationLoading, loadMoreChatHistoryLoading } = useSelector((state: RootState) => state.interview);
 
     useEffect(() => {
         dispatch(getChatHistoryBySessionIDWithEvaluation({ session_id: session_id, turn_no: null }));
-    }, []);
+        setHasMoreMessages(true);
+        setIsLoadingMore(false);
+    }, [session_id]);
 
     const handleFeedbackToggle = (messageId: string) => {
         setExpandedFeedback(prev => ({
@@ -37,6 +43,53 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
             [messageId]: !prev[messageId]
         }));
     };
+
+    const loadMoreMessages = useCallback(() => {
+        if (isLoadingMore || !hasMoreMessages || chatHistoryBySessionIDWithEvaluationLoading) {
+            return;
+        }
+
+        setIsLoadingMore(true);
+        dispatch(setLoadMoreChatHistoryLoading(true));
+        dispatch(getChatHistoryBySessionIDWithEvaluation({ 
+            session_id: session_id, 
+            turn_no:chatHistoryBySessionIDWithEvaluation.cursor_turn_next
+        }));
+    }, [dispatch, session_id, isLoadingMore, hasMoreMessages, chatHistoryBySessionIDWithEvaluationLoading, chatHistoryBySessionIDWithEvaluation.cursor_turn_next]);
+
+    const handleScroll = useCallback(() => {
+        if (!containerRef.current) return;
+
+        const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+        const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
+        const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
+    
+        const shouldLoadMore = (scrollPercentage > 0.8 || distanceFromBottom < 100) && 
+            !isLoadingMore && hasMoreMessages
+        
+        if (shouldLoadMore) {
+            console.log('Triggering load more messages...');
+            loadMoreMessages();
+        }
+    }, [loadMoreMessages, isLoadingMore, hasMoreMessages, chatHistoryBySessionIDWithEvaluation.chat_history.length]);
+
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        container.addEventListener('scroll', handleScroll);
+        return () => container.removeEventListener('scroll', handleScroll);
+    }, [handleScroll]);
+
+    useEffect(() => {
+        if (!loadMoreChatHistoryLoading && isLoadingMore) {
+            setIsLoadingMore(false);
+            
+            if (chatHistoryBySessionIDWithEvaluation.cursor_turn_next === 0) {
+                setHasMoreMessages(false);
+            }
+        }
+    }, [loadMoreChatHistoryLoading, isLoadingMore, chatHistoryBySessionIDWithEvaluation.cursor_turn_next]);
 
     const containerStyle: CSSProperties = {
         height: '100vh',
@@ -114,25 +167,48 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
     }
 
     return (
-        <div style={containerStyle}>
+        <div style={containerStyle} ref={containerRef}>
             {chatHistoryBySessionIDWithEvaluation.chat_history.length > 0 ? (
-                chatHistoryBySessionIDWithEvaluation.chat_history.map((chatHistory: ChatHistoryWithEvaluation) => (
-                    <div
-                        key={chatHistory.id}
-                        style={{
-                            borderRadius: '8px',
-                            padding: '2px',
-                            transition: 'all 0.2s ease',
-                            margin: '1px 0'
-                        }}
-                    >
-                        <TranscriptMessage
-                            message={chatHistory}
-                            showFeedback={showFeedback && expandedFeedback[chatHistory.id]}
-                            onFeedbackToggle={handleFeedbackToggle}
-                        />
-                    </div>
-                ))
+                <>
+                    {chatHistoryBySessionIDWithEvaluation.chat_history.map((chatHistory: ChatHistoryWithEvaluation) => (
+                        <div
+                            key={chatHistory.id}
+                            style={{
+                                borderRadius: '8px',
+                                padding: '2px',
+                                transition: 'all 0.2s ease',
+                                margin: '1px 0'
+                            }}
+                        >
+                            <TranscriptMessage
+                                message={chatHistory}
+                                showFeedback={showFeedback && expandedFeedback[chatHistory.id]}
+                                onFeedbackToggle={handleFeedbackToggle}
+                            />
+                        </div>
+                    ))}
+
+                    {(isLoadingMore || loadMoreChatHistoryLoading) && (
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            padding: '20px',
+                            margin: '10px 0'
+                        }}>
+                            <InsiderLoadingSpinner 
+                                isVisible={true}
+                                wrapperStyle={{
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    width: '100px',
+                                    height: '100px'
+                                }}
+                            />
+                        </div>
+                    )}
+                </>
             ) : (
                 <div style={emptyStateStyle}>
                     <div style={iconContainerStyle}>

@@ -279,9 +279,9 @@ export function* watcherGetInterviewSessionInformationById(): SagaIterator {
 
 function* workerGetChatHistoryBySessionIDWithEvaluation(payload: GetChatHistoryBySessionIDWithEvaluationReq): SagaIterator {
     try {
+        yield delay(2000);
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         const response = yield call(apiGetChatHistoryBySessionIDWithEvaluation, payload, token || '');
-
         if (response && response.success) {
             if (payload.turn_no === null) {
                 yield put(setChatHistoryBySessionIDWithEvaluation(response.data));
