@@ -4,13 +4,12 @@ import type { CSSProperties } from 'react';
 import type { ChatHistoryWithEvaluation } from '../../interface/interviewInterface';
 import TranscriptMessage from './TranscriptMessage';
 import { Colors } from '../../assets/styles';
-import { getChatHistoryBySessionIDWithEvaluation, addChatHistoryBySessionIDWithEvaluation, setLoadMoreChatHistoryLoading } from '../../actions/interviewAction';
+import { getChatHistoryBySessionIDWithEvaluation, setLoadMoreChatHistoryLoading } from '../../actions/interviewAction';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../../reducers/rootReducer';
 import { MessageCircle, Clock, Mic } from 'lucide-react';
 import { useContextProvider } from '../layout/ContextProvider';
 import InsiderLoadingSpinner from './InsiderLoadingSpinner';
-import ContentLoadingSpinner from './ContentLoadingSpinner';
 
 interface ChatContainerProps {
     showFeedback?: boolean;
