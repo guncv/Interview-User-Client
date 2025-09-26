@@ -6,12 +6,13 @@ import type { RootState } from '../../reducers/rootReducer';
 import { useEffect } from 'react';
 import { getEvaluationRubricAndCriteria } from '../../actions/evaluationAction';
 import type { CriterionRow } from '../../interface/evaluationInterface';
+import InsiderLoadingSpinner from './InsiderLoadingSpinner';
 
 const CriteriaTab: React.FC = () => {
     const [selectedRubric, setSelectedRubric] = useState<string>('');
     const dispatch = useDispatch();
     
-    const { evaluationRubricAndCriteria } = useSelector((state: RootState) => state.evaluation);
+    const { evaluationRubricAndCriteria, evaluationRubricAndCriteriaLoading } = useSelector((state: RootState) => state.evaluation);
 
     useEffect(() => {
         dispatch(getEvaluationRubricAndCriteria());
@@ -24,9 +25,12 @@ const CriteriaTab: React.FC = () => {
     }, [evaluationRubricAndCriteria]);
 
     const selectedRubricData = evaluationRubricAndCriteria.rubrics.find(rubric => rubric.id === selectedRubric) || evaluationRubricAndCriteria.rubrics[0];
-    
-    if (evaluationRubricAndCriteria.rubrics.length === 0) {
-        return <div style={{ fontSize: '16px', color: Colors.PRIMARY_COLOR, fontFamily: font.Medium }}>Loading...</div>;
+
+    if (evaluationRubricAndCriteriaLoading) {
+        return <InsiderLoadingSpinner 
+        isVisible={evaluationRubricAndCriteriaLoading} 
+        wrapperStyle={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%' }} 
+        />;
     }
 
     return (

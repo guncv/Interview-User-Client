@@ -108,6 +108,7 @@ export interface GetInterviewSessionInformationResp {
 	status_color: string;
 	started_at: string;
 	ended_at: string;
+	total_time: string;
 	overall_score: number;
 	overall_score_percent: string;
 	overall_score_color: string;
@@ -122,8 +123,10 @@ export interface InterviewSessionSummary {
 	resume_file_name: string;
 	position: string;
 	status: string;
+	status_color: string;
 	total_time: string;
 	overall_score: number;
+	overall_score_color: string;
 	created_at: string;
     created_at_display: string;
 }

@@ -1,27 +1,43 @@
 import { createSelector } from '@reduxjs/toolkit';
 import {
     SET_EVALUATION_RUBRIC_AND_CRITERIA,
-    SET_EVALUATION_RUBRIC_AND_CRITERIA_ERROR,
+    SET_EVALUATION_RUBRIC_AND_CRITERIA_ERROR, 
+    SET_PHRASE_EVALUATIONS_WITH_CRITERIA_BY_SESSION_ID,
+    SET_PHRASE_EVALUATIONS_WITH_CRITERIA_BY_SESSION_ID_ERROR,
 } from '../actions/evaluationAction';
 import type { RootState } from './rootReducer';
-import type { ListAllRubricsAndCriteriaResp } from '../interface/evaluationInterface';
+import type { GetPhraseEvaluationsWithCriteriaResp, ListAllRubricsAndCriteriaResp } from '../interface/evaluationInterface';
 
 type EvaluationState = {
-    error: string;
+    evaluationRubricAndCriteriaError: string;
     evaluationRubricAndCriteria: ListAllRubricsAndCriteriaResp;
+    evaluationRubricAndCriteriaLoading: boolean;
+    phraseEvaluationsWithCriteriaBySessionID: GetPhraseEvaluationsWithCriteriaResp;
+    phraseEvaluationsWithCriteriaBySessionIDError: string;
+    phraseEvaluationsWithCriteriaBySessionIDLoading: boolean;
 }
 type EvaluationStateAction = {
     type: string;
     payload: {
-        error: string;
+        evaluationRubricAndCriteriaError: string;
         evaluationRubricAndCriteria: ListAllRubricsAndCriteriaResp;
+        evaluationRubricAndCriteriaLoading: boolean;
+        phraseEvaluationsWithCriteriaBySessionIDError: string;
+        phraseEvaluationsWithCriteriaBySessionID: GetPhraseEvaluationsWithCriteriaResp;
+        phraseEvaluationsWithCriteriaBySessionIDLoading: boolean;
     }
 }
 const initialState: EvaluationState = {
     evaluationRubricAndCriteria: {
         rubrics: [],
     },
-    error: '',
+    evaluationRubricAndCriteriaLoading: true,
+    phraseEvaluationsWithCriteriaBySessionID: {
+        phrase_evaluations: [],
+    },
+    phraseEvaluationsWithCriteriaBySessionIDLoading: true,
+    evaluationRubricAndCriteriaError: '',
+    phraseEvaluationsWithCriteriaBySessionIDError: '',
 };
 
 export const evaluationReducer = (
@@ -33,11 +49,24 @@ export const evaluationReducer = (
             return {
             ...state,
             evaluationRubricAndCriteria: action.payload.evaluationRubricAndCriteria,
+            evaluationRubricAndCriteriaLoading: false,
             };
         case SET_EVALUATION_RUBRIC_AND_CRITERIA_ERROR:
             return {
             ...state,
-            error: action.payload.error,
+            evaluationRubricAndCriteriaError: action.payload.evaluationRubricAndCriteriaError,
+            };
+        case SET_PHRASE_EVALUATIONS_WITH_CRITERIA_BY_SESSION_ID:
+            return {
+            ...state,
+            phraseEvaluationsWithCriteriaBySessionID: action.payload.phraseEvaluationsWithCriteriaBySessionID,
+            phraseEvaluationsWithCriteriaBySessionIDLoading: false,
+            };
+        case SET_PHRASE_EVALUATIONS_WITH_CRITERIA_BY_SESSION_ID_ERROR:
+            return {
+            ...state,
+            phraseEvaluationsWithCriteriaBySessionIDError: action.payload.phraseEvaluationsWithCriteriaBySessionIDError,
+            phraseEvaluationsWithCriteriaBySessionIDLoading: false,
             };
         default:
             return state;
@@ -49,7 +78,10 @@ export const evaluationReducer = (
     export const evaluationSelector = createSelector(
         [selectEvaluation],
         (evaluation: EvaluationState) => ({
-            error: evaluation.error,
+            evaluationRubricAndCriteriaError: evaluation.evaluationRubricAndCriteriaError,
+            phraseEvaluationsWithCriteriaBySessionIDError: evaluation.phraseEvaluationsWithCriteriaBySessionIDError,
+            phraseEvaluationsWithCriteriaBySessionID: evaluation.phraseEvaluationsWithCriteriaBySessionID,
+            phraseEvaluationsWithCriteriaBySessionIDLoading: evaluation.phraseEvaluationsWithCriteriaBySessionIDLoading,
             evaluationRubricAndCriteria: evaluation.evaluationRubricAndCriteria,
         }),
     );

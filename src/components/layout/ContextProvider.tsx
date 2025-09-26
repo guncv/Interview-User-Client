@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 interface ContextProviderProps {
     isMobile: boolean;
     isTablet: boolean;
+    isSpecialMobile: boolean;
 }
 
 const Context = createContext<ContextProviderProps | undefined>(undefined);
@@ -12,12 +13,16 @@ export const ContextProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [isTablet, setIsTablet] = useState(() =>
         window.innerWidth > 640 && window.innerWidth <= 1024,
     );
+    const [isSpecialMobile, setIsSpecialMobile] = useState(() =>
+        window.innerWidth <= 768,
+    );
     
     useEffect(() => {
         const handleResize = () => {
             const width = window.innerWidth;
             setIsMobile(width <= 640);
             setIsTablet(width > 640 && width <= 1024);
+            setIsSpecialMobile(width <= 768);
         };
     
         window.addEventListener('resize', handleResize);
@@ -28,7 +33,7 @@ export const ContextProvider: React.FC<{ children: ReactNode }> = ({ children })
     
 
     return (
-        <Context.Provider value={{ isTablet, isMobile }}>
+        <Context.Provider value={{ isTablet, isMobile, isSpecialMobile }}>
         {children}
         </Context.Provider>
     );

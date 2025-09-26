@@ -279,11 +279,8 @@ export function* watcherGetInterviewSessionInformationById(): SagaIterator {
 
 function* workerGetChatHistoryBySessionIDWithEvaluation(payload: GetChatHistoryBySessionIDWithEvaluationReq): SagaIterator {
     try {
-        yield delay(0);
-        yield call(showSpinner);
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         const response = yield call(apiGetChatHistoryBySessionIDWithEvaluation, payload, token || '');
-
         if (response && response.success) {
             if (payload.turn_no === null) {
                 yield put(setChatHistoryBySessionIDWithEvaluation(response.data));
@@ -291,13 +288,10 @@ function* workerGetChatHistoryBySessionIDWithEvaluation(payload: GetChatHistoryB
                 yield put(addChatHistoryBySessionIDWithEvaluation(response.data));
             }
         } else {
-            yield call(hideSpinner);
             yield call(handleStatusInterviewError, response.statusCode, response.message);
         }
-        yield call(hideSpinner);
     }
     catch (error) {
-        yield call(hideSpinner);
         const message = (error as { message?: string })?.message || ERROR_MESSAGES.UNEXPECTED_ERROR;
         yield call(handleStatusInterviewError, 0, message);
     }

@@ -3,6 +3,7 @@ import font from '../../assets/styles/Font';
 import type { CSSProperties } from 'react';
 import type { ChatHistoryWithEvaluation } from '../../interface/interviewInterface';
 import { Colors, Size } from '../../assets/styles';
+import { useContextProvider } from '../layout/ContextProvider';
 
 interface TranscriptMessageProps {
     message: ChatHistoryWithEvaluation;
@@ -15,6 +16,7 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
     showFeedback = false,
     onFeedbackToggle
 }) => {
+    const { isMobile } = useContextProvider();
     const isUser = message.actor === 'user';
     const hasFeedback = isUser && (message.evaluation !== null || message.corrected_sentence !== null);
 
@@ -60,7 +62,7 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
         borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
         fontFamily: font.Regular,
         cursor: 'pointer',
-        fontSize: '14px',
+        fontSize: isMobile ? '12px' : '14px',
         lineHeight: '1.5',
         wordWrap: 'break-word',
         maxWidth: '100%'
@@ -68,7 +70,7 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
 
     const headerStyle: CSSProperties = {
         fontFamily: font.Medium,
-        fontSize: '11px',
+        fontSize: isMobile ? '10px' : '11px',
         color: Colors.SECONDARY_TEXT_COLOR,
         marginBottom: '6px',
         display: 'flex',
@@ -86,7 +88,7 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
     };
 
     const timestampStyle: CSSProperties = {
-        fontSize: '10px',
+        fontSize: isMobile ? '9px' : '10px',
         color: Colors.SECONDARY_TEXT_COLOR,
         marginTop: '4px',
         fontFamily: font.Regular
@@ -112,14 +114,14 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
     const scoreBadgeStyle: CSSProperties = {
         padding: '2px 8px',
         borderRadius: '12px',
-        fontSize: '10px',
+        fontSize: isMobile ? '9px' : '10px',
         fontFamily: font.Medium,
         color: 'white'
     };
 
     const improvementTextStyle: CSSProperties = {
         fontFamily: font.Regular,
-        fontSize: '13px',
+        fontSize: isMobile ? '10px' : '13px',
         color: Colors.PRIMARY_COLOR,
         fontStyle: 'italic',
         marginTop: '8px',
@@ -179,11 +181,11 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
                     <div style={feedbackContainerStyle}>
                         {message.evaluation !== null && message.evaluation.overall_score !== undefined && message.evaluation.overall_score !== null && (
                             <div style={scoreStyle}>
-                                <span style={{ fontSize: Size.Medium, color: Colors.SECONDARY_TEXT_COLOR }}>Overall Score:</span>
+                                <span style={{ fontSize: isMobile ? '12px' : Size.Medium, color: Colors.SECONDARY_TEXT_COLOR }}>Overall Score:</span>
                                 <div
                                     style={{
                                         ...scoreBadgeStyle,
-                                        fontSize: "14px",
+                                        fontSize: isMobile ? '12px' : '14px',
                                         color: message.evaluation.overall_color
                                     }}
                                 >
@@ -210,7 +212,7 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
                                             border: `1px solid ${Colors.BORDER_COLOR}`
                                         }}>
                                             <div style={categoryItemStyle}>
-                                                <span style={{ color: Colors.SECONDARY_TEXT_COLOR, fontFamily: font.Medium }}>{category.criterion_name}:</span>
+                                                <span style={{ color: Colors.SECONDARY_TEXT_COLOR, fontFamily: font.Medium, fontSize: isMobile ? '10px' : '12px' }}>{category.criterion_name}:</span>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                     <span
                                                         style={{
@@ -226,7 +228,7 @@ const TranscriptMessage: React.FC<TranscriptMessageProps> = ({
                                             {category.comment_md && (
                                                 <div style={{ 
                                                     marginTop: '6px', 
-                                                    fontSize: "12px", 
+                                                    fontSize: isMobile ? '10px' : '12px', 
                                                     color: Colors.PRIMARY_COLOR,
                                                     fontStyle: 'italic',
                                                     padding: '6px',

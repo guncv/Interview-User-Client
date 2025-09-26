@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import font from '../../assets/styles/Font';
 import type { CSSProperties } from 'react';
 import Colors from '../../assets/styles/Color';
+import { useContextProvider } from '../layout/ContextProvider';
 
 interface FeedBackProps {
     onSubmitClick: (rating: number, comment: string | null) => void;
@@ -14,6 +15,7 @@ const FeedBack: React.FC<FeedBackProps> = ({
     alreadyFeedback = false,
     FeedBackError = '',
 }) => {
+    const { isMobile } = useContextProvider();
     const [isExpanded, setIsExpanded] = useState(false);
     const [rating, setRating] = useState<number | null>(null);
     const [comment, setComment] = useState('');
@@ -50,7 +52,7 @@ const FeedBack: React.FC<FeedBackProps> = ({
         border: '1px solid #D1D5DB',
         borderRadius: '6px',
         fontFamily: font.Regular,
-        fontSize: '14px',
+        fontSize: isMobile ? '12px' : '14px',
         borderColor: '#D1D5DB',
         backgroundColor: isExpanded ? '#F9FAFB' : 'white',
         outline: 'none',
@@ -64,7 +66,7 @@ const FeedBack: React.FC<FeedBackProps> = ({
         border: '1px solid #D1D5DB',
         borderRadius: '6px',
         fontFamily: font.Regular,
-        fontSize: '14px',
+        fontSize: isMobile ? '12px' : '14px',
         borderColor: Colors.ACCENT_COLOR,
         backgroundColor: Colors.ACCENT_COLOR_LIGHT,
         outline: 'none',
@@ -91,7 +93,7 @@ const FeedBack: React.FC<FeedBackProps> = ({
 
     const ratingLabelStyle: CSSProperties = {
         fontFamily: font.Medium,
-        fontSize: '14px',
+        fontSize: isMobile ? '12px' : '14px',
         color: '#374151'
     };
 
@@ -101,14 +103,14 @@ const FeedBack: React.FC<FeedBackProps> = ({
     };
 
     const ratingButtonStyle: CSSProperties = {
-        width: '40px',
-        height: '40px',
+        width: isMobile ? '30px' : '40px',
+        height: isMobile ? '30px' : '40px',
         borderRadius: '50%',
         border: '2px solid #D1D5DB',
         backgroundColor: 'white',
         color: '#6B7280',
         fontFamily: font.Bold,
-        fontSize: '16px',
+        fontSize: isMobile ? '12px' : '16px',
         cursor: 'pointer',
         transition: 'all 0.2s ease',
         display: 'flex',
@@ -131,7 +133,7 @@ const FeedBack: React.FC<FeedBackProps> = ({
 
     const commentLabelStyle: CSSProperties = {
         fontFamily: font.Medium,
-        fontSize: '14px',
+        fontSize: isMobile ? '12px' : '14px',
         color: '#374151'
     };
 
@@ -141,19 +143,19 @@ const FeedBack: React.FC<FeedBackProps> = ({
         borderRadius: '6px',
         fontFamily: font.Regular,
         outline: 'none',
-        fontSize: '14px',
+        fontSize: isMobile ? '12px' : '14px',
         resize: 'vertical',
         minHeight: '80px',
         backgroundColor: 'white'
     };
 
     const submitButtonStyle: CSSProperties = {
-        padding: '12px 24px',
+        padding: isMobile ? '10px 16px' : '12px 24px',
         color: 'white',
         border: 'none',
         borderRadius: '6px',
         fontFamily: font.Medium,
-        fontSize: '14px',
+        fontSize: isMobile ? '12px' : '14px',
         transition: 'all 0.2s ease',
         alignSelf: 'flex-start'
     };

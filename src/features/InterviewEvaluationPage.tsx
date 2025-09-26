@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import font from '../assets/styles/Font';
 import type { CSSProperties } from 'react';
-import type { InterviewEvaluation } from '../interface/interviewInterface';
 import ContentLayout from '../components/layout/ContentLayout';
 import FeedBack from '../components/common/FeedBack';
 import ChatContainer from '../components/common/ChatContainer';
@@ -14,12 +13,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../reducers/rootReducer';
 import { createReviewComment } from '../actions/reviewCommenAction';
 import { deleteInterviewSessionByIdAction, getInterviewSessionInformationById } from '../actions/interviewAction';
+import { useContextProvider } from '../components/layout/ContextProvider';
 
 const InterviewEvaluationPage: React.FC = () => {
     const { sessionId } = useParams<{ sessionId: string }>();
     const dispatch = useDispatch();
-    
+    const { isTablet, isSpecialMobile, isMobile } = useContextProvider();
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
+    const [activeMobileTab, setActiveMobileTab] = useState<'chat' | 'analytics' | 'details' | 'criteria'>('chat');
 
     const alreadyFeedback = useSelector((state: RootState) => state.reviewComment.alreadyFeedback);
     const feedBackError = useSelector((state: RootState) => state.reviewComment.error);
@@ -28,67 +29,6 @@ const InterviewEvaluationPage: React.FC = () => {
     useEffect(() => {
         dispatch(getInterviewSessionInformationById(sessionId || ''));
     }, [sessionId, dispatch]);
-
-    const mockEvaluation: InterviewEvaluation = {
-        id: '1',
-        session_id: sessionId || '',
-        overall_score: 20,
-        status: 'completed',
-        created_at: '2025-09-23T12:25:00Z',
-        feedback: {
-            coaching: [
-                {
-                    category: 'Active Listening',
-                    score: 1,
-                    max_score: 5,
-                    description: 'You did not demonstrate active listening during this brief conversation, as you didn\'t engage with the content your conversation partner shared or ask any follow-up questions.',
-                    insights: [
-                        'Try to ask clarifying questions when you don\'t understand something',
-                        'Show engagement by nodding or providing verbal acknowledgments',
-                        'Paraphrase what the interviewer said to confirm understanding'
-                    ]
-                },
-                {
-                    category: 'Use STAR',
-                    score: 1,
-                    max_score: 5,
-                    description: 'Your responses lacked structure and specific examples.',
-                    insights: [
-                        'Structure your answers using Situation, Task, Action, Result',
-                        'Provide specific examples from your experience',
-                        'Quantify your achievements when possible'
-                    ],
-                    subcategories: [
-                        { name: 'Situation', score: 1, max_score: 5, description: 'No clear situation described' },
-                        { name: 'Task', score: 1, max_score: 5, description: 'No specific task identified' },
-                        { name: 'Action', score: 1, max_score: 5, description: 'No clear actions taken' },
-                        { name: 'Result', score: 1, max_score: 5, description: 'No measurable results provided' }
-                    ]
-                }
-            ],
-            strengths: [
-                'Showed enthusiasm for the position',
-                'Maintained professional demeanor'
-            ],
-            improvements: [
-                'Practice the STAR method for behavioral questions',
-                'Work on active listening skills',
-                'Prepare specific examples from your experience'
-            ],
-            general_feedback: 'Overall, your interview performance showed some positive aspects but requires significant improvement in several key areas. Your enthusiasm for the position was evident, which is a great starting point. '
-        },
-        analytics: {
-            total_duration: 39,
-            speaking_time: {
-                user: 15,
-                interviewer: 24
-            },
-            response_times: [2.5, 3.2, 1.8],
-            keywords_used: ['good', 'yeah', 'um'],
-            confidence_score: 3.2,
-            clarity_score: 2.8
-        }
-    };
 
     const handleSubmitClick = (rating: number, comment: string | null) => {
         console.log('rating', rating);
@@ -123,7 +63,7 @@ const InterviewEvaluationPage: React.FC = () => {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        width: 'calc(100vw - 600px)',
+        width: isSpecialMobile ? '100vw' : isTablet ? 'calc(100vw - 400px)' : 'calc(100vw - 600px)',
         overflow: 'hidden',
         height: '100%'
     };
@@ -135,12 +75,12 @@ const InterviewEvaluationPage: React.FC = () => {
         justifyContent: 'space-between',
         backgroundColor: 'white',
         borderBottom: '1px solid #E5E7EB',
-        padding: '20px 40px'
+        padding: isMobile ? '15px 20px' : '20px 40px'
     };
 
     const feedbackContainerStyle: CSSProperties = {
         flex: 1,
-        padding: '24px',
+        padding: isSpecialMobile ? '16px' : '24px',
         display: 'flex',
         flexDirection: 'column',
         gap: '16px',
@@ -148,6 +88,73 @@ const InterviewEvaluationPage: React.FC = () => {
         minHeight: 0
     };
 
+    // Mobile Tab Styles
+    const mobileTabContainerStyle: CSSProperties = {
+        display: 'flex',
+        backgroundColor: 'white',
+        borderBottom: '1px solid #E5E7EB',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        paddingTop: '10px',
+        alignItems: 'center',
+        padding: '0 16px',
+        overflowX: 'auto',
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+    };
+
+    const mobileTabStyle: CSSProperties = {
+        padding: '12px 16px',
+        border: 'none',
+        backgroundColor: 'transparent',
+        cursor: 'pointer',
+        fontFamily: font.Medium,
+        fontSize: '14px',
+        color: '#6B7280',
+        whiteSpace: 'nowrap',
+        borderBottom: '2px solid transparent',
+        transition: 'all 0.2s ease',
+        minWidth: '80px',
+        textAlign: 'center',
+    };
+
+    const activeMobileTabStyle: CSSProperties = {
+        ...mobileTabStyle,
+        borderBottom: '2px solid ' + Colors.ACCENT_COLOR,
+        color: Colors.ACCENT_COLOR,
+    };
+
+    const mobileTabContentStyle: CSSProperties = {
+        flex: 1,
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+    };
+
+
+    const renderMobileTabContent = () => {
+        switch (activeMobileTab) {
+            case 'chat':
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
+                        <FeedBack
+                            onSubmitClick={handleSubmitClick}
+                            alreadyFeedback={alreadyFeedback}
+                            FeedBackError={feedBackError}
+                        />
+                        <ChatContainer
+                            showFeedback={true}
+                            session_id={sessionId || ''}
+                        />
+                    </div>
+                );
+            case 'analytics':
+            case 'criteria':
+                return <EvaluationResultsPanel sessionID={sessionId || ''} />;
+            default:
+                return null;
+        }
+    };
 
     return (
         <ContentLayout>
@@ -158,7 +165,7 @@ const InterviewEvaluationPage: React.FC = () => {
                             <h1 style={{ 
                                 margin: 0, 
                                 fontFamily: font.Regular, 
-                                fontSize: '24px',
+                                fontSize: isSpecialMobile ? '20px' : '24px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '8px'
@@ -168,7 +175,7 @@ const InterviewEvaluationPage: React.FC = () => {
                             <p style={{ 
                                 margin: '4px 0 0 0', 
                                 color: '#6B7280', 
-                                fontSize: '14px' 
+                                fontSize: isSpecialMobile ? '12px' : '14px' 
                             }}>
                                 {interviewSessionInformationById.created_at_full_name}
                             </p>
@@ -195,24 +202,52 @@ const InterviewEvaluationPage: React.FC = () => {
                         </div>
                     </div>
 
-                    <div style={feedbackContainerStyle}>
-                        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-                            <FeedBack
-                                onSubmitClick={handleSubmitClick}
-                                alreadyFeedback={alreadyFeedback}
-                                FeedBackError={feedBackError}
-                            />
-                            <ChatContainer
-                                showFeedback={true}
-                                session_id={sessionId || ''}
-                            />
-                        </div>
-                    </div>
+                    {isSpecialMobile ? (
+                        <>
+                            <div style={mobileTabContainerStyle}>
+                                <button
+                                    onClick={() => setActiveMobileTab('chat')}
+                                    style={activeMobileTab === 'chat' ? activeMobileTabStyle : mobileTabStyle}
+                                >
+                                    Chat
+                                </button>
+                                <button
+                                    onClick={() => setActiveMobileTab('analytics')}
+                                    style={activeMobileTab === 'analytics' ? activeMobileTabStyle : mobileTabStyle}
+                                >
+                                    Analytics
+                                </button>
+                                <button
+                                    onClick={() => setActiveMobileTab('criteria')}
+                                    style={activeMobileTab === 'criteria' ? activeMobileTabStyle : mobileTabStyle}
+                                >
+                                    Criteria
+                                </button>
+                            </div>
+                            <div style={mobileTabContentStyle}>
+                                {renderMobileTabContent()}
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div style={feedbackContainerStyle}>
+                                <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
+                                    <FeedBack
+                                        onSubmitClick={handleSubmitClick}
+                                        alreadyFeedback={alreadyFeedback}
+                                        FeedBackError={feedBackError}
+                                    />
+                                    <ChatContainer
+                                        showFeedback={true}
+                                        session_id={sessionId || ''}
+                                    />
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </div>
 
-                <EvaluationResultsPanel
-                    evaluation={mockEvaluation}
-                />
+                {!isSpecialMobile && <EvaluationResultsPanel sessionID={sessionId || ''}/>}
             </div>
 
             <ConfirmationModal
