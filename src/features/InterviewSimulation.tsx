@@ -3,12 +3,11 @@ import ChatHistory, { type ChatHistoryRef } from "../components/common/ChatHisto
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ACTOR, CONVERSATION_STATUS, STORAGE_KEYS, WEBSOCKET_TYPES } from "../constants";
 import InterviewRecording from "../components/common/InterviewRecording";
-import { useVoiceStreaming, type AudioChunk } from "../hook/useVoiceStreaming";
+import { useVoiceStreaming } from "../hook/useVoiceStreaming";
 import { Colors } from "../assets/styles";
 import ContentLayout from "../components/layout/ContentLayout";
 import { useDispatch } from "react-redux";
 import { useContextProvider } from "../components/layout/ContextProvider";
-import AudioDebugPanel from "../components/common/AudioDebugPanel";
 import { setEndInterviewSessionLoadingAction, setEndInterviewSessionFinishedAction } from "../actions/interviewAction";
 
 let audioChunks: ArrayBuffer[] = [];
@@ -88,8 +87,6 @@ const InterviewSimulation = () => {
     const [elapsedTime, setElapsedTime] = useState<number>(0);
     const [serverStartTime, setServerStartTime] = useState<string | null>(null);
     const [isConversationStarted, setIsConversationStarted] = useState<boolean>(false);
-    const [debugAudioChunks, setDebugAudioChunks] = useState<AudioChunk[]>([]);
-    const [showDebugPanel, setShowDebugPanel] = useState<boolean>(false);
     const { isMobile, isTablet } = useContextProvider();
 
     const getConnectionStatusMessage = (): string => {
@@ -121,6 +118,13 @@ const InterviewSimulation = () => {
         }
     };
 
+    const handleAiFinishedSpeaking = useCallback(() => {
+        if (!isInterviewerTurn) {
+            setIsVoiceInputEnabled(true);
+            setIsUserTurn(true);
+        }
+    }, [isInterviewerTurn]);
+
     useEffect(() => {
         const timer = setInterval(() => {
             if (serverStartTime) {
@@ -142,23 +146,25 @@ const InterviewSimulation = () => {
 
     const handleUserSegmentEnd = useCallback(() => {
         setIsVoiceInputEnabled(false);
-    }, []);
-
-    const handleAiFinishedSpeaking = useCallback(() => {
-        setIsVoiceInputEnabled(true);
+        console.log("handleUserSegmentEnd set isUserTurn to false");
+        setIsUserTurn(false);
     }, []);
 
     const handleInterviewerTurn = useCallback((turn: boolean) => {
         setIsUserTurn(!turn);
     }, []);
 
-    const handleAudioChunk = useCallback((chunk: AudioChunk) => {
-        setDebugAudioChunks(prev => [...prev, chunk]);
-    }, []);
-
-    const clearDebugChunks = useCallback(() => {
-        setDebugAudioChunks([]);
-    }, []);
+    useEffect(() => {
+        console.log("log status", {
+            isUserTurn,
+            isAiSpeaking,
+            isUserSpeaking,
+            isMicMuted,
+            isInterviewerTurn,
+            isVoiceInputEnabled,
+            isConversationStarted
+        });
+    }, [isUserTurn, isAiSpeaking, isUserSpeaking, isMicMuted, isInterviewerTurn, isVoiceInputEnabled, isConversationStarted]);
 
     const handleEndInterviewSession = useCallback(() => {
         if (!sessionId || !websocketRef.current) {
@@ -179,8 +185,7 @@ const InterviewSimulation = () => {
         }
     }, [sessionId]);
 
-
-    useVoiceStreaming(websocketRef, sessionId, handleUserSpeakingChange, isMicMuted, connectionState === CONVERSATION_STATUS.CONNECTED, isConversationStarted, isAiSpeaking, isVoiceInputEnabled, handleUserSegmentEnd, isUserTurn, handleAudioChunk);
+    useVoiceStreaming(websocketRef, sessionId, handleUserSpeakingChange, isMicMuted, connectionState === CONVERSATION_STATUS.CONNECTED, isConversationStarted, isAiSpeaking, isVoiceInputEnabled, handleUserSegmentEnd, isUserTurn);
 
     const handleMicMuteChange = useCallback((isMuted: boolean) => {
         setIsMicMuted(isMuted);
@@ -197,36 +202,46 @@ const InterviewSimulation = () => {
     const handleWebSocketMessage = useCallback((response: any) => {
         switch (response.type) {
             case WEBSOCKET_TYPES.CONNECTION_ESTABLISHED:
+                console.log("connection established");
                 setSessionId(response.session_id);
                 setServerStartTime(response.started_at);
                 
                 setConnectionState(CONVERSATION_STATUS.CONNECTED);
                 break;
             case WEBSOCKET_TYPES.USER_FULL_TRANSCRIPT:
+                console.log("user full transcript");
                 chatHistoryRef.current?.handleFinalTranscript(response, ACTOR.USER);
                 break;
             case WEBSOCKET_TYPES.CONVERSATION_STARTED:
+                console.log("conversation started");
                 setIsConversationStarted(true);
                 setIsUserTurn(true);
                 break;
             case WEBSOCKET_TYPES.INTERVIEWER_TURN_START:
+                console.log("interviewer turn start");
                 setIsInterviewerTurn(true);
-                setIsUserTurn(false);
                 break;
             case WEBSOCKET_TYPES.INTERVIEWER_TURN_END:
+                console.log("interviewer turn end");
                 setIsInterviewerTurn(false);
+                setIsAiSpeaking(false);
+                setIsUserTurn(true);
                 break;
             case WEBSOCKET_TYPES.INTERVIWER_RESPONSE:
+                console.log("interviewer response");
                 chatHistoryRef.current?.handleFinalTranscript(response, ACTOR.INTERVIEWER);
                 break;
             case WEBSOCKET_TYPES.SUMMARIZE_INTERVIEW_SESSION:
+                console.log("summarize interview session");
                 dispatch(setEndInterviewSessionFinishedAction());
                 websocketRef.current?.close();
                 break;
             case CONVERSATION_STATUS.ERROR:
+                console.log("server error");
                 console.error("Server error:", response.message || response);
                 break;
             case CONVERSATION_STATUS.DISCONNECTED:
+                console.log("server disconnect");
                 console.warn("Server disconnect:", response.message || response);
                 break;
             default:
@@ -308,11 +323,6 @@ const InterviewSimulation = () => {
 
     return (
         <ContentLayout>
-            <AudioDebugPanel
-                audioChunks={debugAudioChunks}
-                onClearChunks={clearDebugChunks}
-                isVisible={showDebugPanel}
-            />
             <div style={{ width: '100%', height: '100vh', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', padding: '20px 20px 0 20px' }}>
                     <div style={{
@@ -327,26 +337,6 @@ const InterviewSimulation = () => {
                             General Interview With AI
                         </div>
                     </div>
-                    <button
-                        onClick={() => setShowDebugPanel(!showDebugPanel)}
-                        style={{
-                            background: showDebugPanel ? Colors.ACCENT_COLOR : 'rgba(102, 126, 234, 0.1)',
-                            border: 'none',
-                            borderRadius: '8px',
-                            padding: '8px 16px',
-                            cursor: 'pointer',
-                            color: showDebugPanel ? 'white' : Colors.ACCENT_COLOR,
-                            fontSize: '14px',
-                            fontWeight: '500',
-                            transition: 'all 0.2s ease',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px'
-                        }}
-                        title={showDebugPanel ? "Hide Debug Panel" : "Show Debug Panel"}
-                    >
-                        🎵 Debug Audio ({debugAudioChunks.length})
-                    </button>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', padding: '0 20px 5px 20px' }}>

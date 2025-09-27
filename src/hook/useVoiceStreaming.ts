@@ -1,57 +1,6 @@
 import { useEffect, useRef } from "react";
 import { generateSegmentId } from "../utils/generator";
-
-export interface AudioChunk {
-    id: string;
-    blob: Blob;
-    timestamp: number;
-    duration?: number;
-    segmentId?: string;
-}
-
-async function sendingAudioChunk(
-    event: any, 
-    sessionId: string, 
-    segmentIdRef: React.MutableRefObject<string | null>, 
-    websocketRef: React.MutableRefObject<WebSocket | null>,
-    onAudioChunk?: (chunk: AudioChunk) => void
-) {
-    const audioBuffer = await event.data.arrayBuffer();
-
-    // Create debug audio chunk
-    if (onAudioChunk && event.data instanceof Blob) {
-        const audioChunk: AudioChunk = {
-            id: generateSegmentId(sessionId),
-            blob: event.data,
-            timestamp: Date.now(),
-            segmentId: segmentIdRef.current || undefined
-        };
-        onAudioChunk(audioChunk);
-    }
-
-    const headerObj = {
-        type: 'audio_chunk',
-        session_id: sessionId,
-        segment_id: segmentIdRef.current,
-        encoding: 'LINEAR16',
-        sample_rate_hz: 16000,
-        num_channels: 1
-    };
-
-    const headerStr = JSON.stringify(headerObj);
-    const headerBytes = new TextEncoder().encode(headerStr);
-
-    const headerLengthBuffer = new Uint8Array(4);
-    const view = new DataView(headerLengthBuffer.buffer);
-    view.setUint32(0, headerBytes.length, false);
-
-    const framedBuffer = new Uint8Array(headerLengthBuffer.length + headerBytes.length + audioBuffer.byteLength);
-    framedBuffer.set(headerLengthBuffer, 0);
-    framedBuffer.set(headerBytes, headerLengthBuffer.length);
-    framedBuffer.set(new Uint8Array(audioBuffer), headerLengthBuffer.length + headerBytes.length);
-
-    websocketRef.current?.send(framedBuffer);
-}
+import { WEBSOCKET_TYPES } from "../constants";
 
 export function useVoiceStreaming(
     websocketRef: React.MutableRefObject<WebSocket | null>,
@@ -63,89 +12,113 @@ export function useVoiceStreaming(
     isAiSpeaking?: boolean,
     isVoiceInputEnabled?: boolean,
     onUserSegmentEnd?: () => void,
-    isUserTurn?: boolean,
-    onAudioChunk?: (chunk: AudioChunk) => void
+    isUserTurn?: boolean
 ) {
     const segmentIdRef = useRef<string | null>(null);
     const silenceTimerRef = useRef<number | null>(null);
-    const chunkEndTimerRef = useRef<number | null>(null);
     const speakingRef = useRef<boolean>(false);
     const lastSpeechTimeRef = useRef<number>(0);
     const segmentStartTimeRef = useRef<number>(0);
-    const onSegmentStarted = useRef<boolean>(false);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const chunksRef = useRef<Blob[]>([]);
 
     useEffect(() => {
-        if (!sessionId || !isConnected || !isConversationStarted) {
+        if (!sessionId || !isConnected || !isConversationStarted || !isUserTurn || isAiSpeaking) {
+            console.log("useVoiceStreaming return");
             return;
         }
 
         let mediaStream: MediaStream;
-        let mediaRecorder: MediaRecorder;
         let audioContext: AudioContext;
         let analyser: AnalyserNode;
         let source: MediaStreamAudioSourceNode;
 
         async function startRecording() {
-            mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch (error) {
+                console.error('🎤 Failed to get microphone access:', error);
+                return;
+            }
 
-            const getSupportedMimeType = (): string => {
-                const types = [
-                    'audio/webm;codecs=opus',
-                    'audio/webm',
-                    'audio/mp4',
-                    'audio/wav',
-                    'audio/ogg'
-                ];
-                
-                for (const type of types) {
-                    if (MediaRecorder.isTypeSupported(type)) {
-                        return type;
-                    }
-                }
-                return 'audio/webm';
+            const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+                ? 'audio/webm;codecs=opus'
+                : 'audio/webm';
+
+            const recorder = new MediaRecorder(mediaStream, { mimeType });
+            mediaRecorderRef.current = recorder;
+            chunksRef.current = [];
+
+            recorder.ondataavailable = (e) => {
+                if (e.data.size > 0) chunksRef.current.push(e.data);
             };
 
-            const mimeType = getSupportedMimeType();
-
-            mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
-            mediaRecorder.ondataavailable = async (event) => {
-                if (
-                    event.data.size > 0 &&
-                    websocketRef.current?.readyState === WebSocket.OPEN &&
-                    speakingRef.current &&
-                    sessionId &&
-                    segmentIdRef.current &&
-                    !isMicMuted
-                ) {
-                    await sendingAudioChunk(event, sessionId, segmentIdRef, websocketRef, onAudioChunk);
+            recorder.onstop = () => {
+                const fullBlob = new Blob(chunksRef.current, { type: mimeType });
+            
+                if (segmentIdRef.current && websocketRef.current?.readyState === WebSocket.OPEN) {
+                    const reader = new FileReader();
+            
+                    reader.onloadend = () => {
+                        const audioArrayBuffer = reader.result as ArrayBuffer;
+            
+                        const headerObj = {
+                            type: "segment_audio",
+                            session_id: sessionId,
+                            segment_id: segmentIdRef.current,
+                        };
+                        const headerStr = JSON.stringify(headerObj);
+                        const headerBytes = new TextEncoder().encode(headerStr);
+            
+                        const headerLengthBuffer = new Uint8Array(4);
+                        new DataView(headerLengthBuffer.buffer).setUint32(0, headerBytes.length, false);
+            
+                        const totalLength = headerLengthBuffer.length + headerBytes.length + audioArrayBuffer.byteLength;
+                        const framedBuffer = new Uint8Array(totalLength);
+                        framedBuffer.set(headerLengthBuffer, 0);
+                        framedBuffer.set(headerBytes, 4);
+                        framedBuffer.set(new Uint8Array(audioArrayBuffer), 4 + headerBytes.length);
+            
+                        websocketRef.current?.send(framedBuffer);
+            
+                        websocketRef.current?.send(
+                            JSON.stringify({
+                                type: WEBSOCKET_TYPES.SEGMENT_END,
+                                session_id: sessionId,
+                                segment_id: segmentIdRef.current,
+                                ended_at: Date.now() / 1000,
+                            })
+                        );
+            
+                        segmentIdRef.current = null;
+                        segmentStartTimeRef.current = 0;
+                        console.log("onUserSegmentEnd set to false 1");
+                        onUserSegmentEnd?.();
+                    };
+            
+                    reader.readAsArrayBuffer(fullBlob);
+                } else {
+                    console.log("onUserSegmentEnd set to false 2");
+                    onUserSegmentEnd?.();
                 }
             };
 
-            mediaRecorder.start(2000);
+            recorder.start();
 
             audioContext = new AudioContext();
             source = audioContext.createMediaStreamSource(mediaStream);
             analyser = audioContext.createAnalyser();
             analyser.fftSize = 1024;
-            analyser.smoothingTimeConstant = 0.3;
             source.connect(analyser);
 
             const dataArray = new Uint8Array(analyser.fftSize);
 
             function detectSilence() {
-                if (!websocketRef.current || websocketRef.current.readyState !== WebSocket.OPEN || !sessionId) {
-                    if (chunkEndTimerRef.current) {
-                        clearTimeout(chunkEndTimerRef.current);
-                        chunkEndTimerRef.current = null;
+                if (!isUserTurn || !isVoiceInputEnabled) {
+                    if (speakingRef.current) {
+                        speakingRef.current = false;
+                        onUserSpeakingChange?.(false);
                     }
-                    if (silenceTimerRef.current) {
-                        clearTimeout(silenceTimerRef.current);
-                        silenceTimerRef.current = null;
-                    }
-                    speakingRef.current = false;
-                    onUserSpeakingChange?.(false);
-                    segmentIdRef.current = null;
-                    
                     requestAnimationFrame(detectSilence);
                     return;
                 }
@@ -159,86 +132,44 @@ export function useVoiceStreaming(
                 const rms = Math.sqrt(sum / dataArray.length);
                 const currentTime = Date.now();
 
-                if (rms > 0.05 && !isMicMuted && !isAiSpeaking && isVoiceInputEnabled && isUserTurn) {
+                const canSpeak = rms > 0.05 && !isMicMuted && !isAiSpeaking && isVoiceInputEnabled && isUserTurn;
+
+                if (canSpeak) {
+                    console.log('🎤 Starting speech segment!');
                     lastSpeechTimeRef.current = currentTime;
-                    
-                    if (!speakingRef.current && !onSegmentStarted.current) {
-                            onSegmentStarted.current = true;
-                            speakingRef.current = true;
-                            segmentStartTimeRef.current = currentTime;
-                            onUserSpeakingChange?.(true);
-                        
-                        if (sessionId) {
-                            const newSegmentId = generateSegmentId(sessionId);
-                            segmentIdRef.current = newSegmentId;
-                            
-                            if (websocketRef.current?.readyState === WebSocket.OPEN) {
-                                websocketRef.current.send(
-                                    JSON.stringify({
-                                        type: 'segment_start',
-                                        session_id: sessionId,
-                                        segment_id: newSegmentId,
-                                        started_at: currentTime / 1000
-                                    })
-                                );
-                            }
-                        }
+
+                    if (!speakingRef.current) {
+                        console.log('🎤 Starting speech segment!');
+                        speakingRef.current = true;
+                        segmentStartTimeRef.current = currentTime;
+                        const segmentId = generateSegmentId(sessionId || '');
+                        segmentIdRef.current = segmentId;
+                        onUserSpeakingChange?.(true);
+
+                        websocketRef.current?.send(
+                            JSON.stringify({
+                                type: WEBSOCKET_TYPES.SEGMENT_START,
+                                session_id: sessionId,
+                                segment_id: segmentId,
+                                started_at: currentTime / 1000,
+                            })
+                        );
                     }
 
-                    if (chunkEndTimerRef.current) {
-                        clearTimeout(chunkEndTimerRef.current);
-                        chunkEndTimerRef.current = null;
-                    }
-                    if (silenceTimerRef.current) {
-                        clearTimeout(silenceTimerRef.current);
-                        silenceTimerRef.current = null;
-                    }
-                } else if (speakingRef.current && segmentIdRef.current) {
+                    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+                } else if (speakingRef.current) {
                     const silenceDuration = currentTime - lastSpeechTimeRef.current;
                     const totalSpeakingTime = currentTime - segmentStartTimeRef.current;
-                    const minSpeakingTime = 2000;
-                    
-                    if (silenceDuration >= 2000 && totalSpeakingTime >= minSpeakingTime && !chunkEndTimerRef.current) {
-                        chunkEndTimerRef.current = window.setTimeout(() => {
-                            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                                mediaRecorder.requestData();
+
+                    if (silenceDuration > 1500 && totalSpeakingTime > 2000) {
+                        silenceTimerRef.current = window.setTimeout(() => {
+                            speakingRef.current = false;
+                            onUserSpeakingChange?.(false);
+
+                            if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+                                mediaRecorderRef.current.stop();
                             }
-                            
-                            setTimeout(() => {
-                                if (sessionId && segmentIdRef.current && websocketRef.current?.readyState === WebSocket.OPEN) {
-                                    websocketRef.current.send(
-                                        JSON.stringify({
-                                            type: 'segment_end',
-                                            session_id: sessionId,
-                                            segment_id: segmentIdRef.current,
-                                            ended_at: Date.now() / 1000
-                                        })
-                                    );
-                                }
-                                
-                        speakingRef.current = false;
-                        onUserSpeakingChange?.(false);
-                        onSegmentStarted.current = false;
-                        segmentIdRef.current = null;
-                        segmentStartTimeRef.current = 0;
-                        chunkEndTimerRef.current = null;
-                        
-                        onUserSegmentEnd?.();
-                            }, 100);
                         }, 500);
-                    }
-                    
-                } else {
-                    if (rms > 0.05) {
-                    }
-                    
-                    if (chunkEndTimerRef.current) {
-                        clearTimeout(chunkEndTimerRef.current);
-                        chunkEndTimerRef.current = null;
-                    }
-                    if (silenceTimerRef.current) {
-                        clearTimeout(silenceTimerRef.current);
-                        silenceTimerRef.current = null;
                     }
                 }
 
@@ -251,11 +182,10 @@ export function useVoiceStreaming(
         startRecording();
 
         return () => {
-            mediaRecorder?.stop();
+            mediaRecorderRef.current?.stop();
             mediaStream?.getTracks().forEach((track) => track.stop());
             audioContext?.close();
             if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-            if (chunkEndTimerRef.current) clearTimeout(chunkEndTimerRef.current);
         };
-    }, [websocketRef, sessionId, onUserSpeakingChange, isMicMuted, isConnected, isConversationStarted, isAiSpeaking, isVoiceInputEnabled, onUserSegmentEnd, isUserTurn]);
+    }, [websocketRef, sessionId, isConnected, isConversationStarted, isMicMuted, isAiSpeaking, isVoiceInputEnabled, isUserTurn]);
 }

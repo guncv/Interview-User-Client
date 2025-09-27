@@ -66,8 +66,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
         const shouldLoadMore = (scrollPercentage > 0.8 || distanceFromBottom < 100) && 
             !isLoadingMore && hasMoreMessages
         
-        if (shouldLoadMore) {
-            console.log('Triggering load more messages...');
+        if (shouldLoadMore) {            
             loadMoreMessages();
         }
     }, [loadMoreMessages, isLoadingMore, hasMoreMessages, chatHistoryBySessionIDWithEvaluation.chat_history.length]);

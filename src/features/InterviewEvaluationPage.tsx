@@ -31,8 +31,6 @@ const InterviewEvaluationPage: React.FC = () => {
     }, [sessionId, dispatch]);
 
     const handleSubmitClick = (rating: number, comment: string | null) => {
-        console.log('rating', rating);
-        console.log('comment', comment);
         dispatch(createReviewComment({
             session_id: sessionId || '',
             rating,
@@ -131,7 +129,6 @@ const InterviewEvaluationPage: React.FC = () => {
         flexDirection: 'column',
     };
 
-
     const renderMobileTabContent = () => {
         switch (activeMobileTab) {
             case 'chat':
@@ -149,8 +146,9 @@ const InterviewEvaluationPage: React.FC = () => {
                     </div>
                 );
             case 'analytics':
+                return <EvaluationResultsPanel sessionID={sessionId || ''} activeTab="analytics" />;
             case 'criteria':
-                return <EvaluationResultsPanel sessionID={sessionId || ''} />;
+                return <EvaluationResultsPanel sessionID={sessionId || ''} activeTab="criteria" />;
             default:
                 return null;
         }

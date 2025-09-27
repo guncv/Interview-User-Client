@@ -46,8 +46,8 @@ export const CURSOR_TYPE = {
 
 export const WEBSOCKET_TYPES = {
   CONNECTION_ESTABLISHED: 'connection_established',
-  START_SEGMENT: 'start_segment',
-  END_SEGMENT: 'end_segment',
+  SEGMENT_START: 'segment_start',
+  SEGMENT_END: 'segment_end',
   INTERVIEWER_AUDIO_CHUNKING: 'interviewer_audio_chunking',
   USER_FULL_TRANSCRIPT: 'user_full_transcript',
   INTERVIWER_RESPONSE: 'interviewer_response',

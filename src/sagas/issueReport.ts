@@ -10,7 +10,6 @@ import type { CreateUserIssueReportReq } from "../interface/reportIssueInterface
 
 function* workerCreateIssueReport(payload: CreateUserIssueReportReq): SagaIterator {
     try {
-        console.log("workerCreateIssueReport", payload);
         yield delay(0);
         yield call(showSpinner);
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);

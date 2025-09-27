@@ -52,12 +52,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ title }) => {
         setIsLoading(true);
         
         try {
-            console.log("Resetting password with:", { newPassword });
-            
             await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            console.log("Password reset successful");
-            
         } catch (error) {
             console.error("Password reset failed:", error);
         } finally {

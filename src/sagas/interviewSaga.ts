@@ -101,7 +101,7 @@ function* workerGetChatHistoryBySessionToken(payload: { session_token: string })
         yield call(showSpinner);
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         const response = yield call(apiGetChatHistoryBySessionToken, payload.session_token, token || '');
-        console.log("response", response);
+
         if (response && response.success) {
             yield put(setChatHistory(response.data));
         } else {

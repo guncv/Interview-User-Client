@@ -207,24 +207,19 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     useEffect(() => {
         if (isAiSpeaking) {
             setSpeakingState('ai');
-            setSessionInfo(prevInfo => ({
-                ...prevInfo,
-                interviewState: 'AI Speaking'
-            }));
+            setSessionInfo(prev => ({ ...prev, interviewState: 'AI Speaking' }));
         } else if (isUserSpeaking) {
             setSpeakingState('user');
-            setSessionInfo(prevInfo => ({
-                ...prevInfo,
-                interviewState: 'User Speaking'
-            }));
+            setSessionInfo(prev => ({ ...prev, interviewState: 'User Speaking' }));
+        } else if (isUserTurn) {
+            setSpeakingState('user');
+            setSessionInfo(prev => ({ ...prev, interviewState: 'Waiting for User' }));
         } else {
             setSpeakingState('none');
-            setSessionInfo(prevInfo => ({
-                ...prevInfo,
-                interviewState: 'Listening'
-            }));
+            setSessionInfo(prev => ({ ...prev, interviewState: 'Listening' }));
         }
-    }, [isAiSpeaking, isUserSpeaking]);
+    }, [isAiSpeaking, isUserSpeaking, isUserTurn]);
+    
 
 
     const handleMicrophoneChange = (deviceId: string) => {
@@ -481,8 +476,8 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                     minHeight: '120px'
                 }}>
                     {Array.from({ length: 20 }, (_, i) => {
-                        const isActive = isConnected && ((speakingState === 'user' && !isMicMuted));
-                        const isConversationReady = isConnected && isConversationStarted && !isAiSpeaking && isUserTurn;
+                        const showUserWave = isUserTurn && !isAiSpeaking && isConversationStarted && isConnected;
+                        const isActive = showUserWave && !isMicMuted && (speakingState === 'user');
                         const baseHeight = 12;
                         const maxHeight = 80; 
                         
@@ -506,11 +501,11 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                                 style={{
                                     width: '5px',
                                     height: `${Math.max(baseHeight, Math.min(height, maxHeight + 20))}px`,
-                                    backgroundColor: isConversationReady ? Colors.ACCENT_COLOR : Colors.SECONDARY_TEXT_COLOR,
+                                    backgroundColor: showUserWave ? Colors.ACCENT_COLOR : Colors.SECONDARY_TEXT_COLOR,
                                     borderRadius: '3px',
                                     transition: 'all 0.1s ease',
-                                    opacity: isConversationReady ? ((audioLevel > 0.05 || isActive) ? 1 : 0.5) : 0.3,
-                                    boxShadow: (audioLevel > 0.2 && isConversationReady) ? `0 0 8px ${Colors.ACCENT_COLOR}40` : 'none'
+                                    opacity: showUserWave ? ((audioLevel > 0.05 || isActive) ? 1 : 0.5) : 0.3,
+                                    boxShadow: (audioLevel > 0.2 && showUserWave) ? `0 0 8px ${Colors.ACCENT_COLOR}40` : 'none'
                                 }}
                             />
                         );

@@ -94,7 +94,6 @@ function* workerDownloadResumeByResumeId(payload: { resume_id: string }): SagaIt
         }
         
         if (response && response.success) {
-            console.log("response.data from download resume by session token", response.data);
             try {
                 const fileResponse = yield call(fetch, response.data.file_url);
                 

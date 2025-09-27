@@ -27,7 +27,6 @@ const FeedBack: React.FC<FeedBackProps> = ({
     };
 
     const handleExpandClick = () => {
-        console.log('handleExpandClick');
         setIsExpanded(!isExpanded);
     };
 
