@@ -26,7 +26,7 @@ export const apiListIssueCategories = async (token: string) => {
                 [HTTP_HEADERS.AUTHORIZATION]: `${HTTP_HEADERS.BEARER} ${token}`,
             },
         });
-        console.log('response.data', response.data);
+        
         return { success: true, data: response.data };
     }
     catch (error) {

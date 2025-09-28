@@ -63,7 +63,6 @@ export const apiGetChatHistoryBySessionToken = async (session_token: string, tok
 };
 
 export const apiGetInterviewSessionListCursor = async (payload: GetInterviewSessionListCursorReq, token: string) => {
-    console.log("Get interview session list cursor token ", token);
     try {
         const filteredParams = Object.entries(payload).reduce((acc, [key, value]) => {
             if (value !== undefined && value !== null) {
@@ -169,9 +168,7 @@ export const apiGetChatHistoryBySessionIDWithEvaluation = async (request: GetCha
                     [HTTP_HEADERS.AUTHORIZATION]: `${HTTP_HEADERS.BEARER} ${token}`,
                 },
             }
-        );
-
-        console.log("response", response.data);
+        ); 
 
         return { success: true, data: response.data as GetChatHistoryBySessionIDWithEvaluationResp };
     }

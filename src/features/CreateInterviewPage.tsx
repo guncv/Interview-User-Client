@@ -62,7 +62,6 @@ const CreateInterviewPage = () => {
     }
     if (success) {
       setUpdatedAt(success.last_updated_at);
-      console.log(success);
       setResumeList(success.resume_content);
       setResumeCount(success.count);
     }
@@ -122,8 +121,6 @@ const CreateInterviewPage = () => {
         formDataToSend.append('position', formData.position as string);
         formDataToSend.append('is_consent', formData.consentGiven.toString() as string);
 
-        console.log('Creating interview with new resume:', formDataToSend);
-
         let response;
         try {
           showSpinner();
@@ -134,7 +131,6 @@ const CreateInterviewPage = () => {
             },
           });
           
-          console.log('Interview created successfully:', response.data);
         } catch (error: any) {
           console.error('Failed to create interview:', error);
 
@@ -157,7 +153,7 @@ const CreateInterviewPage = () => {
           position: formData.position,
           is_consent: formData.consentGiven,
         };
-        console.log('Creating interview with existing resume:', request);
+        
         dispatch(createInterviewSessionWithExistingResume(request));;
       }
     } catch (error) {

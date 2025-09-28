@@ -86,8 +86,6 @@ const VerifyEmail = () => {
         
         dispatch(resetVerifyEmail(token!));
         setCountdown(5);
-        
-        console.log('Resending OTP...');
     };
 
     const inputContainerStyle: CSSProperties = {

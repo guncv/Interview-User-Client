@@ -66,8 +66,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
         const shouldLoadMore = (scrollPercentage > 0.8 || distanceFromBottom < 100) && 
             !isLoadingMore && hasMoreMessages
         
-        if (shouldLoadMore) {
-            console.log('Triggering load more messages...');
+        if (shouldLoadMore) {            
             loadMoreMessages();
         }
     }, [loadMoreMessages, isLoadingMore, hasMoreMessages, chatHistoryBySessionIDWithEvaluation.chat_history.length]);
@@ -126,9 +125,8 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
 
     const titleStyle: CSSProperties = {
         fontSize: isMobile ? '16px' : '20px',
-        fontFamily: font.Medium,
         color: Colors.PRIMARY_COLOR,
-        marginBottom: '12px',
+        marginBottom: '20px',
         margin: 0
     };
 
@@ -136,7 +134,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
         fontSize: isMobile ? '12px' : '14px',
         fontFamily: font.Regular,
         color: Colors.SECONDARY_TEXT_COLOR,
-        marginBottom: '20px',
+        marginBottom: '15px',
         lineHeight: '1.5',
         maxWidth: '300px',
         margin: '0 0 20px 0'

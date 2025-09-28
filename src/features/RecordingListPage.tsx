@@ -29,8 +29,6 @@ const RecordingListPage = () => {
 
     const { interviewSessionList } = useSelector((state: RootState) => state.interview);
 
-    console.log("interviewSessionList", interviewSessionList);
-
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearchText(searchText);

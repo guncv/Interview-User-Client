@@ -46,12 +46,13 @@ export const CURSOR_TYPE = {
 
 export const WEBSOCKET_TYPES = {
   CONNECTION_ESTABLISHED: 'connection_established',
-  START_SEGMENT: 'start_segment',
-  END_SEGMENT: 'end_segment',
+  SEGMENT_START: 'segment_start',
+  SEGMENT_END: 'segment_end',
   INTERVIEWER_AUDIO_CHUNKING: 'interviewer_audio_chunking',
   USER_FULL_TRANSCRIPT: 'user_full_transcript',
   INTERVIWER_RESPONSE: 'interviewer_response',
   CONVERSATION_STARTED: "conversation_started",
+  CONVERSATION_STARTING: "conversation_starting",
   INTERVIEWER_TURN_START: "interviewer_turn_start",
   INTERVIEWER_TURN_END: "interviewer_turn_end",
   END_INTERVIEW_SESSION: "end_interview_session",
@@ -184,4 +185,9 @@ export const ERROR_CODES = {
   AUTH_EXPIRED_ACCESS_TOKEN: 'ONX0203',
   AUTH_INVALID_REFRESH_TOKEN: 'ONX0204',
   AUTH_EXPIRED_REFRESH_TOKEN: 'ONX0205',
+} as const;
+
+export const AUDIO_LEVEL = {
+  MIN_AUDIO_LEVEL: 0.05,
+  MIN_AUDIO_LEVEL_FOR_SHOW_USER_WAVE: 0.3,
 } as const;

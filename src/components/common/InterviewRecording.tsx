@@ -5,6 +5,7 @@ import CircularIconButton from './CircularIconButton';
 import SettingsPopup from '../dialog/SettingsPopup';
 import profileImage from "../../assets/images/profile.png";
 import { useContextProvider } from "../layout/ContextProvider";
+import { AUDIO_LEVEL } from "../../constants";
 
 interface InterviewRecordingProps {
     websocketUrl?: string;
@@ -21,8 +22,6 @@ interface InterviewRecordingProps {
     isConversationStarted?: boolean;
     onEndInterview?: () => void;
 }
-
-type SpeakingState = 'ai' | 'user' | 'none';
 
 interface MicrophoneDevice {
     deviceId: string;
@@ -53,7 +52,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
 }) => {
     void websocketUrl;
     void sessionToken;
-    const [speakingState, setSpeakingState] = useState<SpeakingState>('none');
     const [sessionInfo, setSessionInfo] = useState<SessionInfo>({
         startTime: Date.now(),
         interviewState: 'Initializing',
@@ -164,21 +162,25 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 gainNodeRef.current.gain.value = isMicMuted ? 0 : 1;
                 
                 analyserRef.current = audioContextRef.current.createAnalyser();
-                analyserRef.current.fftSize = 512;
+                analyserRef.current.fftSize = 1024;
                 analyserRef.current.smoothingTimeConstant = 0.3;
                 
                 source.connect(gainNodeRef.current);
                 gainNodeRef.current.connect(analyserRef.current);
                 
                 const updateAudioLevel = () => {
-                    if (analyserRef.current && !isMicMuted && isConnected) {
-                        const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
-                        analyserRef.current.getByteFrequencyData(dataArray);
-                        const average = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
-                        const normalizedLevel = average / 255;
+                    if (analyserRef.current) {
+                        const dataArray = new Uint8Array(analyserRef.current.fftSize);
+                        analyserRef.current.getByteTimeDomainData(dataArray);
                         
+                        let sum = 0;
+                        for (let i = 0; i < dataArray.length; i++) {
+                            const value = (dataArray[i] - 128) / 128.0;
+                            sum += value * value;
+                        }
+                        const rms = Math.sqrt(sum / dataArray.length);
                         
-                        setAudioLevel(normalizedLevel);
+                        setAudioLevel(rms);
                     } else {
                         setAudioLevel(0);
                     }
@@ -204,27 +206,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
         };
     }, [selectedMicId, isMicMuted]);
 
-    useEffect(() => {
-        if (isAiSpeaking) {
-            setSpeakingState('ai');
-            setSessionInfo(prevInfo => ({
-                ...prevInfo,
-                interviewState: 'AI Speaking'
-            }));
-        } else if (isUserSpeaking) {
-            setSpeakingState('user');
-            setSessionInfo(prevInfo => ({
-                ...prevInfo,
-                interviewState: 'User Speaking'
-            }));
-        } else {
-            setSpeakingState('none');
-            setSessionInfo(prevInfo => ({
-                ...prevInfo,
-                interviewState: 'Listening'
-            }));
-        }
-    }, [isAiSpeaking, isUserSpeaking]);
 
 
     const handleMicrophoneChange = (deviceId: string) => {
@@ -334,7 +315,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
 
             await initAudio();
 
-            setSpeakingState('none');
             setSessionInfo(prev => ({
                 ...prev,
                 interviewState: 'Ready for interview'
@@ -403,11 +383,11 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
-                boxShadow: speakingState === 'ai' ? '0 8px 32px rgba(76, 175, 80, 0.3)' : '0 8px 32px rgba(0, 0, 0, 0.1)',
-                border: speakingState === 'ai' ? '2px solid #4CAF50' : '1px solid rgba(255, 255, 255, 0.2)',
+                boxShadow: isAiSpeaking ? '0 8px 32px rgba(76, 175, 80, 0.3)' : '0 8px 32px rgba(0, 0, 0, 0.1)',
+                border: isAiSpeaking ? '2px solid #4CAF50' : '1px solid rgba(255, 255, 255, 0.2)',
                 minWidth: isMobile ? '0px' : '180px',
                 transition: 'all 0.3s ease',
-                animation: speakingState === 'ai' ? 'aiSpeakingPulse 2s ease-in-out infinite' : 'none'
+                animation: isAiSpeaking ? 'aiSpeakingPulse 2s ease-in-out infinite' : 'none'
             }}>
                 <div style={{
                     width: '48px',
@@ -450,11 +430,11 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                             </div>
                         </div>
                         <div style={{
-                            width: speakingState === 'ai' ? '12px' : '8px',
-                            height: speakingState === 'ai' ? '12px' : '8px',
+                            width: isAiSpeaking ? '12px' : '8px',
+                            height: isAiSpeaking ? '12px' : '8px',
                             borderRadius: '50%',
-                            backgroundColor: speakingState === 'ai' ? '#4CAF50' : '#4CAF50',
-                            boxShadow: speakingState === 'ai' ? '0 0 12px rgba(76, 175, 80, 0.8)' : '0 0 8px rgba(76, 175, 80, 0.5)',
+                            backgroundColor: isAiSpeaking ? '#4CAF50' : '#4CAF50',
+                            boxShadow: isAiSpeaking ? '0 0 12px rgba(76, 175, 80, 0.8)' : '0 0 8px rgba(76, 175, 80, 0.5)',
                             transition: 'all 0.3s ease'
                         }}></div>
                     </>
@@ -481,19 +461,20 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                     minHeight: '120px'
                 }}>
                     {Array.from({ length: 20 }, (_, i) => {
-                        const isActive = isConnected && ((speakingState === 'user' && !isMicMuted));
-                        const isConversationReady = isConnected && isConversationStarted && !isAiSpeaking && isUserTurn;
+                        const isActive = isUserTurn && isConversationStarted && isConnected ;
+                        const showUserWave = isActive && !isMicMuted && !isHeadphonesMuted && isUserSpeaking && !isAiSpeaking;
+                    
                         const baseHeight = 12;
-                        const maxHeight = 80; 
+                        const maxHeight = 80;
                         
                         const audioInfluence = Math.pow(audioLevel * 2, 1.5);
                         const randomVariation = Math.sin((Date.now() / 120) + i * 0.8) * 0.4 + 0.6;
                         
                         let height;
-                        if (isActive || audioLevel > 0.05) {
+                        if (showUserWave && audioLevel > AUDIO_LEVEL.MIN_AUDIO_LEVEL) {
                             height = baseHeight + (audioInfluence + randomVariation * 0.3) * (maxHeight - baseHeight);
 
-                            if (audioLevel > 0.3) {
+                            if (audioLevel > AUDIO_LEVEL.MIN_AUDIO_LEVEL_FOR_SHOW_USER_WAVE) {
                                 height *= 1.2;
                             }
                         } else {
@@ -506,11 +487,11 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                                 style={{
                                     width: '5px',
                                     height: `${Math.max(baseHeight, Math.min(height, maxHeight + 20))}px`,
-                                    backgroundColor: isConversationReady ? Colors.ACCENT_COLOR : Colors.SECONDARY_TEXT_COLOR,
+                                    backgroundColor: isActive ? Colors.ACCENT_COLOR : Colors.SECONDARY_TEXT_COLOR,
                                     borderRadius: '3px',
                                     transition: 'all 0.1s ease',
-                                    opacity: isConversationReady ? ((audioLevel > 0.05 || isActive) ? 1 : 0.5) : 0.3,
-                                    boxShadow: (audioLevel > 0.2 && isConversationReady) ? `0 0 8px ${Colors.ACCENT_COLOR}40` : 'none'
+                                    opacity: isActive ? ((audioLevel > AUDIO_LEVEL.MIN_AUDIO_LEVEL || showUserWave) ? 1 : 0.5) : 0.3,
+                                    boxShadow: (audioLevel > AUDIO_LEVEL.MIN_AUDIO_LEVEL_FOR_SHOW_USER_WAVE && showUserWave) ? `0 0 8px ${Colors.ACCENT_COLOR}40` : 'none'
                                 }}
                             />
                         );
