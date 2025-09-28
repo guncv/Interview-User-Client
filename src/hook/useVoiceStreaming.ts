@@ -25,7 +25,6 @@ export function useVoiceStreaming(
 
     useEffect(() => {
         if (!sessionId || !isConnected || !isConversationStarted || !isUserTurn || isAiSpeaking) {
-            console.log("useVoiceStreaming return");
             return;
         }
 
@@ -56,7 +55,6 @@ export function useVoiceStreaming(
 
             recorder.onstop = () => {
                 if (!segmentStartedRef.current || !segmentIdRef.current) {
-                    console.log("onUserSegmentEnd set to false 3");
                     return;
                 }
 
@@ -99,13 +97,11 @@ export function useVoiceStreaming(
                         segmentIdRef.current = null;
                         segmentStartedRef.current = false;
                         segmentStartTimeRef.current = 0;
-                        console.log("onUserSegmentEnd set to false 1");
                         onUserSegmentEnd?.();
                     };
             
                     reader.readAsArrayBuffer(fullBlob);
                 } else {
-                    console.log("onUserSegmentEnd set to false 2");
                     onUserSegmentEnd?.();
                 }
             };
@@ -142,11 +138,9 @@ export function useVoiceStreaming(
                 const canSpeak = rms > 0.05 && !isMicMuted && !isAiSpeaking && isVoiceInputEnabled && isUserTurn;
 
                 if (canSpeak) {
-                    console.log('🎤 Starting speech segment!');
                     lastSpeechTimeRef.current = currentTime;
 
                     if (!speakingRef.current) {
-                        console.log('🎤 Starting speech segment!');
                         speakingRef.current = true;
                         segmentStartTimeRef.current = currentTime;
                         const segmentId = generateSegmentId(sessionId || '');
