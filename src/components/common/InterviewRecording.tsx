@@ -477,7 +477,8 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 }}>
                     {Array.from({ length: 20 }, (_, i) => {
                         const showUserWave = isUserTurn && !isAiSpeaking && isConversationStarted && isConnected;
-                        const isActive = showUserWave && !isMicMuted && (speakingState === 'user');
+                        const isActive = showUserWave && !isMicMuted && (speakingState === 'user') && !isHeadphonesMuted && !isUserSpeaking;
+                        
                         const baseHeight = 12;
                         const maxHeight = 80; 
                         

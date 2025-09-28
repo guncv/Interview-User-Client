@@ -10,59 +10,57 @@ import { useDispatch } from "react-redux";
 import { useContextProvider } from "../components/layout/ContextProvider";
 import { setEndInterviewSessionLoadingAction, setEndInterviewSessionFinishedAction } from "../actions/interviewAction";
 
-let audioChunks: ArrayBuffer[] = [];
+const audioQueue: Blob[] = [];
 let isPlaying = false;
 
-async function playBufferedAudio(
+async function playMp3AudioChunk(
     chunk: ArrayBuffer,
     setIsAiSpeaking: (speaking: boolean) => void,
     isHeadphonesMuted: boolean,
     isConnected: boolean,
-    onAiFinishedSpeaking?: () => void,
-    isInterviewerTurn?: boolean,
-    handleInterviewerTurn?: (turn: boolean) => void,
-    ) {
+    onAiFinishedSpeaking: () => void,
+    isInterviewerTurn: boolean,
+    handleInterviewerTurn: (turn: boolean) => void
+) {
     if (!isConnected) return;
 
-    audioChunks.push(chunk);
+    audioQueue.push(new Blob([chunk], { type: 'audio/mpeg' }));
 
     if (isPlaying) return;
 
     isPlaying = true;
     setIsAiSpeaking(true);
 
-    await new Promise((res) => setTimeout(res, 300));
+    while (audioQueue.length > 0) {
+        const currentBlob = audioQueue.shift()!;
+        const audioUrl = URL.createObjectURL(currentBlob);
+        const audio = new Audio(audioUrl);
 
-    const fullBlob = new Blob(audioChunks, { type: "audio/ogg; codecs=opus" });
-    audioChunks = [];
+        if (isHeadphonesMuted) {
+            audio.volume = 0;
+        }
 
-    const url = URL.createObjectURL(fullBlob);
-    const audio = new Audio(url);
-    audio.volume = isHeadphonesMuted ? 0 : 1;
-
-    await new Promise<void>((resolve) => {
-        audio.onended = () => {
-        URL.revokeObjectURL(url);
-        resolve();
-        };
-        audio.onerror = (err) => {
-        console.error("Audio playback error:", err);
-        URL.revokeObjectURL(url);
-        resolve();
-        };
-        audio.play().catch((e) => {
-        console.error("Audio play() failed:", e);
-        URL.revokeObjectURL(url);
-        resolve();
+        await new Promise<void>((resolve) => {
+            audio.onended = () => resolve();
+            audio.onerror = () => {
+                console.error("🔴 MP3 playback failed.");
+                resolve();
+            };
+            audio.play().catch((err) => {
+                console.error("🔴 Error playing MP3:", err);
+                resolve();
+            });
         });
-    });
+
+        URL.revokeObjectURL(audioUrl);
+    }
 
     isPlaying = false;
     setIsAiSpeaking(false);
     onAiFinishedSpeaking?.();
 
-    if (!isInterviewerTurn) {
-        handleInterviewerTurn?.(false);
+    if (isInterviewerTurn) {
+        handleInterviewerTurn(false);
     }
 }
 
@@ -92,15 +90,15 @@ const InterviewSimulation = () => {
     const getConnectionStatusMessage = (): string => {
         switch (connectionState) {
             case CONVERSATION_STATUS.CONNECTING:
-                return '🟡 Connecting to Server...';
+                return '🟡 Connect to Session';
             case CONVERSATION_STATUS.CONNECTED:
-                return '🟢 Connected to Server';
+                return '🟢 In Session';
             case CONVERSATION_STATUS.DISCONNECTED:
-                return '🔴 Disconnected from Server';
+                return '🔴 Disconnected from Session';
             case CONVERSATION_STATUS.ERROR:
-                return '🔴 Connection error from Server';
+                return '🔴 Connection error from Session';
             default:
-                return '🟡 Connecting to Server...';
+                return '🟡 Connect to Session';
         }
     };
 
@@ -146,7 +144,6 @@ const InterviewSimulation = () => {
 
     const handleUserSegmentEnd = useCallback(() => {
         setIsVoiceInputEnabled(false);
-        console.log("handleUserSegmentEnd set isUserTurn to false");
         setIsUserTurn(false);
     }, []);
 
@@ -225,7 +222,6 @@ const InterviewSimulation = () => {
                 console.log("interviewer turn end");
                 setIsInterviewerTurn(false);
                 setIsAiSpeaking(false);
-                setIsUserTurn(true);
                 break;
             case WEBSOCKET_TYPES.INTERVIWER_RESPONSE:
                 console.log("interviewer response");
@@ -289,7 +285,8 @@ const InterviewSimulation = () => {
                 
                         if (header.type === WEBSOCKET_TYPES.INTERVIEWER_AUDIO_CHUNKING) {
                             const isConnected = connectionState === CONVERSATION_STATUS.CONNECTED || connectionState === CONVERSATION_STATUS.CONNECTING;
-                            await playBufferedAudio(audioData, setIsAiSpeaking, isHeadphonesMuted, isConnected, handleAiFinishedSpeaking, isInterviewerTurn, handleInterviewerTurn);
+                            console.log("playQueuedAudio", audioData);
+                            await playMp3AudioChunk(audioData, setIsAiSpeaking, isHeadphonesMuted, isConnected, handleAiFinishedSpeaking, isInterviewerTurn, handleInterviewerTurn);
                         }
                     } else {
                         const data = JSON.parse(event.data);

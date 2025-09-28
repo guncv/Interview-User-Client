@@ -15,6 +15,7 @@ export function useVoiceStreaming(
     isUserTurn?: boolean
 ) {
     const segmentIdRef = useRef<string | null>(null);
+    const segmentStartedRef = useRef<boolean>(false);
     const silenceTimerRef = useRef<number | null>(null);
     const speakingRef = useRef<boolean>(false);
     const lastSpeechTimeRef = useRef<number>(0);
@@ -54,6 +55,11 @@ export function useVoiceStreaming(
             };
 
             recorder.onstop = () => {
+                if (!segmentStartedRef.current || !segmentIdRef.current) {
+                    console.log("onUserSegmentEnd set to false 3");
+                    return;
+                }
+
                 const fullBlob = new Blob(chunksRef.current, { type: mimeType });
             
                 if (segmentIdRef.current && websocketRef.current?.readyState === WebSocket.OPEN) {
@@ -91,6 +97,7 @@ export function useVoiceStreaming(
                         );
             
                         segmentIdRef.current = null;
+                        segmentStartedRef.current = false;
                         segmentStartTimeRef.current = 0;
                         console.log("onUserSegmentEnd set to false 1");
                         onUserSegmentEnd?.();
@@ -144,6 +151,7 @@ export function useVoiceStreaming(
                         segmentStartTimeRef.current = currentTime;
                         const segmentId = generateSegmentId(sessionId || '');
                         segmentIdRef.current = segmentId;
+                        segmentStartedRef.current = true;
                         onUserSpeakingChange?.(true);
 
                         websocketRef.current?.send(
@@ -157,7 +165,7 @@ export function useVoiceStreaming(
                     }
 
                     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-                } else if (speakingRef.current) {
+                } else if (speakingRef.current && segmentIdRef.current) {
                     const silenceDuration = currentTime - lastSpeechTimeRef.current;
                     const totalSpeakingTime = currentTime - segmentStartTimeRef.current;
 
@@ -187,5 +195,5 @@ export function useVoiceStreaming(
             audioContext?.close();
             if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
         };
-    }, [websocketRef, sessionId, isConnected, isConversationStarted, isMicMuted, isAiSpeaking, isVoiceInputEnabled, isUserTurn]);
+    }, [websocketRef, sessionId, onUserSpeakingChange, isMicMuted, isConnected, isConversationStarted, isAiSpeaking, isVoiceInputEnabled, onUserSegmentEnd, isUserTurn]);
 }
