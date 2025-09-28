@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { generateSegmentId } from "../utils/generator";
-import { WEBSOCKET_TYPES } from "../constants";
+import { AUDIO_LEVEL, WEBSOCKET_TYPES } from "../constants";
 
 export function useVoiceStreaming(
     websocketRef: React.MutableRefObject<WebSocket | null>,
@@ -9,8 +9,6 @@ export function useVoiceStreaming(
     isMicMuted?: boolean,
     isConnected?: boolean,
     isConversationStarted?: boolean,
-    isAiSpeaking?: boolean,
-    isVoiceInputEnabled?: boolean,
     onUserSegmentEnd?: () => void,
     isUserTurn?: boolean
 ) {
@@ -24,7 +22,7 @@ export function useVoiceStreaming(
     const chunksRef = useRef<Blob[]>([]);
 
     useEffect(() => {
-        if (!sessionId || !isConnected || !isConversationStarted || !isUserTurn || isAiSpeaking) {
+        if (!sessionId || !isConnected || !isConversationStarted || !isUserTurn) {
             return;
         }
 
@@ -117,7 +115,7 @@ export function useVoiceStreaming(
             const dataArray = new Uint8Array(analyser.fftSize);
 
             function detectSilence() {
-                if (!isUserTurn || !isVoiceInputEnabled) {
+                if (!isUserTurn) {
                     if (speakingRef.current) {
                         speakingRef.current = false;
                         onUserSpeakingChange?.(false);
@@ -135,7 +133,7 @@ export function useVoiceStreaming(
                 const rms = Math.sqrt(sum / dataArray.length);
                 const currentTime = Date.now();
 
-                const canSpeak = rms > 0.05 && !isMicMuted && !isAiSpeaking && isVoiceInputEnabled && isUserTurn;
+                const canSpeak = rms > AUDIO_LEVEL.MIN_AUDIO_LEVEL && !isMicMuted && isUserTurn;
 
                 if (canSpeak) {
                     lastSpeechTimeRef.current = currentTime;
@@ -189,5 +187,5 @@ export function useVoiceStreaming(
             audioContext?.close();
             if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
         };
-    }, [websocketRef, sessionId, onUserSpeakingChange, isMicMuted, isConnected, isConversationStarted, isAiSpeaking, isVoiceInputEnabled, onUserSegmentEnd, isUserTurn]);
+    }, [websocketRef, sessionId, onUserSpeakingChange, isMicMuted, isConnected, isConversationStarted, onUserSegmentEnd, isUserTurn]);
 }

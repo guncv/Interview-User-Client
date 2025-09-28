@@ -10,45 +10,107 @@ import { useDispatch } from "react-redux";
 import { useContextProvider } from "../components/layout/ContextProvider";
 import { setEndInterviewSessionLoadingAction, setEndInterviewSessionFinishedAction } from "../actions/interviewAction";
 
-let isPlaying = false;
-let collectedAudioChunks: ArrayBuffer[] = [];
+type AudioTurn = {
+    turnId: string;
+    chunks: ArrayBuffer[];
+    metadata?: {
+        transcript: string;
+        session_id: string;
+        message: string;
+        started_at: string;
+        ended_at: string;
+        current_state: string;
+    };
+    hasMetadata: boolean;
+    isComplete: boolean;
+};
 
-async function playMp3AudioChunk(
-    audioData: ArrayBuffer,
-    _setIsAiSpeaking: (speaking: boolean) => void,
-    _isHeadphonesMuted: boolean,
-    isConnected: boolean,
-    _onAiFinishedSpeaking: () => void,
-    _isInterviewerTurn: boolean,
-    _handleInterviewerTurn: (turn: boolean) => void
-) {
-    if (!isConnected) return;
-    
-    collectedAudioChunks.push(audioData);
-    console.log("🎵 Collected audio chunk:", audioData.byteLength, "bytes. Total chunks:", collectedAudioChunks.length);
+let audioTurnQueue: AudioTurn[] = [];
+let isPlaying = false;
+let currentTurnId: string | null = null;
+
+function generateTurnId(): string {
+    return `turn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-async function playCollectedAudio(
+async function collectAudioChunk(audioData: ArrayBuffer) {
+    if (!currentTurnId) {
+        currentTurnId = generateTurnId();
+    }
+
+    let currentTurn = audioTurnQueue.find(turn => turn.turnId === currentTurnId);
+    if (!currentTurn) {
+        currentTurn = {
+            turnId: currentTurnId,
+            chunks: [],
+            hasMetadata: false,
+            isComplete: false
+        };
+        audioTurnQueue.push(currentTurn);
+    }
+
+    currentTurn.chunks.push(audioData);
+}
+
+function addMetadataToCurrentTurn(responseData: any) {
+    if (!currentTurnId) {
+        return;
+    }
+
+    const currentTurn = audioTurnQueue.find(turn => turn.turnId === currentTurnId);
+    if (!currentTurn) {
+        return;
+    }
+
+    currentTurn.metadata = {
+        transcript: responseData.transcript || responseData.message || '',
+        session_id: responseData.session_id,
+        message: responseData.message || '',
+        started_at: responseData.started_at || '',
+        ended_at: responseData.ended_at || '',
+        current_state: responseData.current_state || ''
+    };
+    currentTurn.hasMetadata = true;
+    currentTurn.isComplete = true;
+
+    currentTurnId = null;
+}
+
+async function processAudioQueue(
     setIsAiSpeaking: (speaking: boolean) => void,
     isHeadphonesMuted: boolean,
     isConnected: boolean,
     onAiFinishedSpeaking: () => void,
-    isInterviewerTurn: boolean,
-    handleInterviewerTurn: (turn: boolean) => void
+    showTranscript: (response: any) => void,
+    isInterviewerTurnEndedReceived: boolean,
+    setIsUserTurn: (isUserTurn: boolean) => void
 ) {
-    console.log("🔊 Playing complete interviewer response 0:", isConnected, isPlaying, collectedAudioChunks.length);
-    if (!isConnected || isPlaying || collectedAudioChunks.length === 0) return;
+    if (!isConnected || isPlaying || audioTurnQueue.length === 0) {
+        return;
+    }
 
-    console.log("🔊 Playing complete interviewer response 1:", collectedAudioChunks.length, "chunks");
+    const completeTurnIndex = audioTurnQueue.findIndex(turn => turn.isComplete && turn.hasMetadata && turn.chunks.length > 0);
+        
+    if (completeTurnIndex === -1) {
+        return;
+    }
+
+    const currentTurn = audioTurnQueue.splice(completeTurnIndex, 1)[0];
     
+
     isPlaying = true;
+    setIsAiSpeaking(true);
 
     try {
-        const totalLength = collectedAudioChunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
+        if (currentTurn.metadata?.transcript) {
+            showTranscript(currentTurn.metadata);
+        }
+
+        const totalLength = currentTurn.chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
         const mergedArray = new Uint8Array(totalLength);
         let offset = 0;
-        
-        for (const chunk of collectedAudioChunks) {
+
+        for (const chunk of currentTurn.chunks) {
             mergedArray.set(new Uint8Array(chunk), offset);
             offset += chunk.byteLength;
         }
@@ -58,45 +120,51 @@ async function playCollectedAudio(
         const audio = new Audio(url);
         audio.volume = isHeadphonesMuted ? 0 : 1;
 
-        // const a = document.createElement("a");
-        // a.href = URL.createObjectURL(mergedBlob);
-        // a.download = "merged.mp3";
-        // a.click();
-        setIsAiSpeaking(true);
         await new Promise<void>((resolve) => {
             audio.onended = () => {
-                console.log("✅ MP3 playback ended");
                 resolve();
             };
 
             audio.onerror = () => {
-                console.error("🔴 MP3 playback error", audio.error);
                 resolve();
             };
 
             audio.play()
-                .then(() => {
-                    console.log("✅ MP3 playback started");
-                })
                 .catch((err) => {
-                    console.error("🔴 Error starting MP3:", err);
+                    console.error("🔴 Error starting MP3 for turn:", currentTurn.turnId, err);
                     resolve();
                 });
         });
 
         URL.revokeObjectURL(url);
     } catch (error) {
-        console.error("🔴 Error processing collected audio:", error);
+        console.error("🔴 Error processing audio for turn:", currentTurn.turnId, error);
     } finally {
-        collectedAudioChunks = [];
-        
         isPlaying = false;
         setIsAiSpeaking(false);
         onAiFinishedSpeaking?.();
-
-        if (isInterviewerTurn) {
-            handleInterviewerTurn(false);
+        if (isInterviewerTurnEndedReceived && audioTurnQueue.length === 0) {
+            console.log("🔄 Interviewer turn ended and audio queue is empty set isUserTurn to true");
+            setIsUserTurn(true);
         }
+
+        setTimeout(() => {
+            processAudioQueue(setIsAiSpeaking, isHeadphonesMuted, isConnected, onAiFinishedSpeaking, showTranscript, isInterviewerTurnEndedReceived, setIsUserTurn);
+        }, 100);
+    }
+}
+
+function tryProcessAudioQueue(
+    setIsAiSpeaking: (speaking: boolean) => void,
+    isHeadphonesMuted: boolean,
+    isConnected: boolean,
+    onAiFinishedSpeaking: () => void,
+    showTranscript: (response: any) => void,
+    isInterviewerTurnEndedReceived: boolean,
+    setIsUserTurn: (isUserTurn: boolean) => void
+) {
+    if (!isPlaying) {
+        processAudioQueue(setIsAiSpeaking, isHeadphonesMuted, isConnected, onAiFinishedSpeaking, showTranscript, isInterviewerTurnEndedReceived, setIsUserTurn);
     }
 }
 
@@ -106,13 +174,11 @@ const InterviewSimulation = () => {
     const [searchParams] = useSearchParams();
     const sessionTokenParam = searchParams.get('session_token');
     const [websocketUrl] = useState(`ws://localhost:8080/api/v1/ws/connect/${sessionTokenParam}`);
-    const [isInterviewerTurn, setIsInterviewerTurn] = useState<boolean>(false);
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [isAiSpeaking, setIsAiSpeaking] = useState<boolean>(false);
     const [isUserSpeaking, setIsUserSpeaking] = useState<boolean>(false);
     const [isMicMuted, setIsMicMuted] = useState<boolean>(false);
     const [isHeadphonesMuted, setIsHeadphonesMuted] = useState<boolean>(false);
-    const [isVoiceInputEnabled, setIsVoiceInputEnabled] = useState<boolean>(true);
     const [isUserTurn, setIsUserTurn] = useState<boolean>(false);
     const [connectionState, setConnectionState] = useState<WebSocketConnectionState>(CONVERSATION_STATUS.CONNECTING);
     const websocketRef = useRef<WebSocket | null>(null);
@@ -122,9 +188,13 @@ const InterviewSimulation = () => {
     const [serverStartTime, setServerStartTime] = useState<string | null>(null);
     const [isConversationStarted, setIsConversationStarted] = useState<boolean>(false);
     const { isMobile, isTablet } = useContextProvider();
+    const [isInterviewerTurnEndedReceived, setIsInterviewerTurnEndedReceived] = useState<boolean>(false);
+
+    const showTranscript = useCallback((response: any) => {
+        chatHistoryRef.current?.handleFinalTranscript(response, ACTOR.INTERVIEWER);
+    }, []);
 
     useEffect(() => {
-        console.log("🔊 connectionState", connectionState);
     }, [connectionState]);
 
     const getConnectionStatusMessage = (): string => {
@@ -157,11 +227,9 @@ const InterviewSimulation = () => {
     };
 
     const handleAiFinishedSpeaking = useCallback(() => {
-        if (!isInterviewerTurn) {
-            setIsVoiceInputEnabled(true);
-            setIsUserTurn(true);
-        }
-    }, [isInterviewerTurn]);
+        console.log("🔄 Ai finished speaking set isUserTurn to true");
+        setIsUserTurn(true);
+    }, []);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -183,13 +251,10 @@ const InterviewSimulation = () => {
     }, [isMicMuted]);
 
     const handleUserSegmentEnd = useCallback(() => {
-        setIsVoiceInputEnabled(false);
+        console.log("🔄 User segment end set isUserTurn to false");
         setIsUserTurn(false);
     }, []);
 
-    const handleInterviewerTurn = useCallback((turn: boolean) => {
-        setIsUserTurn(!turn);
-    }, []);
 
     const handleEndInterviewSession = useCallback(() => {
         if (!sessionId || !websocketRef.current) {
@@ -210,7 +275,7 @@ const InterviewSimulation = () => {
         }
     }, [sessionId]);
 
-    useVoiceStreaming(websocketRef, sessionId, handleUserSpeakingChange, isMicMuted, connectionState === CONVERSATION_STATUS.CONNECTED, isConversationStarted, isAiSpeaking, isVoiceInputEnabled, handleUserSegmentEnd, isUserTurn);
+    useVoiceStreaming(websocketRef, sessionId, handleUserSpeakingChange, isMicMuted, connectionState === CONVERSATION_STATUS.CONNECTED, isConversationStarted, handleUserSegmentEnd, isUserTurn);
 
     const handleMicMuteChange = useCallback((isMuted: boolean) => {
         setIsMicMuted(isMuted);
@@ -227,62 +292,48 @@ const InterviewSimulation = () => {
     const handleWebSocketMessage = useCallback(async (response: any) => {
         switch (response.type) {
             case WEBSOCKET_TYPES.CONNECTION_ESTABLISHED:
-                console.log("connection established");
                 setSessionId(response.session_id);
                 setServerStartTime(response.started_at);
                 
                 setConnectionState(CONVERSATION_STATUS.CONNECTED);
                 break;
             case WEBSOCKET_TYPES.USER_FULL_TRANSCRIPT:
-                console.log("user full transcript");
                 chatHistoryRef.current?.handleFinalTranscript(response, ACTOR.USER);
                 break;
             case WEBSOCKET_TYPES.CONVERSATION_STARTED:
-                console.log("conversation started");
                 setIsConversationStarted(true);
+                console.log("🔄 Conversation started set isUserTurn to true");
                 setIsUserTurn(true);
                 break;
             case WEBSOCKET_TYPES.INTERVIEWER_TURN_START:
-                console.log("interviewer turn start");
-                collectedAudioChunks = [];
-                setIsInterviewerTurn(true);
+                setIsInterviewerTurnEndedReceived(false);
+                console.log("🔄 Interviewer turn started set isUserTurn to false");
+                setIsUserTurn(false);
                 break;
             case WEBSOCKET_TYPES.INTERVIEWER_TURN_END:
-                console.log("interviewer turn end");
-                setIsInterviewerTurn(false);
-
-                const isWebSocketConnected = websocketRef.current?.readyState === WebSocket.OPEN;
-                console.log("🔊 Debug connection state:", { 
-                    connectionState, 
-                    isConnected: connectionState === CONVERSATION_STATUS.CONNECTED,
-                    websocketReadyState: websocketRef.current?.readyState,
-                    isWebSocketConnected 
-                });
-
-                await playCollectedAudio(
-                    setIsAiSpeaking,
-                    isHeadphonesMuted,
-                    isWebSocketConnected,
-                    handleAiFinishedSpeaking,
-                    isInterviewerTurn,
-                    handleInterviewerTurn
-                );
+                setIsInterviewerTurnEndedReceived(true);
                 break;
             case WEBSOCKET_TYPES.INTERVIWER_RESPONSE:
-                console.log("interviewer response");
-                chatHistoryRef.current?.handleFinalTranscript(response, ACTOR.INTERVIEWER);
+                
+                addMetadataToCurrentTurn(response);
+                tryProcessAudioQueue(
+                    setIsAiSpeaking,
+                    isHeadphonesMuted,
+                    connectionState === CONVERSATION_STATUS.CONNECTED || connectionState === CONVERSATION_STATUS.CONNECTING,
+                    handleAiFinishedSpeaking,
+                    showTranscript,
+                    isInterviewerTurnEndedReceived,
+                    setIsUserTurn
+                );
                 break;
             case WEBSOCKET_TYPES.SUMMARIZE_INTERVIEW_SESSION:
-                console.log("summarize interview session");
                 dispatch(setEndInterviewSessionFinishedAction());
                 websocketRef.current?.close();
                 break;
             case CONVERSATION_STATUS.ERROR:
-                console.log("server error");
                 console.error("Server error:", response.message || response);
                 break;
             case CONVERSATION_STATUS.DISCONNECTED:
-                console.log("server disconnect");
                 console.warn("Server disconnect:", response.message || response);
                 break;
             default:
@@ -308,6 +359,9 @@ const InterviewSimulation = () => {
                 setConnectionState(CONVERSATION_STATUS.DISCONNECTED);
                 setSessionId(null);
                 
+                audioTurnQueue.length = 0;
+                currentTurnId = null;
+                isPlaying = false;
             };
 
             websocketRef.current.onerror = (error) => {
@@ -329,8 +383,17 @@ const InterviewSimulation = () => {
                         const audioData = buffer.slice(4 + headerLength);
                 
                         if (header.type === WEBSOCKET_TYPES.INTERVIEWER_AUDIO_CHUNKING) {
-                            const isWebSocketConnected = websocketRef.current?.readyState === WebSocket.OPEN;
-                            await playMp3AudioChunk(audioData, setIsAiSpeaking, isHeadphonesMuted, isWebSocketConnected, handleAiFinishedSpeaking, isInterviewerTurn, handleInterviewerTurn);
+                            await collectAudioChunk(audioData);
+                            
+                            tryProcessAudioQueue(
+                                setIsAiSpeaking,
+                                isHeadphonesMuted,
+                                connectionState === CONVERSATION_STATUS.CONNECTED,
+                                handleAiFinishedSpeaking,
+                                showTranscript,
+                                isInterviewerTurnEndedReceived,
+                                setIsUserTurn
+                            );
                         }
                     } else {
                         const data = JSON.parse(event.data);
@@ -359,6 +422,10 @@ const InterviewSimulation = () => {
         return () => {
             websocketRef.current?.close();
             websocketRef.current = null;
+            
+            audioTurnQueue.length = 0;
+            currentTurnId = null;
+            isPlaying = false;
         };
     }, []);
 
