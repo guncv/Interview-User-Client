@@ -162,21 +162,25 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 gainNodeRef.current.gain.value = isMicMuted ? 0 : 1;
                 
                 analyserRef.current = audioContextRef.current.createAnalyser();
-                analyserRef.current.fftSize = 512;
+                analyserRef.current.fftSize = 1024;
                 analyserRef.current.smoothingTimeConstant = 0.3;
                 
                 source.connect(gainNodeRef.current);
                 gainNodeRef.current.connect(analyserRef.current);
                 
                 const updateAudioLevel = () => {
-                    if (analyserRef.current && !isMicMuted && isConnected) {
-                        const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
-                        analyserRef.current.getByteFrequencyData(dataArray);
-                        const average = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
-                        const normalizedLevel = average / 255;
+                    if (analyserRef.current) {
+                        const dataArray = new Uint8Array(analyserRef.current.fftSize);
+                        analyserRef.current.getByteTimeDomainData(dataArray);
                         
+                        let sum = 0;
+                        for (let i = 0; i < dataArray.length; i++) {
+                            const value = (dataArray[i] - 128) / 128.0;
+                            sum += value * value;
+                        }
+                        const rms = Math.sqrt(sum / dataArray.length);
                         
-                        setAudioLevel(normalizedLevel);
+                        setAudioLevel(rms);
                     } else {
                         setAudioLevel(0);
                     }

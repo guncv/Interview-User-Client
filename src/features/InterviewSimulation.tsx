@@ -80,10 +80,9 @@ async function processAudioQueue(
     setIsAiSpeaking: (speaking: boolean) => void,
     isHeadphonesMuted: boolean,
     isConnected: boolean,
-    onAiFinishedSpeaking: () => void,
     showTranscript: (response: any) => void,
-    isInterviewerTurnEndedReceived: boolean,
-    setIsUserTurn: (isUserTurn: boolean) => void
+    setIsUserTurn: (isUserTurn: boolean) => void,
+    getIsInterviewerTurnEndedReceived?: () => boolean
 ) {
     if (!isConnected || isPlaying || audioTurnQueue.length === 0) {
         return;
@@ -142,14 +141,13 @@ async function processAudioQueue(
     } finally {
         isPlaying = false;
         setIsAiSpeaking(false);
-        onAiFinishedSpeaking?.();
-        if (isInterviewerTurnEndedReceived && audioTurnQueue.length === 0) {
-            console.log("🔄 Interviewer turn ended and audio queue is empty set isUserTurn to true");
+        
+        if (getIsInterviewerTurnEndedReceived?.() && audioTurnQueue.length === 0) {
             setIsUserTurn(true);
         }
 
         setTimeout(() => {
-            processAudioQueue(setIsAiSpeaking, isHeadphonesMuted, isConnected, onAiFinishedSpeaking, showTranscript, isInterviewerTurnEndedReceived, setIsUserTurn);
+            processAudioQueue(setIsAiSpeaking, isHeadphonesMuted, isConnected, showTranscript, setIsUserTurn, getIsInterviewerTurnEndedReceived);
         }, 100);
     }
 }
@@ -158,13 +156,12 @@ function tryProcessAudioQueue(
     setIsAiSpeaking: (speaking: boolean) => void,
     isHeadphonesMuted: boolean,
     isConnected: boolean,
-    onAiFinishedSpeaking: () => void,
     showTranscript: (response: any) => void,
-    isInterviewerTurnEndedReceived: boolean,
-    setIsUserTurn: (isUserTurn: boolean) => void
+    setIsUserTurn: (isUserTurn: boolean) => void,
+    getIsInterviewerTurnEndedReceived?: () => boolean
 ) {
     if (!isPlaying) {
-        processAudioQueue(setIsAiSpeaking, isHeadphonesMuted, isConnected, onAiFinishedSpeaking, showTranscript, isInterviewerTurnEndedReceived, setIsUserTurn);
+        processAudioQueue(setIsAiSpeaking, isHeadphonesMuted, isConnected, showTranscript, setIsUserTurn, getIsInterviewerTurnEndedReceived);
     }
 }
 
@@ -188,7 +185,7 @@ const InterviewSimulation = () => {
     const [serverStartTime, setServerStartTime] = useState<string | null>(null);
     const [isConversationStarted, setIsConversationStarted] = useState<boolean>(false);
     const { isMobile, isTablet } = useContextProvider();
-    const [isInterviewerTurnEndedReceived, setIsInterviewerTurnEndedReceived] = useState<boolean>(false);
+    const isInterviewerTurnEndedReceivedRef = useRef<boolean>(false);
 
     const showTranscript = useCallback((response: any) => {
         chatHistoryRef.current?.handleFinalTranscript(response, ACTOR.INTERVIEWER);
@@ -226,11 +223,6 @@ const InterviewSimulation = () => {
         }
     };
 
-    const handleAiFinishedSpeaking = useCallback(() => {
-        console.log("🔄 Ai finished speaking set isUserTurn to true");
-        setIsUserTurn(true);
-    }, []);
-
     useEffect(() => {
         const timer = setInterval(() => {
             if (serverStartTime) {
@@ -251,7 +243,6 @@ const InterviewSimulation = () => {
     }, [isMicMuted]);
 
     const handleUserSegmentEnd = useCallback(() => {
-        console.log("🔄 User segment end set isUserTurn to false");
         setIsUserTurn(false);
     }, []);
 
@@ -302,28 +293,27 @@ const InterviewSimulation = () => {
                 break;
             case WEBSOCKET_TYPES.CONVERSATION_STARTED:
                 setIsConversationStarted(true);
-                console.log("🔄 Conversation started set isUserTurn to true");
                 setIsUserTurn(true);
                 break;
+            case WEBSOCKET_TYPES.CONVERSATION_STARTING:
+                setIsConversationStarted(true);
+                break;
             case WEBSOCKET_TYPES.INTERVIEWER_TURN_START:
-                setIsInterviewerTurnEndedReceived(false);
-                console.log("🔄 Interviewer turn started set isUserTurn to false");
+                isInterviewerTurnEndedReceivedRef.current = false;
                 setIsUserTurn(false);
                 break;
             case WEBSOCKET_TYPES.INTERVIEWER_TURN_END:
-                setIsInterviewerTurnEndedReceived(true);
+                isInterviewerTurnEndedReceivedRef.current = true;
                 break;
             case WEBSOCKET_TYPES.INTERVIWER_RESPONSE:
-                
                 addMetadataToCurrentTurn(response);
                 tryProcessAudioQueue(
                     setIsAiSpeaking,
                     isHeadphonesMuted,
                     connectionState === CONVERSATION_STATUS.CONNECTED || connectionState === CONVERSATION_STATUS.CONNECTING,
-                    handleAiFinishedSpeaking,
                     showTranscript,
-                    isInterviewerTurnEndedReceived,
-                    setIsUserTurn
+                    setIsUserTurn,
+                    () => isInterviewerTurnEndedReceivedRef.current
                 );
                 break;
             case WEBSOCKET_TYPES.SUMMARIZE_INTERVIEW_SESSION:
@@ -389,10 +379,9 @@ const InterviewSimulation = () => {
                                 setIsAiSpeaking,
                                 isHeadphonesMuted,
                                 connectionState === CONVERSATION_STATUS.CONNECTED,
-                                handleAiFinishedSpeaking,
                                 showTranscript,
-                                isInterviewerTurnEndedReceived,
-                                setIsUserTurn
+                                setIsUserTurn,
+                                () => isInterviewerTurnEndedReceivedRef.current
                             );
                         }
                     } else {

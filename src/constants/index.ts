@@ -52,6 +52,7 @@ export const WEBSOCKET_TYPES = {
   USER_FULL_TRANSCRIPT: 'user_full_transcript',
   INTERVIWER_RESPONSE: 'interviewer_response',
   CONVERSATION_STARTED: "conversation_started",
+  CONVERSATION_STARTING: "conversation_starting",
   INTERVIEWER_TURN_START: "interviewer_turn_start",
   INTERVIEWER_TURN_END: "interviewer_turn_end",
   END_INTERVIEW_SESSION: "end_interview_session",
