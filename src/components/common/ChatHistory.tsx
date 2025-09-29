@@ -183,6 +183,7 @@ const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_toke
                             <div style={{
                                 fontSize: '10px',
                                 opacity: 0.6,
+                                color: Colors.SECONDARY_TEXT_COLOR,
                                 marginTop: '4px',
                                 textAlign: 'right'
                             }}>

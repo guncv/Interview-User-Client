@@ -92,6 +92,8 @@ export const ROLE = {
 export const STORAGE_KEYS = {
   ACCESS_TOKEN: 'access_token',
   REFRESH_TOKEN: 'refresh_token',
+  X_ACCESS_TOKEN: 'X-Access-Token',
+  X_ACCESS_TOKEN_LOWER: 'x-access-token',
 } as const;
 
 // HTTP Status Codes

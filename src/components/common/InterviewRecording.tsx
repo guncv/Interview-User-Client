@@ -335,31 +335,103 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
         onEndInterview?.();
     };
 
+    const getStatusText = (): string => {
+        if (!isConnected) return 'Connecting...';
+        if (!isConversationStarted) return 'Waiting to start';
+        if (isAiSpeaking) return 'AI speaking';
+        if (isUserTurn && isUserSpeaking) return 'You are speaking';
+        if (isUserTurn && !isUserSpeaking) return 'Your turn — speak now';
+        if (!isUserTurn) return 'Waiting for response';
+        return 'Ready';
+    };
+
+    const getStatusColor = (): string => {
+        if (!isConnected) return '#FF9800'
+        if (!isConversationStarted) return '#9E9E9E'
+        if (isAiSpeaking) return '#4CAF50'
+        if (isUserTurn && isUserSpeaking) return '#9C27B0'
+        if (isUserTurn && !isUserSpeaking) return '#2196F3'
+        if (!isUserTurn) return '#FF5722'
+        return '#4CAF50';
+    };
+
+    const getStatusBackground = (): string => {
+        if (!isConnected) return 'rgba(255, 152, 0, 0.1)';
+        if (!isConversationStarted) return 'rgba(158, 158, 158, 0.1)';
+        if (isAiSpeaking) return 'rgba(76, 175, 80, 0.1)';
+        if (isUserTurn && isUserSpeaking) return 'rgba(156, 39, 176, 0.1)';
+        if (isUserTurn && !isUserSpeaking) return 'rgba(33, 150, 243, 0.1)';
+        if (!isUserTurn) return 'rgba(255, 87, 34, 0.1)';
+        return 'rgba(76, 175, 80, 0.1)';
+    };
+
+    const getStatusBorderColor = (): string => {
+        if (!isConnected) return 'rgba(255, 152, 0, 0.3)';
+        if (!isConversationStarted) return 'rgba(158, 158, 158, 0.3)';
+        if (isAiSpeaking) return 'rgba(76, 175, 80, 0.3)';
+        if (isUserTurn && isUserSpeaking) return 'rgba(156, 39, 176, 0.3)';
+        if (isUserTurn && !isUserSpeaking) return 'rgba(33, 150, 243, 0.3)';
+        if (!isUserTurn) return 'rgba(255, 87, 34, 0.3)';
+        return 'rgba(76, 175, 80, 0.3)';
+    };
+
+    const getStatusTextColor = (): string => {
+        if (!isConnected) return '#FF9800';
+        if (!isConversationStarted) return '#9E9E9E';
+        if (isAiSpeaking) return '#4CAF50';
+        if (isUserTurn && isUserSpeaking) return '#9C27B0';
+        if (isUserTurn && !isUserSpeaking) return '#2196F3';
+        if (!isUserTurn) return '#FF5722';
+        return '#4CAF50';
+    };
+
+    const getStatusAnimation = (): string => {
+        if (isAiSpeaking || (isUserTurn && isUserSpeaking)) {
+            return 'statusPulse 1.5s ease-in-out infinite';
+        }
+        return 'none';
+    };
+
     return (
-        <div style={{ 
-            width: isMobile || isTablet ? '100%' : '50vw',
-            height: isMobile ? '30vh' : isTablet ? '35vh' : '40vh',
-            position: 'relative',
-            background: `${Colors.CONTENT_HOVER_COLOR}`,
-            borderRadius: '24px',
-            marginTop: '20px',
-            padding: '0',
-            overflow: 'hidden',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.08)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center'
-        }}>
+        <>
+            <style>
+                {`
+                @keyframes statusPulse {
+                    0%, 100% { 
+                        opacity: 1; 
+                        transform: scale(1); 
+                    }
+                    50% { 
+                        opacity: 0.6; 
+                        transform: scale(1.2); 
+                    }
+                }
+                `}
+            </style>
+            <div style={{ 
+                width: isMobile || isTablet ? '100%' : '50vw',
+                height: isMobile ? '30vh' : isTablet ? '35vh' : '40vh',
+                position: 'relative',
+                background: `${Colors.CONTENT_HOVER_COLOR}`,
+                borderRadius: '24px',
+                marginTop: '20px',
+                padding: '0',
+                overflow: 'hidden',
+                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.08)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center'
+            }}>
             <div style={{
                 position: 'absolute',
                 top: '10px',
                 left: '10px',
                 padding: '10px',
                 display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                gap: '8px',
                 minWidth: '180px'
             }}>
                 <div style={{
@@ -367,8 +439,38 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                     fontWeight: '600',
                     color: Colors.ACCENT_COLOR,
                     marginBottom: '2px'
-                    }}>
+                }}>
                     Time: {formatTime(elapsedTime)}
+                </div>
+                
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '6px 12px',
+                    borderRadius: '12px',
+                    background: getStatusBackground(),
+                    border: `1px solid ${getStatusBorderColor()}`,
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                    transition: 'all 0.3s ease'
+                }}>
+                    <div style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: getStatusColor(),
+                        boxShadow: `0 0 8px ${getStatusColor()}40`,
+                        animation: getStatusAnimation()
+                    }}></div>
+                    
+                    <div style={{
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: getStatusTextColor(),
+                        whiteSpace: 'nowrap'
+                    }}>
+                        {getStatusText()}
+                    </div>
                 </div>
             </div>
 
@@ -576,6 +678,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 onHeadphonesChange={handleHeadphonesChange}
             />
         </div>
+        </>
     );
 };
 

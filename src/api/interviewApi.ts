@@ -82,6 +82,7 @@ export const apiGetInterviewSessionListCursor = async (payload: GetInterviewSess
                 },
             }
         );
+        
         return { success: true, data: response.data as GetInterviewSessionListResp };
     }
     catch (error) {
