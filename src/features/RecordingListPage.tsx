@@ -14,6 +14,7 @@ import type { RootState } from "../reducers/rootReducer";
 import type { GetInterviewSessionListCursorReq, GetInterviewSessionListPageReq } from "../interface";
 import { CURSOR_TYPE } from "../constants";
 import { useContextProvider } from "../components/layout/ContextProvider";
+import noDataImage from "../assets/images/no_data.png";
 
 const RecordingListPage = () => {
     const dispatch = useDispatch();
@@ -250,12 +251,57 @@ const RecordingListPage = () => {
                                 <tr>
                                     <td colSpan={6} style={{
                                         textAlign: 'center',
-                                        padding: '40px 16px',
-                                        fontSize: Size.Medium,
-                                        color: Colors.SECONDARY_TEXT_COLOR,
-                                        fontFamily: font.Regular
+                                        padding: '60px 20px',
                                     }}>
-                                        No interviews Recordings found
+                                        <div style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            gap: '20px',
+                                            maxWidth: '400px',
+                                            margin: '0 auto'
+                                        }}>
+                                            <img 
+                                                src={noDataImage} 
+                                                alt="No recordings found"
+                                                style={{
+                                                    width: isMobile ? '120px' : '150px',
+                                                    height: isMobile ? '120px' : '150px',
+                                                    objectFit: 'contain',
+                                                    opacity: 0.8
+                                                }}
+                                            />
+                                            <div style={{
+                                                textAlign: 'center'
+                                            }}>
+                                                <h3 style={{
+                                                    fontSize: isMobile ? '18px' : '22px',
+                                                    fontFamily: font.Regular,
+                                                    color: Colors.PRIMARY_COLOR,
+                                                    margin: '0 0 8px 0'
+                                                }}>
+                                                    No Interview Recordings Yet
+                                                </h3>
+                                                <p style={{
+                                                    fontSize: isMobile ? '14px' : Size.Medium,
+                                                    color: Colors.SECONDARY_TEXT_COLOR,
+                                                    fontFamily: font.Regular,
+                                                    margin: '0 0 24px 0',
+                                                    lineHeight: '1.5'
+                                                }}>
+                                                    Start your first interview to see your recordings and performance analytics here.
+                                                </p>
+                                                <PrimaryButton 
+                                                    label="Start Your First Interview"
+                                                    onClick={handleStartNewInterviews}
+                                                    style={{
+                                                        fontSize: isMobile ? '14px' : Size.Medium,
+                                                        borderRadius: '8px',
+                                                        fontFamily: font.Medium
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                             ) : (
