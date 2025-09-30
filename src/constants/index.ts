@@ -57,6 +57,9 @@ export const WEBSOCKET_TYPES = {
   INTERVIEWER_TURN_END: "interviewer_turn_end",
   END_INTERVIEW_SESSION: "end_interview_session",
   SUMMARIZE_INTERVIEW_SESSION: "summarize_interview_session",
+  INTERVIEW_SESSION_TIMED_OUT: "interview_session_timed_out",
+  INACTIVITY_WARNING: "inactivity_warning",
+  ACTIVITY_TIMER_RESET: "activity_timer_reset",
 } as const;
 
 export const ACTOR = {

@@ -210,7 +210,7 @@ const ChatHistory = forwardRef<ChatHistoryRef, ChatHistoryProps>(({ session_toke
                                     alignItems: 'center',
                                     gap: '4px'
                                 }}>
-                                    <span style={{ fontSize: '16px', opacity: 0.7, marginBottom: '4px', fontWeight: '500' }}>
+                                    <span style={{ fontSize: isMobile ? '12px' : '16px', opacity: 0.7, marginBottom: '4px', fontWeight: '500' }}>
                                         is typing
                                     </span>
                                     <span style={{

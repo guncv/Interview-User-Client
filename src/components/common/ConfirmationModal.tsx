@@ -9,6 +9,8 @@ interface ConfirmationModalProps {
     confirmText?: string;
     cancelText?: string;
     confirmButtonColor?: string;
+    cancelButtonBackground?: string;
+    cancelButtonColor?: string;
     onConfirm: () => void;
     onCancel: () => void;
 }
@@ -18,8 +20,10 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     title,
     message,
     confirmText = 'Confirm',
-    cancelText = 'Cancel',
+    cancelText,
     confirmButtonColor = Colors.TEXT_ERROR_COLOR,
+    cancelButtonColor = Colors.PRIMARY_COLOR,
+    cancelButtonBackground = Colors.TEXT_WHITE_COLOR,
     onConfirm,
     onCancel
 }) => {
@@ -68,21 +72,23 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                     gap: '13px',
                     justifyContent: 'center'
                 }}>
-                    <button
-                        onClick={onCancel}
-                        style={{
-                            padding: '8px 20px',
-                            border: `1px solid ${Colors.BORDER_COLOR}`,
-                            backgroundColor: 'white',
-                            color: Colors.PRIMARY_COLOR,
-                            borderRadius: '6px',
-                            fontFamily: font.Medium,
-                            fontSize: '14px',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        {cancelText}
-                    </button>
+                    {cancelText && (
+                        <button
+                            onClick={onCancel}
+                            style={{
+                                padding: '8px 20px',
+                                border: `1px solid ${Colors.BORDER_COLOR}`,
+                                backgroundColor: cancelButtonBackground,
+                                color: cancelButtonColor,
+                                borderRadius: '6px',
+                                fontFamily: font.Medium,
+                                fontSize: '14px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            {cancelText}
+                        </button>
+                    )}
                     <button
                         onClick={onConfirm}
                         style={{
