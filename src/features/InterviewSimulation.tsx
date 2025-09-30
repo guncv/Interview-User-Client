@@ -32,8 +32,6 @@ const InterviewSimulation = () => {
     const [elapsedTime, setElapsedTime] = useState<number>(0);
     const [serverStartTime, setServerStartTime] = useState<string | null>(null);
     const [isConversationStarted, setIsConversationStarted] = useState<boolean>(false);
-    const [timeoutSeconds, setTimeoutSeconds] = useState<number>(0);
-    const [isTimeoutActive, setIsTimeoutActive] = useState<boolean>(false);
     const [showInactivityPopup, setShowInactivityPopup] = useState<boolean>(false);
     const [showSessionTimeoutPopup, setShowSessionTimeoutPopup] = useState<boolean>(false);
     const [inactivityMessage, setInactivityMessage] = useState<string>("");
@@ -41,46 +39,23 @@ const InterviewSimulation = () => {
     const { isMobile, isTablet } = useContextProvider();
     const isInterviewerTurnEndedReceivedRef = useRef<boolean>(false);
     const audioQueueManagerRef = useRef<AudioQueueManager>(new AudioQueueManager());
-    const timeoutIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     const showTranscript = useCallback((response: any) => {
         chatHistoryRef.current?.handleFinalTranscript(response, ACTOR.INTERVIEWER);
     }, []);
 
-    const resetTimeout = useCallback((timerDuration?: number) => {
-        if (timeoutIntervalRef.current) {
-            clearInterval(timeoutIntervalRef.current);
-        }
-        const duration = timerDuration || 120;
-        setTimeoutSeconds(duration);
-        setIsTimeoutActive(true);
-        
-        timeoutIntervalRef.current = setInterval(() => {
-            setTimeoutSeconds(prev => {
-                if (prev <= 1) {
-                    if (timeoutIntervalRef.current) {
-                        clearInterval(timeoutIntervalRef.current);
-                        timeoutIntervalRef.current = null;
-                    }
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-    }, []);
-
     const getConnectionStatusText = (): string => {
         switch (connectionState) {
             case CONVERSATION_STATUS.CONNECTING:
-                return 'Connecting to Session';
+                return 'Connecting...';
             case CONVERSATION_STATUS.CONNECTED:
-                return 'In Session';
+                return 'Interview in progress';
             case CONVERSATION_STATUS.DISCONNECTED:
-                return 'Disconnected';
+                return 'Session ended';
             case CONVERSATION_STATUS.ERROR:
-                return 'Connection Error';
+                return 'Something went wrong';
             default:
-                return 'Ready to Connect';
+                return 'Ready to start';
         }
     };
 
@@ -122,19 +97,6 @@ const InterviewSimulation = () => {
                 return 'none';
         }
     };
-
-    const formatTimeoutDisplay = (): string => {
-        const minutes = Math.floor(timeoutSeconds / 60);
-        const seconds = timeoutSeconds % 60;
-        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    };
-
-    const getTimeoutColor = (): string => {
-        if (timeoutSeconds <= 30) return '#F44336';
-        if (timeoutSeconds <= 60) return '#FF9800';
-        return '#4CAF50';
-    };
-
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -263,9 +225,8 @@ const InterviewSimulation = () => {
                 setInactivityMessage(response.message || "You've been inactive for a while. Do you want to continue this interview session or end it?");
                 setShowInactivityPopup(true);
                 break;
-            case WEBSOCKET_TYPES.ACTIVITY_TIMER_RESET:
-                const timerDuration = response.timer || 120; 
-                resetTimeout(timerDuration);
+            case WEBSOCKET_TYPES.INTERVIEW_SESSION_ALREADY_TIMED_OUT:
+                safeNavigate(ROUTES.RECORDINGS);
                 break;
             default:
                 console.warn("Unknown message type:", response);
@@ -354,10 +315,6 @@ const InterviewSimulation = () => {
             websocketRef.current = null;
             
             audioQueueManagerRef.current.clearQueue();
-            
-            if (timeoutIntervalRef.current) {
-                clearInterval(timeoutIntervalRef.current);
-            }
         };
     }, []);
 
@@ -454,74 +411,6 @@ const InterviewSimulation = () => {
                         </div>
                     </div>
                     
-
-                    {isConversationStarted && isTimeoutActive && (
-                        <div 
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: isMobile ? '8px' : '12px',
-                                padding: isMobile ? '8px 12px' : '10px 16px',
-                                borderRadius: '16px',
-                                background: `linear-gradient(135deg, 
-                                    ${getTimeoutColor()}08 0%, 
-                                    ${getTimeoutColor()}12 50%, 
-                                    ${getTimeoutColor()}08 100%)`,
-                                border: `1px solid ${getTimeoutColor()}20`,
-                                boxShadow: `0 4px 16px ${getTimeoutColor()}10`,
-                                backdropFilter: 'blur(10px)',
-                                transition: 'all 0.3s ease',
-                                position: 'relative',
-                                cursor: 'default'
-                            }}>
-                            
-                                <div 
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        width: isMobile ? '28px' : '32px',
-                                        height: isMobile ? '28px' : '32px',
-                                        borderRadius: '50%',
-                                        background: `linear-gradient(135deg, ${getTimeoutColor()}15, ${getTimeoutColor()}25)`,
-                                        border: `1px solid ${getTimeoutColor()}30`,
-                                        position: 'relative'
-                                    }}
-                                    title={`Response Timer: ${formatTimeoutDisplay()} remaining`}>
-                                    <div style={{
-                                        width: isMobile ? '14px' : '16px',
-                                        height: isMobile ? '14px' : '16px',
-                                        borderRadius: '50%',
-                                        border: `2px solid ${getTimeoutColor()}`,
-                                        borderTop: `2px solid transparent`,
-                                    }} />
-                                </div>
-                                
-                                <div style={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center',
-                                    gap: isMobile ? '6px' : '8px'
-                                }}>
-                                    <div style={{
-                                        fontSize: isMobile ? '14px' : '16px',
-                                        fontWeight: '600',
-                                        color: getTimeoutColor(),
-                                        fontFamily: 'monospace',
-                                    }}>
-                                        {formatTimeoutDisplay()}
-                                    </div>
-                                    
-                                    {timeoutSeconds <= 30 && timeoutSeconds > 0 && (
-                                        <div style={{
-                                            width: '4px',
-                                            height: '4px',
-                                            borderRadius: '50%',
-                                            backgroundColor: getTimeoutColor(),
-                                        }} />
-                                    )}
-                                </div>
-                        </div>
-                    )}
                 </div>
 
                 <div style={{borderBottom: `1px solid ${Colors.SECONDARY_TEXT_COLOR}`}}></div>
