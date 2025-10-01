@@ -23,7 +23,6 @@ const InterviewSimulation = () => {
     const [isAiSpeaking, setIsAiSpeaking] = useState<boolean>(false);
     const [isUserSpeaking, setIsUserSpeaking] = useState<boolean>(false);
     const [isMicMuted, setIsMicMuted] = useState<boolean>(false);
-    const [isHeadphonesMuted, setIsHeadphonesMuted] = useState<boolean>(false);
     const [isUserTurn, setIsUserTurn] = useState<boolean>(false);
     const [connectionState, setConnectionState] = useState<WebSocketConnectionState>(CONVERSATION_STATUS.CONNECTING);
     const websocketRef = useRef<WebSocket | null>(null);
@@ -39,6 +38,7 @@ const InterviewSimulation = () => {
     const { isMobile, isTablet } = useContextProvider();
     const isInterviewerTurnEndedReceivedRef = useRef<boolean>(false);
     const audioQueueManagerRef = useRef<AudioQueueManager>(new AudioQueueManager());
+    const isHeadphonesMutedRef = useRef<boolean>(false);
 
     const showTranscript = useCallback((response: any) => {
         chatHistoryRef.current?.handleFinalTranscript(response, ACTOR.INTERVIEWER);
@@ -166,7 +166,14 @@ const InterviewSimulation = () => {
     }, []);
 
     const handleHeadphoneMuteChange = useCallback((isMuted: boolean) => {
-        setIsHeadphonesMuted(isMuted);
+        isHeadphonesMutedRef.current = isMuted;
+
+        if (isMuted) {
+            setIsMicMuted(true);
+            audioQueueManagerRef.current.setVolume(0);
+        } else {
+            audioQueueManagerRef.current.setVolume(1);
+        }
     }, []);
 
     const handleWebSocketMessage = useCallback(async (response: any) => {
@@ -203,7 +210,7 @@ const InterviewSimulation = () => {
                         setIsUserTurn,
                         getIsInterviewerTurnEndedReceived: () => isInterviewerTurnEndedReceivedRef.current
                     },
-                    isHeadphonesMuted,
+                    isHeadphonesMutedRef.current,
                     connectionState === CONVERSATION_STATUS.CONNECTED || connectionState === CONVERSATION_STATUS.CONNECTING
                 );
                 break;
@@ -282,7 +289,7 @@ const InterviewSimulation = () => {
                                     setIsUserTurn,
                                     getIsInterviewerTurnEndedReceived: () => isInterviewerTurnEndedReceivedRef.current
                                 },
-                                isHeadphonesMuted,
+                                isHeadphonesMutedRef.current,
                                 connectionState === CONVERSATION_STATUS.CONNECTED
                             );
                         }
