@@ -24,11 +24,13 @@ export class AudioQueueManager {
     private audioTurnQueue: AudioTurn[] = [];
     private isPlaying: boolean = false;
     private currentTurnId: string | null = null;
+    private currentAudio: HTMLAudioElement | null = null;
 
     constructor() {
         this.audioTurnQueue = [];
         this.isPlaying = false;
         this.currentTurnId = null;
+        this.currentAudio = null;
     }
 
     private generateTurnId(): string {
@@ -118,19 +120,25 @@ export class AudioQueueManager {
             const url = URL.createObjectURL(mergedBlob);
             const audio = new Audio(url);
             audio.volume = isHeadphonesMuted ? 0 : 1;
+            
+            this.currentAudio = audio;
+            this.currentAudio.volume = isHeadphonesMuted ? 0 : 1;
 
             await new Promise<void>((resolve) => {
                 audio.onended = () => {
+                    this.currentAudio = null;
                     resolve();
                 };
 
                 audio.onerror = () => {
+                    this.currentAudio = null;
                     resolve();
                 };
 
                 audio.play()
                     .catch((err) => {
                         console.error("🔴 Error starting MP3 for turn:", currentTurn.turnId, err);
+                        this.currentAudio = null;
                         resolve();
                     });
             });
@@ -138,8 +146,10 @@ export class AudioQueueManager {
             URL.revokeObjectURL(url);
         } catch (error) {
             console.error("🔴 Error processing audio for turn:", currentTurn.turnId, error);
+            this.currentAudio = null;
         } finally {
             this.isPlaying = false;
+            this.currentAudio = null;
             callbacks.setIsAiSpeaking(false);
             
             console.log('callbacks.getIsInterviewerTurnEndedReceived?.()', callbacks.getIsInterviewerTurnEndedReceived?.());
@@ -168,6 +178,21 @@ export class AudioQueueManager {
         this.audioTurnQueue.length = 0;
         this.currentTurnId = null;
         this.isPlaying = false;
+        this.stopCurrentAudio();
+    }
+
+    stopCurrentAudio(): void {
+        if (this.currentAudio) {
+            this.currentAudio.pause();
+            this.currentAudio.currentTime = 0;
+            this.currentAudio = null;
+        }
+    }
+
+    setVolume(volume: number): void {
+        if (this.currentAudio) {
+            this.currentAudio.volume = Math.max(0, Math.min(1, volume));
+        }
     }
 
     getQueueLength(): number {

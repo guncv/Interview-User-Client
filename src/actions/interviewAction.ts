@@ -13,6 +13,8 @@ export const CREATE_SESSION_WITH_NEW_RESUME = 'CREATE_SESSION_WITH_NEW_RESUME';
 export const CREATE_SESSION_WITH_EXISTING_RESUME = 'CREATE_SESSION_WITH_EXISTING_RESUME';
 export const GET_CHAT_HISTORY_BY_SESSION_TOKEN = 'GET_CHAT_HISTORY_BY_SESSION_TOKEN';
 export const SET_CHAT_HISTORY = 'SET_CHAT_HISTORY';
+export const ADD_CHAT_HISTORY = 'ADD_CHAT_HISTORY';
+export const SET_LOAD_MORE_CHAT_HISTORY_BY_SESSION_TOKEN_LOADING = 'SET_LOAD_MORE_CHAT_HISTORY_BY_SESSION_TOKEN_LOADING';
 
 export const SET_END_INTERVIEW_SESSION_LOADING = 'SET_END_INTERVIEW_SESSION_LOADING';
 export const SET_END_INTERVIEW_SESSION_FINISHED = 'SET_END_INTERVIEW_SESSION_FINISHED';
@@ -52,14 +54,23 @@ export const createInterviewSessionWithExistingResume = (payload: CreateIntervie
     return { type: CREATE_SESSION_WITH_EXISTING_RESUME, payload };
 };
 
-export const getChatHistoryBySessionToken = (session_token: string) => {
-    return { type: GET_CHAT_HISTORY_BY_SESSION_TOKEN, payload: { session_token } };
+export const getChatHistoryBySessionToken = (session_token: string, turn_no: number | null) => {
+    console.log("getChatHistoryBySessionToken Action", session_token, turn_no);
+    return { type: GET_CHAT_HISTORY_BY_SESSION_TOKEN, payload: { session_token, turn_no } };
 };
 
 export const setChatHistory = (payload: GetChatHistoryBySessionTokenResp) => {
+    console.log("setChatHistory Action", payload);
     return { type: SET_CHAT_HISTORY, payload: { chatHistory: payload } };
 };
 
+export const addChatHistory = (payload: GetChatHistoryBySessionTokenResp) => {
+    return { type: ADD_CHAT_HISTORY, payload };
+};
+
+export const setLoadMoreChatHistoryBySessionTokenLoading = (isLoading: boolean) => {
+    return { type: SET_LOAD_MORE_CHAT_HISTORY_BY_SESSION_TOKEN_LOADING, payload: { isLoading } };
+};
 
 export const setEndInterviewSessionLoadingAction = () => {
     return { type: SET_END_INTERVIEW_SESSION_LOADING };
@@ -101,7 +112,7 @@ export const setChatHistoryBySessionIDWithEvaluation = (req: GetChatHistoryBySes
     return { type: SET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION, payload: { chatHistoryBySessionIDWithEvaluation: req } };
 };
 
-export const addChatHistoryBySessionIDWithEvaluation = (payload: GetChatHistoryBySessionIDWithEvaluationReq) => {
+export const addChatHistoryBySessionIDWithEvaluation = (payload: GetChatHistoryBySessionIDWithEvaluationResp) => {
     return { type: ADD_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION, payload: { chatHistoryBySessionIDWithEvaluation: payload } };
 };
 

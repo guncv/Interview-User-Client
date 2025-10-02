@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import loadingAnimation from '../../assets/animations/loading.lottie?url';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import Colors from '../../assets/styles/Color';
@@ -8,6 +8,9 @@ interface LoadingSpinnerProps {
 }
 
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ isVisible }) => {
+    const [hasError, setHasError] = useState(false);
+    const uniqueKeyRef = useRef(`lottie-spinner-${Date.now()}-${Math.random()}`);
+
     if (!isVisible) return null;
 
     const wrapperStyle: React.CSSProperties = {
@@ -45,16 +48,38 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ isVisible }) => {
         height: 'auto',
     };
 
+    const fallbackStyle: React.CSSProperties = {
+        ...animationStyle,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        borderRadius: '8px',
+        fontSize: '18px',
+        color: '#333',
+        fontWeight: 'bold',
+    };
+
     return (
         <div style={wrapperStyle}>
             <div style={backdropStyle} />
             <div style={animationContainerStyle}>
-                <DotLottieReact
-                    src={loadingAnimation}
-                    loop={true}
-                    autoplay={true}
-                    style={animationStyle}
-                />
+                {hasError ? (
+                    <div style={fallbackStyle}>
+                        Loading...
+                    </div>
+                ) : (
+                    <DotLottieReact
+                        key={uniqueKeyRef.current}
+                        src={loadingAnimation}
+                        loop={true}
+                        autoplay={true}
+                        style={animationStyle}
+                        onError={() => {
+                            setHasError(true);
+                        }}
+                    />
+                )}
             </div>
         </div>
     );

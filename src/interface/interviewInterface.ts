@@ -180,8 +180,14 @@ export interface CreateInterviewFormErrors {
     consentGiven?: string;
 }
 
+export interface GetChatHistoryBySessionTokenReq {
+	session_token: string;
+	turn_no: number | null;
+}
+
 export interface GetChatHistoryBySessionTokenResp {
 	chat_history: ChatHistory[];
+	cursor_turn_next: number;
 }
 
 export interface ChatHistory {

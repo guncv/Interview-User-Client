@@ -251,6 +251,22 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
         const newMutedState = !isHeadphonesMuted;
         setIsHeadphonesMuted(newMutedState);
         
+        if (newMutedState) {
+            setIsMicMuted(true);
+            
+            if (gainNodeRef.current) {
+                gainNodeRef.current.gain.value = 0;
+            }
+            
+            if (mediaStreamRef.current) {
+                mediaStreamRef.current.getAudioTracks().forEach(track => {
+                    track.enabled = false;
+                });
+            }
+            
+            onMicMuteChange?.(true);
+        }
+        
         onHeadphoneMuteChange?.(newMutedState);
     };
 
@@ -640,7 +656,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                     buttonId="headphones"
                     onClick={isConnected && isConversationStarted ? toggleHeadphonesMute : undefined}
                     isActive={isConnected && isConversationStarted}
-                    tooltip={!isConnected ? "Connect to enable headphones" : !isConversationStarted ? "Wait for conversation to start" : (isHeadphonesMuted ? "Unmute Headphones" : "Mute Headphones")}
+                    tooltip={!isConnected ? "Connect to enable audio" : !isConversationStarted ? "Wait for conversation to start" : (isHeadphonesMuted ? "Unmute Audio (Mic & Speakers)" : "Mute All Audio (Mic & Speakers)")}
                     size="38px"
                     iconSize="38px"
                 />

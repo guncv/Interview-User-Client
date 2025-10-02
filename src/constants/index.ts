@@ -60,6 +60,7 @@ export const WEBSOCKET_TYPES = {
   INTERVIEW_SESSION_TIMED_OUT: "interview_session_timed_out",
   INACTIVITY_WARNING: "inactivity_warning",
   ACTIVITY_TIMER_RESET: "activity_timer_reset",
+  INTERVIEW_SESSION_ALREADY_TIMED_OUT: "interview_session_already_timed_out",
 } as const;
 
 export const ACTOR = {
