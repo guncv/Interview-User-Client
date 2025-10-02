@@ -2,7 +2,7 @@ import type { AxiosError } from "axios";
 import { API_ENDPOINTS, CONTENT_TYPES, HTTP_HEADERS } from "../constants";
 import { axiosInstance } from "./axiosInstance";
 import { handleApiError } from "./errorApi";
-import type { CreateInterviewSessionResponse, CreateInterviewSessionWithExistingResumeRequest, GetChatHistoryBySessionTokenResp, GetInterviewSessionListResp, GetInterviewSessionListCursorReq, GetInterviewSessionListPageReq, GetInterviewSessionInformationResp, GetChatHistoryBySessionIDWithEvaluationReq, GetChatHistoryBySessionIDWithEvaluationResp } from "../interface/interviewInterface";
+import type { CreateInterviewSessionResponse, CreateInterviewSessionWithExistingResumeRequest, GetChatHistoryBySessionTokenResp, GetInterviewSessionListResp, GetInterviewSessionListCursorReq, GetInterviewSessionListPageReq, GetInterviewSessionInformationResp, GetChatHistoryBySessionIDWithEvaluationReq, GetChatHistoryBySessionIDWithEvaluationResp, GetChatHistoryBySessionTokenReq } from "../interface/interviewInterface";
 
 export const apiCreateSessionWithNewResume = async (data: FormData) => {
     try {
@@ -43,11 +43,17 @@ export const apiCreateSessionWithExistingResume = async (data: CreateInterviewSe
     }
 };
 
-export const apiGetChatHistoryBySessionToken = async (session_token: string, token: string) => {
+export const apiGetChatHistoryBySessionToken = async (request: GetChatHistoryBySessionTokenReq, token: string) => {
     try {
+        const params: any = {};
+        if (request.turn_no !== null) {
+            params.turn_no = request.turn_no;
+        }
+
         const response = await axiosInstance.get(
-            `${API_ENDPOINTS.GET_CHAT_HISTORY_BY_SESSION_TOKEN}/${session_token}`,
+            `${API_ENDPOINTS.GET_CHAT_HISTORY_BY_SESSION_TOKEN}/${request.session_token}`,
             {
+                params,
                 headers: {
                     [HTTP_HEADERS.CONTENT_TYPE]: CONTENT_TYPES.APPLICATION_JSON,
                     [HTTP_HEADERS.AUTHORIZATION]: `${HTTP_HEADERS.BEARER} ${token}`,

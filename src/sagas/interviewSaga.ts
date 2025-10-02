@@ -13,9 +13,11 @@ import { CREATE_SESSION_WITH_NEW_RESUME, CREATE_SESSION_WITH_EXISTING_RESUME, se
     GET_INTERVIEW_SESSION_INFORMATION_BY_ID,
     setChatHistoryBySessionIDWithEvaluation,
     GET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION,
-    addChatHistoryBySessionIDWithEvaluation} from "../actions/interviewAction";
+    addChatHistoryBySessionIDWithEvaluation,
+    addChatHistory,
+    } from "../actions/interviewAction";
 import { setCreateInterviewError } from "../actions/interviewAction";
-import { hideSpinner, safeNavigate, showSpinner, type GetChatHistoryBySessionIDWithEvaluationReq, type GetInterviewSessionListCursorReq, type GetInterviewSessionListPageReq } from "..";
+import { hideSpinner, safeNavigate, showSpinner, type GetChatHistoryBySessionIDWithEvaluationReq, type GetChatHistoryBySessionTokenReq, type GetInterviewSessionListCursorReq, type GetInterviewSessionListPageReq } from "..";
 
 function* workerCreateSessionWithNewResume(payload: {
     position: string;
@@ -95,23 +97,24 @@ export function* watcherCreateSessionWithExistingResume(): SagaIterator {
     }
 }
 
-function* workerGetChatHistoryBySessionToken(payload: { session_token: string }): SagaIterator {
+function* workerGetChatHistoryBySessionToken(payload: GetChatHistoryBySessionTokenReq): SagaIterator {
     try {
-        yield delay(0);
-        yield call(showSpinner);
+        yield delay(2000);
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-        const response = yield call(apiGetChatHistoryBySessionToken, payload.session_token, token || '');
+        const response = yield call(apiGetChatHistoryBySessionToken, payload, token || '');
 
         if (response && response.success) {
-            yield put(setChatHistory(response.data));
+            if (payload.turn_no === undefined || payload.turn_no === null) {
+                console.log("setChatHistory", response.data);
+                yield put(setChatHistory(response.data));
+            } else {
+                yield put(addChatHistory(response.data));
+            }
         } else {
-            yield call(hideSpinner);
             yield call(handleStatusInterviewError, response.statusCode, response.message);
         }
-        yield call(hideSpinner);
     }
     catch (error) {
-        yield call(hideSpinner);
         const message = (error as { message?: string })?.message || ERROR_MESSAGES.UNEXPECTED_ERROR;
         yield call(handleStatusInterviewError, 0, message);
     }
@@ -279,6 +282,7 @@ export function* watcherGetInterviewSessionInformationById(): SagaIterator {
 
 function* workerGetChatHistoryBySessionIDWithEvaluation(payload: GetChatHistoryBySessionIDWithEvaluationReq): SagaIterator {
     try {
+        yield delay(2000);
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         const response = yield call(apiGetChatHistoryBySessionIDWithEvaluation, payload, token || '');
         if (response && response.success) {

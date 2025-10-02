@@ -441,7 +441,7 @@ const InterviewSimulation = () => {
                         />
                     </div>
                     <div style={{ width: isMobile ? '80%' : isTablet ? '70%' : '60%', overflow: 'hidden' }}>
-                        <ChatHistory ref={chatHistoryRef} session_token={sessionTokenParam || ''} />
+                        <ChatHistory ref={chatHistoryRef} session_token={sessionTokenParam || ''} isUserTurn={isUserTurn} />
                     </div>
                 </div>
                     
