@@ -146,7 +146,6 @@ export function* watcherEndInterviewSessionLoading(): SagaIterator {
 
 function* workerEndInterviewSessionFinished(): SagaIterator {
     try {
-        console.log('✅ End interview session finished');
         yield delay(0);
         yield call(hideSpinner);
         safeNavigate(ROUTES.RECORDINGS);
