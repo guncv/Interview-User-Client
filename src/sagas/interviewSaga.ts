@@ -4,7 +4,8 @@ import { ERROR_MESSAGES, HTTP_STATUS, ROUTES, STORAGE_KEYS } from "../constants"
 import { apiCreateSessionWithNewResume, apiCreateSessionWithExistingResume, apiGetChatHistoryBySessionToken,
     apiGetInterviewSessionListCursor, apiGetInterviewSessionListPage, apiDeleteInterviewSessionById, 
     apiGetInterviewSessionInformationById,
-    apiGetChatHistoryBySessionIDWithEvaluation} from "../api/interviewApi";
+    apiGetChatHistoryBySessionIDWithEvaluation,
+    apiGetFinalizingSessions} from "../api/interviewApi";
 import { CREATE_SESSION_WITH_NEW_RESUME, CREATE_SESSION_WITH_EXISTING_RESUME, setCreateInterviewSuccess,
     GET_CHAT_HISTORY_BY_SESSION_TOKEN, setChatHistory,
     SET_END_INTERVIEW_SESSION_FINISHED, SET_END_INTERVIEW_SESSION_LOADING, GET_INTERVIEW_SESSION_LIST_CURSOR, setInterviewSessionList,
@@ -15,6 +16,8 @@ import { CREATE_SESSION_WITH_NEW_RESUME, CREATE_SESSION_WITH_EXISTING_RESUME, se
     GET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION,
     addChatHistoryBySessionIDWithEvaluation,
     addChatHistory,
+    GET_FINALIZING_SESSIONS,
+    setFinalizingSessions,
     } from "../actions/interviewAction";
 import { setCreateInterviewError } from "../actions/interviewAction";
 import { hideSpinner, safeNavigate, showSpinner, type GetChatHistoryBySessionIDWithEvaluationReq, type GetChatHistoryBySessionTokenReq, type GetInterviewSessionListCursorReq, type GetInterviewSessionListPageReq } from "..";
@@ -302,6 +305,33 @@ export function* watcherGetChatHistoryBySessionIDWithEvaluation(): SagaIterator 
     while (true) {
         const action = yield take(GET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION);
         yield call(workerGetChatHistoryBySessionIDWithEvaluation, action.payload);
+    }
+}
+
+function* workerGetFinalizingSessions(): SagaIterator {
+    try {
+        yield delay(0);
+        yield call(showSpinner);
+        const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+        const response = yield call(apiGetFinalizingSessions, token || '');
+        
+        if (response && response.success) {
+            yield put(setFinalizingSessions(response.data));
+        } else {
+            yield call(hideSpinner);
+            yield put(setFinalizingSessions({ sessions: [], total_count: 0 }));
+        }
+    }
+    catch (error) {
+        yield call(hideSpinner);
+        yield put(setFinalizingSessions({ sessions: [], total_count: 0 }));
+    }
+}
+
+export function* watcherGetFinalizingSessions(): SagaIterator {
+    while (true) {
+        yield take(GET_FINALIZING_SESSIONS);
+        yield call(workerGetFinalizingSessions);
     }
 }
 

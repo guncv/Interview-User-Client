@@ -1,7 +1,7 @@
 import { all } from 'redux-saga/effects';
 import { watcherForgotPassword, watcherSignOut, watcherSignIn, watcherVerifyEmail, watcherSignUp, watcherResetVerifyEmail, watcherResetPassword } from './userSaga';
 import { watcherGetResumeById, watcherListResume, watcherDownloadResumeBySessionToken } from './resumeSaga';
-import { watcherCreateSessionWithNewResume, watcherCreateSessionWithExistingResume, watcherGetChatHistoryBySessionToken, watcherEndInterviewSessionLoading, watcherEndInterviewSessionFinished, watcherGetInterviewSessionListCursor, watcherGetInterviewSessionListPage, watcherDeleteInterviewSessionById, watcherGetInterviewSessionInformationById, watcherGetChatHistoryBySessionIDWithEvaluation } from './interviewSaga';
+import { watcherCreateSessionWithNewResume, watcherCreateSessionWithExistingResume, watcherGetChatHistoryBySessionToken, watcherEndInterviewSessionLoading, watcherEndInterviewSessionFinished, watcherGetInterviewSessionListCursor, watcherGetInterviewSessionListPage, watcherDeleteInterviewSessionById, watcherGetInterviewSessionInformationById, watcherGetChatHistoryBySessionIDWithEvaluation, watcherGetFinalizingSessions } from './interviewSaga';
 import { watcherListIssueCategories, watcherCreateIssueReport } from './issueReport';
 import { watcherCreateReviewComment } from './reviewCommentSaga';
 import { watcherGetEvaluationRubricAndCriteria, watcherGetPhraseEvaluationsWithCriteriaBySessionID } from './evaluationSaga';
@@ -33,6 +33,7 @@ export default function* rootSaga() {
         watcherDeleteInterviewSessionById(),
         watcherGetInterviewSessionInformationById(),
         watcherGetChatHistoryBySessionIDWithEvaluation(),
+        watcherGetFinalizingSessions(),
         
         // ===== EVALUATION MODULE =====
         watcherGetEvaluationRubricAndCriteria(),

@@ -24,6 +24,7 @@ export const API_ENDPOINTS = {
   DELETE_INTERVIEW_SESSION_BY_ID: '/api/v1/sessions',
   GET_INTERVIEW_SESSION_BY_ID: '/api/v1/sessions',
   GET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION: '/api/v1/sessions',
+  GET_FINALIZING_SESSIONS: '/api/v1/sessions/finalizing',
 
   // Evaluation API
   LIST_ALL_RUBRICS_AND_CRITERIA: '/api/v1/evaluation/rubrics',

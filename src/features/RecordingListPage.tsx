@@ -8,13 +8,17 @@ import font from "../assets/styles/Font";
 import { safeNavigate } from "../utils/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { downloadResumeByResumeId } from "../actions/resumeAction";
-import { getInterviewSessionListCursorAction, getInterviewSessionListPageAction } from "../actions/interviewAction";
+import { getInterviewSessionListCursorAction, getInterviewSessionListPageAction, getFinalizingSessionsAction } from "../actions/interviewAction";
 import { useEffect, useState, useCallback } from "react";
 import type { RootState } from "../reducers/rootReducer";
 import type { GetInterviewSessionListCursorReq, GetInterviewSessionListPageReq } from "../interface";
 import { CURSOR_TYPE } from "../constants";
 import { useContextProvider } from "../components/layout/ContextProvider";
 import noDataImage from "../assets/images/no_data.png";
+import { Eye, EyeOff } from "lucide-react";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime);
 
 const RecordingListPage = () => {
     const dispatch = useDispatch();
@@ -23,12 +27,17 @@ const RecordingListPage = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [searchText, setSearchText] = useState("");
     const [debouncedSearchText, setDebouncedSearchText] = useState("");
+    const [isFinalizingExpanded, setIsFinalizingExpanded] = useState(true);
 
     const handleDownloadResume = (resumeId: string) => {
         dispatch(downloadResumeByResumeId(resumeId));
     }
 
-    const { interviewSessionList } = useSelector((state: RootState) => state.interview);
+    const { interviewSessionList, finalizingSessions } = useSelector((state: RootState) => state.interview);
+
+    useEffect(() => {
+        dispatch(getFinalizingSessionsAction());
+    }, [dispatch]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -183,10 +192,13 @@ const RecordingListPage = () => {
     const tableContainerStyle: CSSProperties = {
         marginTop: '20px',
         width: '100%',
-        maxHeight: isMobile ? 'calc(100vh - 200px)' : isTablet ? 'calc(100vh - 180px)' : '80vh',
         backgroundColor: "white",
         overflowY: 'auto',
         borderRadius: '8px',
+        flex: '1',
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column'
     }
 
     const tableStyle: CSSProperties = {
@@ -217,9 +229,85 @@ const RecordingListPage = () => {
         safeNavigate('/create-interview');
     }
 
+    const dataCellStyle: CSSProperties = {
+        padding: isMobile ? "8px 10px" : "16px 12px",
+        textAlign: 'left',
+        borderBottom: `1px solid #e9ecef`,
+        fontSize: isMobile ? "11px" : isTablet ? "13px" : Size.Medium,
+        color: Colors.PRIMARY_COLOR,
+        transition: 'all 0.3s ease',
+    };
+
+    const finalizingContainerStyle: CSSProperties = {
+        marginTop: '20px',
+        marginBottom: '20px',
+        padding: isFinalizingExpanded ? '16px' : '12px',
+        backgroundColor: '#FFF9E6',
+        borderRadius: '8px',
+        border: '1px solid #FFD700',
+        maxHeight: isFinalizingExpanded ? '280px' : 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        flexShrink: 0,
+        transition: 'all 0.3s ease',
+        overflow: 'hidden',
+    };
+
+    const finalizingHeaderStyle: CSSProperties = {
+        fontSize: isMobile ? "12px" : "16px",
+        fontWeight: 'bold',
+        color: Colors.PRIMARY_COLOR,
+        marginBottom: isFinalizingExpanded ? '5px' : '0px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '8px',
+        transition: 'all 0.3s ease',
+        cursor: 'pointer',
+    };
+
+    const toggleButtonStyle: CSSProperties = {
+        backgroundColor: 'transparent',
+        border: 'none',
+        padding: isMobile ? '6px 8px' : '8px 12px',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        fontSize: isMobile ? '12px' : isTablet ? '14px' : '16px',
+        color: Colors.PRIMARY_COLOR,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: isMobile ? '28px' : isTablet ? '32px' : '36px',
+        minHeight: isMobile ? '28px' : isTablet ? '32px' : '36px',
+    };
+
+    const finalizingInfoStyle: CSSProperties = {
+        fontSize: isMobile ? "11px" : "13px",
+        color: Colors.SECONDARY_TEXT_COLOR,
+        marginBottom: '8px',
+    };
+
+    const mainContainerStyle: CSSProperties = {
+        width: '100%',
+        padding: '20px 40px',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        overflow: 'hidden'
+    };
+
+    const contentAreaStyle: CSSProperties = {
+        flex: '1',
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        overflow: 'hidden'
+    };
+
     return (
         <ContentLayout>
-            <div style={{ width: '100%', padding: '20px 40px' }}>
+            <div style={mainContainerStyle}>
                 <div style={titleStyle}>
                     <div>Interview Recordings</div>
                     <div style={buttonSearchContainerStyle}>
@@ -232,6 +320,119 @@ const RecordingListPage = () => {
                         />
                     </div>
                 </div>
+
+                <div style={contentAreaStyle}>
+                    {finalizingSessions.sessions.length > 0 && (
+                    <div style={finalizingContainerStyle}>
+                        <div 
+                            style={finalizingHeaderStyle}
+                            onClick={() => setIsFinalizingExpanded(!isFinalizingExpanded)}
+                            title={isFinalizingExpanded ? "Collapse section" : "Expand section"}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span>⏳</span>
+                                <span>Finalizing Recordings ({finalizingSessions.total_count})</span>
+                            </div>
+                            <button 
+                                style={{
+                                    ...toggleButtonStyle,
+                                    backgroundColor: isFinalizingExpanded ? 'transparent' : '#fff4',
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor = '#fff3';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor = isFinalizingExpanded ? 'transparent' : '#fff4';
+                                }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsFinalizingExpanded(!isFinalizingExpanded);
+                                }}
+                                title={isFinalizingExpanded ? "Hide details" : "Show details"}
+                            >
+                                <span style={{ 
+                                    fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', 
+                                    filter: isFinalizingExpanded ? 'opacity(1)' : 'opacity(0.6)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    {isFinalizingExpanded ? <Eye size={isMobile ? 16 : isTablet ? 18 : 20} /> : <EyeOff size={isMobile ? 16 : isTablet ? 18 : 20} />}
+                                </span>
+                            </button>
+                        </div>
+                        
+                        {isFinalizingExpanded && (
+                            <>
+                                <div style={finalizingInfoStyle}>
+                                    Your interview session is being processed. Scores are being calculated...
+                                </div>
+                                <div style={{ 
+                                    maxHeight: isMobile ? '120px' : '180px', 
+                                    overflowY: 'auto',
+                                    backgroundColor: 'white',
+                                    borderRadius: '4px',
+                                    flex: '1',
+                                    minHeight: '120px'
+                                }}>
+                                    <table style={tableStyle}>
+                                        <thead>
+                                            <tr>
+                                                <th style={{...headerCellStyle, backgroundColor: '#FFF9E6'}}>Position</th>
+                                                {isMobile ? null : <th style={{...headerCellStyle, textAlign: 'center', backgroundColor: '#FFF9E6'}}>Resume</th>}
+                                                <th style={{...headerCellStyle, textAlign: 'center', backgroundColor: '#FFF9E6'}}>Status</th>
+                                                <th style={{...headerCellStyle, textAlign: 'center', backgroundColor: '#FFF9E6'}}>Total Time</th>
+                                                <th style={{...headerCellStyle, textAlign: 'center', backgroundColor: '#FFF9E6'}}>Created At</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {finalizingSessions.sessions.map((interview) => (
+                                                <tr key={interview.id} style={{ opacity: 0.8 }}>
+                                                    <td style={dataCellStyle}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                            <span>{interview.position}</span>
+                                                        </div>
+                                                    </td>
+                                                    
+                                                    {isMobile ? null : <td style={{...dataCellStyle, textAlign: 'center'}}>
+                                                        <span style={{ fontSize: isTablet ? "10px" : Size.Medium }}>
+                                                            {interview.resume_file_name}
+                                                        </span>
+                                                    </td>}
+                                                    
+                                                    <td style={{...dataCellStyle, textAlign: 'center'}}>
+                                                        <span style={{
+                                                            padding: isMobile ? "4px 8px" : "4px 12px",
+                                                            borderRadius: '16px',
+                                                            fontSize: isMobile ? "8px" : isTablet ? "10px" : "12px",
+                                                            fontWeight: 'bold',
+                                                            backgroundColor: `${interview.status_color + '20'}`,
+                                                            color: `${interview.status_color}`,
+                                                        }}>
+                                                            {interview.status}
+                                                        </span>
+                                                    </td>
+                                                    
+                                                    <td style={{...dataCellStyle, textAlign: 'center'}}>
+                                                        <span style={{ fontFamily: 'monospace', fontWeight: '500' }}>
+                                                            {interview.total_time}
+                                                        </span>
+                                                    </td>
+                                                    
+                                                    <td style={{...dataCellStyle, textAlign: 'center', fontSize: "12px"}}>
+                                                        <span style={{ color: Colors.SECONDARY_TEXT_COLOR }}>
+                                                            {dayjs(interview.created_at).fromNow()}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
 
                 <div style={tableContainerStyle}>
                     <table style={tableStyle}>
@@ -318,17 +519,25 @@ const RecordingListPage = () => {
                     </table>
                 </div>
 
-                {interviewSessionList.total_pages > 0 && (
-                    <Pagination
-                        currentPage={currentPage}
-                        totalPages={interviewSessionList.total_pages || 1}
-                        onPageChange={handlePageChange}
-                        onPrevious={() => handlePrevious(currentPage)}
-                        onNext={() => handleNext(currentPage)}
-                        onFirst={handleFirst}
-                        onLast={handleLast}
-                    />
-                )}
+                <div style={{ 
+                    flexShrink: 0, 
+                    marginTop: '16px', 
+                    paddingTop: '16px',
+                    borderTop: '1px solid #e9ecef'
+                }}>
+                    {interviewSessionList.total_pages > 0 && (
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={interviewSessionList.total_pages || 1}
+                            onPageChange={handlePageChange}
+                            onPrevious={() => handlePrevious(currentPage)}
+                            onNext={() => handleNext(currentPage)}
+                            onFirst={handleFirst}
+                            onLast={handleLast}
+                        />
+                    )}
+                </div>
+                </div>
             </div>
         </ContentLayout>
     );

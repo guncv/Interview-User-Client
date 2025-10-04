@@ -10,9 +10,10 @@ import {
     SET_LOAD_MORE_CHAT_HISTORY_LOADING,
     ADD_CHAT_HISTORY,
     SET_LOAD_MORE_CHAT_HISTORY_BY_SESSION_TOKEN_LOADING,
+    SET_FINALIZING_SESSIONS,
 } from '../actions/interviewAction';
 import type { RootState } from './rootReducer';
-import type { CreateInterviewSessionResponse, GetChatHistoryBySessionIDWithEvaluationResp, GetChatHistoryBySessionTokenResp, GetInterviewSessionInformationResp, GetInterviewSessionListResp } from '../interface/interviewInterface';
+import type { CreateInterviewSessionResponse, GetChatHistoryBySessionIDWithEvaluationResp, GetChatHistoryBySessionTokenResp, GetInterviewSessionInformationResp, GetInterviewSessionListResp, GetFinalizingSessionsResp } from '../interface/interviewInterface';
 
 type InterviewState = {
     error: string;
@@ -22,6 +23,7 @@ type InterviewState = {
     loadMoreChatHistoryBySessionTokenLoading: boolean;
     interviewSessionInformationById: GetInterviewSessionInformationResp;
     interviewSessionList: GetInterviewSessionListResp;
+    finalizingSessions: GetFinalizingSessionsResp;
     chatHistoryBySessionIDWithEvaluation: GetChatHistoryBySessionIDWithEvaluationResp;
     chatHistoryBySessionIDWithEvaluationLoading: boolean;
     loadMoreChatHistoryLoading: boolean;
@@ -36,6 +38,7 @@ type InterviewStateAction = {
         loadMoreChatHistoryBySessionTokenLoading: boolean;
         interviewSessionInformationById: GetInterviewSessionInformationResp;
         interviewSessionList: GetInterviewSessionListResp;
+        finalizingSessions: GetFinalizingSessionsResp;
         chatHistoryBySessionIDWithEvaluation: GetChatHistoryBySessionIDWithEvaluationResp;
         chatHistoryBySessionIDWithEvaluationLoading: boolean;
         isLoading: boolean;
@@ -75,6 +78,10 @@ const initialState: InterviewState = {
         next_cursor: null,
         total_pages: 0,
         page_size: 0,
+    },
+    finalizingSessions: {
+        sessions: [],
+        total_count: 0,
     },
     chatHistoryBySessionIDWithEvaluation: {
         chat_history: [],
@@ -132,6 +139,11 @@ export const interviewReducer = (
             return {
             ...state,
             interviewSessionList: action.payload.interviewSessionList,
+            };
+        case SET_FINALIZING_SESSIONS:
+            return {
+            ...state,
+            finalizingSessions: action.payload.finalizingSessions,
             };
         case SET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION:
             return {

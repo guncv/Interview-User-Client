@@ -7,7 +7,8 @@ import type {
     GetInterviewSessionListPageReq,
     GetInterviewSessionInformationResp,
     GetChatHistoryBySessionIDWithEvaluationReq,
-    GetChatHistoryBySessionIDWithEvaluationResp } from "../interface/interviewInterface";
+    GetChatHistoryBySessionIDWithEvaluationResp,
+    GetFinalizingSessionsResp } from "../interface/interviewInterface";
 
 export const CREATE_SESSION_WITH_NEW_RESUME = 'CREATE_SESSION_WITH_NEW_RESUME';
 export const CREATE_SESSION_WITH_EXISTING_RESUME = 'CREATE_SESSION_WITH_EXISTING_RESUME';
@@ -29,6 +30,9 @@ export const GET_INTERVIEW_SESSION_LIST_CURSOR = 'GET_INTERVIEW_SESSION_LIST_CUR
 export const GET_INTERVIEW_SESSION_LIST_PAGE = 'GET_INTERVIEW_SESSION_LIST_PAGE';
 export const SET_INTERVIEW_SESSION_LIST = 'SET_INTERVIEW_SESSION_LIST';
 export const DELETE_INTERVIEW_SESSION_BY_ID = 'DELETE_INTERVIEW_SESSION_BY_ID';
+
+export const GET_FINALIZING_SESSIONS = 'GET_FINALIZING_SESSIONS';
+export const SET_FINALIZING_SESSIONS = 'SET_FINALIZING_SESSIONS';
 
 export const GET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION = 'GET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION';
 export const SET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION = 'SET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION';
@@ -116,4 +120,12 @@ export const addChatHistoryBySessionIDWithEvaluation = (payload: GetChatHistoryB
 
 export const setLoadMoreChatHistoryLoading = (isLoading: boolean) => {
     return { type: SET_LOAD_MORE_CHAT_HISTORY_LOADING, payload: { isLoading } };
+};
+
+export const getFinalizingSessionsAction = () => {
+    return { type: GET_FINALIZING_SESSIONS };
+};
+
+export const setFinalizingSessions = (payload: GetFinalizingSessionsResp) => {
+    return { type: SET_FINALIZING_SESSIONS, payload: { finalizingSessions: payload } };
 };
