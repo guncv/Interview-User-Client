@@ -105,7 +105,6 @@ export const interviewReducer = (
             loadMoreChatHistoryBySessionTokenLoading: action.payload.isLoading,
             };
         case SET_CHAT_HISTORY:
-            console.log("setChatHistory Reducer", action.payload.chatHistory);
             return {
                 ...state,
                 chatHistory: action.payload.chatHistory,
