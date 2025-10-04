@@ -58,7 +58,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
         microphoneDevice: 'Default Microphone',
         headphonesDevice: 'Default Headphones'
     });
-    void sessionInfo; 
+    void sessionInfo;
     const [availableMicrophones, setAvailableMicrophones] = useState<MicrophoneDevice[]>([]);
     const [selectedMicId, setSelectedMicId] = useState<string>('default');
     const [availableHeadphones, setAvailableHeadphones] = useState<MicrophoneDevice[]>([]);

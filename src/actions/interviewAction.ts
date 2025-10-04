@@ -55,12 +55,10 @@ export const createInterviewSessionWithExistingResume = (payload: CreateIntervie
 };
 
 export const getChatHistoryBySessionToken = (session_token: string, turn_no: number | null) => {
-    console.log("getChatHistoryBySessionToken Action", session_token, turn_no);
     return { type: GET_CHAT_HISTORY_BY_SESSION_TOKEN, payload: { session_token, turn_no } };
 };
 
 export const setChatHistory = (payload: GetChatHistoryBySessionTokenResp) => {
-    console.log("setChatHistory Action", payload);
     return { type: SET_CHAT_HISTORY, payload: { chatHistory: payload } };
 };
 

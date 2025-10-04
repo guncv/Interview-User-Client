@@ -18,6 +18,8 @@ export interface AudioQueueCallbacks {
     showTranscript: (response: any) => void;
     setIsUserTurn: (isUserTurn: boolean) => void;
     getIsInterviewerTurnEndedReceived?: () => boolean;
+    getIsSessionCompleted?: () => boolean;
+    sendCompleteSession?: () => void;
 }
 
 export class AudioQueueManager {
@@ -152,8 +154,10 @@ export class AudioQueueManager {
             this.currentAudio = null;
             callbacks.setIsAiSpeaking(false);
             
-            console.log('callbacks.getIsInterviewerTurnEndedReceived?.()', callbacks.getIsInterviewerTurnEndedReceived?.());
-            console.log('this.audioTurnQueue.length', this.audioTurnQueue.length);
+            if (callbacks.getIsSessionCompleted?.()) {
+                callbacks.sendCompleteSession?.();
+            }
+            
             if (callbacks.getIsInterviewerTurnEndedReceived?.() && this.audioTurnQueue.length === 0) {
                 callbacks.setIsUserTurn(true);
             }

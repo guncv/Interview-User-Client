@@ -19,11 +19,10 @@ const InterviewSimulation = () => {
     const [searchParams] = useSearchParams();
     const sessionTokenParam = searchParams.get('session_token');
     const [websocketUrl] = useState(`ws://localhost:8080/api/v1/ws/connect/${sessionTokenParam}`);
-    const [sessionId, setSessionId] = useState<string | null>(null);
+    const sessionIdRef = useRef<string | null>(null);
     const [isAiSpeaking, setIsAiSpeaking] = useState<boolean>(false);
     const [isUserSpeaking, setIsUserSpeaking] = useState<boolean>(false);
     const [isMicMuted, setIsMicMuted] = useState<boolean>(false);
-    const [isUserTurn, setIsUserTurn] = useState<boolean>(false);
     const [connectionState, setConnectionState] = useState<WebSocketConnectionState>(CONVERSATION_STATUS.CONNECTING);
     const websocketRef = useRef<WebSocket | null>(null);
     const chatHistoryRef = useRef<ChatHistoryRef>(null);
@@ -39,6 +38,8 @@ const InterviewSimulation = () => {
     const isInterviewerTurnEndedReceivedRef = useRef<boolean>(false);
     const audioQueueManagerRef = useRef<AudioQueueManager>(new AudioQueueManager());
     const isHeadphonesMutedRef = useRef<boolean>(false);
+    const isUserTurnRef = useRef<boolean>(false);
+    const isSessionCompletedRef = useRef<boolean>(false);
 
     const showTranscript = useCallback((response: any) => {
         chatHistoryRef.current?.handleFinalTranscript(response, ACTOR.INTERVIEWER);
@@ -118,28 +119,44 @@ const InterviewSimulation = () => {
     }, [isMicMuted]);
 
     const handleUserSegmentEnd = useCallback(() => {
-        setIsUserTurn(false);
+        isUserTurnRef.current = false;
     }, []);
 
-
     const handleEndInterviewSession = useCallback(() => {
-        if (!sessionId || !websocketRef.current) {
+        if (!sessionIdRef.current || !websocketRef.current) {
             return;
         }
 
         dispatch(setEndInterviewSessionLoadingAction());
         const endSessionMessage = {
             type: WEBSOCKET_TYPES.END_INTERVIEW_SESSION,
-            session_id: sessionId
+            session_id: sessionIdRef.current
         };
-        
 
         try {
             websocketRef.current.send(JSON.stringify(endSessionMessage));
         } catch (error) {
             console.error('Failed to send end interview session message:', error);
         }
-    }, [sessionId]);
+    }, [dispatch]);
+
+    const handleCompleteSession = useCallback(() => {
+        if (!sessionIdRef.current || !websocketRef.current) {
+            return;
+        }
+
+        dispatch(setEndInterviewSessionLoadingAction());
+        const completeSessionMessage = {
+            type: WEBSOCKET_TYPES.USER_COMPLETE_SESSION,
+            session_id: sessionIdRef.current
+        };
+
+        try {
+            websocketRef.current.send(JSON.stringify(completeSessionMessage));
+        } catch (error) {
+            console.error('Failed to send complete session message:', error);
+        }
+    }, [dispatch]);
 
     const handleContinueSession = useCallback(() => {
         setShowInactivityPopup(false);
@@ -155,7 +172,7 @@ const InterviewSimulation = () => {
         safeNavigate(ROUTES.RECORDINGS);
     }, []);
 
-    useVoiceStreaming(websocketRef, sessionId, handleUserSpeakingChange, isMicMuted, connectionState === CONVERSATION_STATUS.CONNECTED, isConversationStarted, handleUserSegmentEnd, isUserTurn);
+    useVoiceStreaming(websocketRef, sessionIdRef.current, handleUserSpeakingChange, isMicMuted, connectionState === CONVERSATION_STATUS.CONNECTED, isConversationStarted, handleUserSegmentEnd, isUserTurnRef.current);
 
     const handleMicMuteChange = useCallback((isMuted: boolean) => {
         setIsMicMuted(isMuted);
@@ -179,7 +196,7 @@ const InterviewSimulation = () => {
     const handleWebSocketMessage = useCallback(async (response: any) => {
         switch (response.type) {
             case WEBSOCKET_TYPES.CONNECTION_ESTABLISHED:
-                setSessionId(response.session_id);
+                sessionIdRef.current = response.session_id;
                 setServerStartTime(response.started_at);
                 
                 setConnectionState(CONVERSATION_STATUS.CONNECTED);
@@ -189,14 +206,14 @@ const InterviewSimulation = () => {
                 break;
             case WEBSOCKET_TYPES.CONVERSATION_STARTED:
                 setIsConversationStarted(true);
-                setIsUserTurn(true);
+                isUserTurnRef.current = true;
                 break;
             case WEBSOCKET_TYPES.CONVERSATION_STARTING:
                 setIsConversationStarted(true);
                 break;
             case WEBSOCKET_TYPES.INTERVIEWER_TURN_START:
                 isInterviewerTurnEndedReceivedRef.current = false;
-                setIsUserTurn(false);
+                isUserTurnRef.current = false;
                 break;
             case WEBSOCKET_TYPES.INTERVIEWER_TURN_END:
                 isInterviewerTurnEndedReceivedRef.current = true;
@@ -207,8 +224,10 @@ const InterviewSimulation = () => {
                     {
                         setIsAiSpeaking,
                         showTranscript,
-                        setIsUserTurn,
-                        getIsInterviewerTurnEndedReceived: () => isInterviewerTurnEndedReceivedRef.current
+                        setIsUserTurn: (isUserTurn: boolean) => isUserTurnRef.current = isUserTurn,
+                        getIsInterviewerTurnEndedReceived: () => isInterviewerTurnEndedReceivedRef.current,
+                        getIsSessionCompleted: () => isSessionCompletedRef.current,
+                        sendCompleteSession: handleCompleteSession
                     },
                     isHeadphonesMutedRef.current,
                     connectionState === CONVERSATION_STATUS.CONNECTED || connectionState === CONVERSATION_STATUS.CONNECTING
@@ -218,12 +237,17 @@ const InterviewSimulation = () => {
                 dispatch(setEndInterviewSessionFinishedAction());
                 websocketRef.current?.close();
                 break;
+            case WEBSOCKET_TYPES.INTERVIEW_COMPLETED:
+                isSessionCompletedRef.current = true;
+                isInterviewerTurnEndedReceivedRef.current = true;
+                break;
             case CONVERSATION_STATUS.ERROR:
                 console.error("Server error:", response.message || response);
                 break;
             case CONVERSATION_STATUS.DISCONNECTED:
                 console.warn("Server disconnect:", response.message || response);
                 break;
+                
             case WEBSOCKET_TYPES.INTERVIEW_SESSION_TIMED_OUT:
                 setTimeoutMessage(response.message || "Your interview session has timed out and has been automatically ended.");
                 setShowSessionTimeoutPopup(true);
@@ -232,13 +256,13 @@ const InterviewSimulation = () => {
                 setInactivityMessage(response.message || "You've been inactive for a while. Do you want to continue this interview session or end it?");
                 setShowInactivityPopup(true);
                 break;
-            case WEBSOCKET_TYPES.INTERVIEW_SESSION_ALREADY_TIMED_OUT:
+            case WEBSOCKET_TYPES.INTERVIEW_SESSION_ALREADY_TIMED_OUT || WEBSOCKET_TYPES.INTERVIEW_SESSION_ALREADY_COMPLETED:
                 safeNavigate(ROUTES.RECORDINGS);
                 break;
             default:
                 console.warn("Unknown message type:", response);
         }
-    }, [sessionId, connectionState, websocketRef]);
+    }, [connectionState, websocketRef]);
 
     const initializeWebSocket = useCallback(() => {
         try {
@@ -256,7 +280,7 @@ const InterviewSimulation = () => {
 
             websocketRef.current.onclose = (_event) => {
                 setConnectionState(CONVERSATION_STATUS.DISCONNECTED);
-                setSessionId(null);
+                sessionIdRef.current = null;
                 
                 audioQueueManagerRef.current.clearQueue();
             };
@@ -286,8 +310,10 @@ const InterviewSimulation = () => {
                                 {
                                     setIsAiSpeaking,
                                     showTranscript,
-                                    setIsUserTurn,
-                                    getIsInterviewerTurnEndedReceived: () => isInterviewerTurnEndedReceivedRef.current
+                                    setIsUserTurn: (isUserTurn: boolean) => isUserTurnRef.current = isUserTurn,
+                                    getIsInterviewerTurnEndedReceived: () => isInterviewerTurnEndedReceivedRef.current,
+                                    getIsSessionCompleted: () => isSessionCompletedRef.current,
+                                    sendCompleteSession: handleCompleteSession
                                 },
                                 isHeadphonesMutedRef.current,
                                 connectionState === CONVERSATION_STATUS.CONNECTED
@@ -429,7 +455,7 @@ const InterviewSimulation = () => {
                             sessionToken={sessionTokenParam || ''}
                             isAiSpeaking={isAiSpeaking}
                             isUserSpeaking={isUserSpeaking}
-                            isUserTurn={isUserTurn}
+                            isUserTurn={isUserTurnRef.current}
                             onMicMuteChange={handleMicMuteChange}
                             onHeadphoneMuteChange={handleHeadphoneMuteChange}
                             onReconnect={handleManualReconnect}
@@ -441,7 +467,7 @@ const InterviewSimulation = () => {
                         />
                     </div>
                     <div style={{ width: isMobile ? '80%' : isTablet ? '70%' : '60%', overflow: 'hidden' }}>
-                        <ChatHistory ref={chatHistoryRef} session_token={sessionTokenParam || ''} isUserTurn={isUserTurn} />
+                        <ChatHistory ref={chatHistoryRef} session_token={sessionTokenParam || ''} isUserTurn={isUserTurnRef.current} />
                     </div>
                 </div>
                     

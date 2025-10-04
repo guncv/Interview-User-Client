@@ -61,6 +61,9 @@ export const WEBSOCKET_TYPES = {
   INACTIVITY_WARNING: "inactivity_warning",
   ACTIVITY_TIMER_RESET: "activity_timer_reset",
   INTERVIEW_SESSION_ALREADY_TIMED_OUT: "interview_session_already_timed_out",
+  INTERVIEW_SESSION_ALREADY_COMPLETED: "interview_session_already_completed",
+  INTERVIEW_COMPLETED: "interview_completed",
+  USER_COMPLETE_SESSION: "user_complete_session",
 } as const;
 
 export const ACTOR = {

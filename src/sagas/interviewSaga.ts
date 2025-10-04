@@ -99,13 +99,11 @@ export function* watcherCreateSessionWithExistingResume(): SagaIterator {
 
 function* workerGetChatHistoryBySessionToken(payload: GetChatHistoryBySessionTokenReq): SagaIterator {
     try {
-        yield delay(2000);
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         const response = yield call(apiGetChatHistoryBySessionToken, payload, token || '');
 
         if (response && response.success) {
             if (payload.turn_no === undefined || payload.turn_no === null) {
-                console.log("setChatHistory", response.data);
                 yield put(setChatHistory(response.data));
             } else {
                 yield put(addChatHistory(response.data));
@@ -148,6 +146,7 @@ export function* watcherEndInterviewSessionLoading(): SagaIterator {
 
 function* workerEndInterviewSessionFinished(): SagaIterator {
     try {
+        console.log('✅ End interview session finished');
         yield delay(0);
         yield call(hideSpinner);
         safeNavigate(ROUTES.RECORDINGS);
@@ -282,7 +281,6 @@ export function* watcherGetInterviewSessionInformationById(): SagaIterator {
 
 function* workerGetChatHistoryBySessionIDWithEvaluation(payload: GetChatHistoryBySessionIDWithEvaluationReq): SagaIterator {
     try {
-        yield delay(2000);
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         const response = yield call(apiGetChatHistoryBySessionIDWithEvaluation, payload, token || '');
         if (response && response.success) {
