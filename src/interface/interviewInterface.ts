@@ -128,7 +128,6 @@ export interface InterviewSessionSummary {
 	overall_score: number;
 	overall_score_color: string;
 	created_at: string;
-    created_at_display: string;
 }
 
 export interface Cursor {
@@ -156,6 +155,22 @@ export interface GetInterviewSessionListPageReq {
 	offset?: number;
 	limit?: number;
 	search_text?: string;
+}
+
+export interface GetFinalizingSessionsResp {
+	sessions: FinalizingInterviewSessionSummary[];
+	total_count: number;
+}
+
+export interface FinalizingInterviewSessionSummary {
+	id: string;
+	resume_id: string;
+	resume_file_name: string;
+	position: string;
+	status: string;
+	status_color: string;
+	total_time: string;
+	created_at: string;
 }
 
 export interface InterviewSession {

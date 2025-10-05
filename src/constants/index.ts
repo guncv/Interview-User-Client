@@ -24,6 +24,7 @@ export const API_ENDPOINTS = {
   DELETE_INTERVIEW_SESSION_BY_ID: '/api/v1/sessions',
   GET_INTERVIEW_SESSION_BY_ID: '/api/v1/sessions',
   GET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION: '/api/v1/sessions',
+  GET_FINALIZING_SESSIONS: '/api/v1/sessions/finalizing',
 
   // Evaluation API
   LIST_ALL_RUBRICS_AND_CRITERIA: '/api/v1/evaluation/rubrics',
@@ -48,9 +49,10 @@ export const WEBSOCKET_TYPES = {
   CONNECTION_ESTABLISHED: 'connection_established',
   SEGMENT_START: 'segment_start',
   SEGMENT_END: 'segment_end',
+  SEGMENT_AUDIO: 'segment_audio',
   INTERVIEWER_AUDIO_CHUNKING: 'interviewer_audio_chunking',
   USER_FULL_TRANSCRIPT: 'user_full_transcript',
-  INTERVIWER_RESPONSE: 'interviewer_response',
+  INTERVIEWER_RESPONSE: 'interviewer_response',
   CONVERSATION_STARTED: "conversation_started",
   CONVERSATION_STARTING: "conversation_starting",
   INTERVIEWER_TURN_START: "interviewer_turn_start",

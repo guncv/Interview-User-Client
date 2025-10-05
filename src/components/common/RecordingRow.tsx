@@ -6,6 +6,9 @@ import { ClickableLink } from './';
 import type { InterviewSessionSummary } from '../../interface/interviewInterface';
 import { safeNavigate } from '../../utils/navigation';
 import { useContextProvider } from '../layout/ContextProvider';
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime);
 
 interface RecordingRowProps {
     interview: InterviewSessionSummary;
@@ -93,9 +96,9 @@ const RecordingRow: React.FC<RecordingRowProps> = ({ interview, onDownloadResume
                 </span>
             </td>
             
-            <td style={{...dataCellStyle, textAlign: 'center', fontSize: Size.Small}}>
+            <td style={{...dataCellStyle, textAlign: 'center', fontSize: "12px"}}>
                 <span style={{ color: Colors.SECONDARY_TEXT_COLOR }}>
-                    {interview.created_at_display}
+                    {dayjs(interview.created_at).fromNow()}
                 </span>
             </td>
         </tr>
