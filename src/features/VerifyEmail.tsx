@@ -11,11 +11,13 @@ import AuthPageLayout from "../components/layout/AuthPageLayout";
 import { resetVerifyEmail, verifyEmail } from '../actions/userAction';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '../reducers/rootReducer';
+import { useLocation } from 'react-router-dom';
 
 const VerifyEmail = () => {
     const { isMobile } = useContextProvider();
     const dispatch = useDispatch();
     const { error } = useSelector((state: RootState) => state.user);
+    const location = useLocation();
     const [otp, setOtp] = useState('');
     const [otpError, setOtpError] = useState('');
     const [isVerifying, setIsVerifying] = useState(false);
@@ -25,11 +27,12 @@ const VerifyEmail = () => {
 
     const otpRegex = /^[A-Z0-9]{6}$/;
 
+
     useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
+        const urlParams = new URLSearchParams(location.search);
         const tokenFromUrl = urlParams.get('token');
         setToken(tokenFromUrl || '');
-    }, []);
+    }, [location.search]);
 
     useEffect(() => {
         if (error) {

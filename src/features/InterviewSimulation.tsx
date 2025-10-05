@@ -333,15 +333,12 @@ const InterviewSimulation = () => {
     }, [websocketUrl, handleWebSocketMessage]);
 
     useEffect(() => {
-        // Prevent double initialization - check if already connecting or open
         if (websocketRef.current?.readyState === WebSocket.OPEN || 
             websocketRef.current?.readyState === WebSocket.CONNECTING) {
-            // Connection exists, mark as initialized to prevent cleanup
             isInitializingRef.current = true;
             return;
         }
 
-        // Only initialize if not already in progress
         if (isInitializingRef.current) {
             return;
         }
@@ -350,12 +347,9 @@ const InterviewSimulation = () => {
         initializeWebSocket();
 
         return () => {
-            // Mark as not initializing anymore
             isInitializingRef.current = false;
             
-            // Delay cleanup to give Strict Mode a chance to remount
             setTimeout(() => {
-                // Only close if not reinitialized (true unmount, not Strict Mode)
                 if (!isInitializingRef.current && websocketRef.current) {
                     websocketRef.current.close();
                     websocketRef.current = null;
