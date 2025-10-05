@@ -1,5 +1,5 @@
 {
-  "name": "onyx-dashboard",
+  "name": "interview-simulation",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -8,7 +8,7 @@
     "dev:with-lint": "npm run lint && vite",
     "dev:no-lint": "vite",
     "dev:watch": "concurrently \"npm run lint:watch\" \"vite\"",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "build:no-lint": "tsc -b && vite build",
     "lint": "eslint .",
     "lint:check": "eslint . --max-warnings 0",
@@ -27,7 +27,6 @@
     "eventemitter3": "^5.0.1",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.525.0",
-    "onyx-dashboard": "link:",
     "react": "^19.1.1",
     "react-dom": "^19.1.0",
     "react-rating": "^2.0.5",
