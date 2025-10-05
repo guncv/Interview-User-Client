@@ -119,10 +119,6 @@ const InterviewSimulation = () => {
         setIsUserSpeaking(speaking && !isMicMuted);
     }, [isMicMuted]);
 
-    const handleUserSegmentEnd = useCallback(() => {
-        isUserTurnRef.current = false;
-    }, []);
-
     const handleEndInterviewSession = useCallback(() => {
         if (!sessionIdRef.current || !websocketRef.current) {
             return;
@@ -173,7 +169,7 @@ const InterviewSimulation = () => {
         safeNavigate(ROUTES.RECORDINGS);
     }, []);
 
-    useVoiceStreaming(websocketRef, sessionIdRef.current, handleUserSpeakingChange, isMicMuted, connectionState === CONVERSATION_STATUS.CONNECTED, isConversationStarted, handleUserSegmentEnd, isUserTurnRef.current);
+    useVoiceStreaming(websocketRef, sessionIdRef.current, handleUserSpeakingChange, isMicMuted, connectionState === CONVERSATION_STATUS.CONNECTED, isConversationStarted, isUserTurnRef);
 
     const handleMicMuteChange = useCallback((isMuted: boolean) => {
         setIsMicMuted(isMuted);

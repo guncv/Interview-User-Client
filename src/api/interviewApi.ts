@@ -195,7 +195,6 @@ export const apiGetFinalizingSessions = async (token: string) => {
             }
         );
 
-        console.log(response.data);
         return { success: true, data: response.data as GetFinalizingSessionsResp };
 
     }

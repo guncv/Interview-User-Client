@@ -9,8 +9,7 @@ export function useVoiceStreaming(
     isMicMuted?: boolean,
     isConnected?: boolean,
     isConversationStarted?: boolean,
-    onUserSegmentEnd?: () => void,
-    isUserTurn?: boolean
+    isUserTurnRef?: React.MutableRefObject<boolean>
 ) {
     const segmentIdRef = useRef<string | null>(null);
     const segmentStartedRef = useRef<boolean>(false);
@@ -20,9 +19,11 @@ export function useVoiceStreaming(
     const segmentStartTimeRef = useRef<number>(0);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
+    const lastSegmentEndTimeRef = useRef<number>(0);
+    const segmentCooldownRef = useRef<number>(2000);
 
     useEffect(() => {
-        if (!sessionId || !isConnected || !isConversationStarted || !isUserTurn) {
+        if (!sessionId || !isConnected || !isConversationStarted || !isUserTurnRef?.current) {
             return;
         }
 
@@ -80,9 +81,10 @@ export function useVoiceStreaming(
                         framedBuffer.set(headerLengthBuffer, 0);
                         framedBuffer.set(headerBytes, 4);
                         framedBuffer.set(new Uint8Array(audioArrayBuffer), 4 + headerBytes.length);
-            
+                        
                         websocketRef.current?.send(framedBuffer);
-            
+                        
+                        lastSegmentEndTimeRef.current = Date.now();
                         websocketRef.current?.send(
                             JSON.stringify({
                                 type: WEBSOCKET_TYPES.SEGMENT_END,
@@ -95,12 +97,19 @@ export function useVoiceStreaming(
                         segmentIdRef.current = null;
                         segmentStartedRef.current = false;
                         segmentStartTimeRef.current = 0;
-                        onUserSegmentEnd?.();
+                        if (isUserTurnRef) {
+                            isUserTurnRef.current = false;
+                        }
+                        console.log("sending segment end after setting", speakingRef.current, segmentStartedRef.current, isUserTurnRef?.current, "lastSegmentEndTime:", lastSegmentEndTimeRef.current, "currentTime:", Date.now(), "isUserTurn:", isUserTurnRef?.current);
                     };
             
                     reader.readAsArrayBuffer(fullBlob);
                 } else {
-                    onUserSegmentEnd?.();
+                    lastSegmentEndTimeRef.current = Date.now();
+                    // Set user turn to false immediately for real-time control
+                    if (isUserTurnRef) {
+                        isUserTurnRef.current = false;
+                    }
                 }
             };
 
@@ -115,7 +124,7 @@ export function useVoiceStreaming(
             const dataArray = new Uint8Array(analyser.fftSize);
 
             function detectSilence() {
-                if (!isUserTurn) {
+                if (!isUserTurnRef?.current) {
                     if (speakingRef.current) {
                         speakingRef.current = false;
                         onUserSpeakingChange?.(false);
@@ -133,19 +142,23 @@ export function useVoiceStreaming(
                 const rms = Math.sqrt(sum / dataArray.length);
                 const currentTime = Date.now();
 
-                const canSpeak = rms > AUDIO_LEVEL.MIN_AUDIO_LEVEL && !isMicMuted && isUserTurn;
+                const canSpeak = rms > AUDIO_LEVEL.MIN_AUDIO_LEVEL && !isMicMuted && isUserTurnRef?.current;
 
                 if (canSpeak) {
                     lastSpeechTimeRef.current = currentTime;
 
-                    if (!speakingRef.current) {
+                    const timeSinceLastSegment = Date.now() - lastSegmentEndTimeRef.current;
+                    const canStartNewSegment = timeSinceLastSegment >= segmentCooldownRef.current;
+                    
+                    if (!speakingRef.current && !segmentStartedRef.current && isUserTurnRef?.current && canStartNewSegment) {
+                        console.log("sending segment start", speakingRef.current, segmentStartedRef.current, isUserTurnRef?.current, canStartNewSegment, "timeSinceLastSegment:", timeSinceLastSegment, "lastSegmentEndTime:", lastSegmentEndTimeRef.current, "currentTime:", currentTime, "isUserTurn:", isUserTurnRef?.current);
                         speakingRef.current = true;
                         segmentStartTimeRef.current = currentTime;
                         const segmentId = generateSegmentId(sessionId || '');
                         segmentIdRef.current = segmentId;
                         segmentStartedRef.current = true;
                         onUserSpeakingChange?.(true);
-
+                        
                         websocketRef.current?.send(
                             JSON.stringify({
                                 type: WEBSOCKET_TYPES.SEGMENT_START,
@@ -187,5 +200,5 @@ export function useVoiceStreaming(
             audioContext?.close();
             if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
         };
-    }, [websocketRef, sessionId, onUserSpeakingChange, isMicMuted, isConnected, isConversationStarted, onUserSegmentEnd, isUserTurn]);
+    }, [websocketRef, sessionId, onUserSpeakingChange, isMicMuted, isConnected, isConversationStarted, isUserTurnRef]);
 }
