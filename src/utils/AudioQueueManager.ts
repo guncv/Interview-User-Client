@@ -1,3 +1,7 @@
+const sleep = (ms: number): Promise<void> => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+};
+
 export type AudioTurn = {
     turnId: string;
     chunks: ArrayBuffer[];
@@ -8,9 +12,12 @@ export type AudioTurn = {
         started_at: string;
         ended_at: string;
         current_state: string;
+        chunking_count?: number;
     };
     hasMetadata: boolean;
     isComplete: boolean;
+    expectedChunkCount?: number;
+    receivedChunkCount: number;
 };
 
 export interface AudioQueueCallbacks {
@@ -27,12 +34,14 @@ export class AudioQueueManager {
     private isPlaying: boolean = false;
     private currentTurnId: string | null = null;
     private currentAudio: HTMLAudioElement | null = null;
+    private callProcessAudioQueue: () => void;
 
-    constructor() {
+    constructor(callProcessAudioQueue: () => void) {
         this.audioTurnQueue = [];
         this.isPlaying = false;
         this.currentTurnId = null;
         this.currentAudio = null;
+        this.callProcessAudioQueue = callProcessAudioQueue;
     }
 
     private generateTurnId(): string {
@@ -50,22 +59,29 @@ export class AudioQueueManager {
                 turnId: this.currentTurnId,
                 chunks: [],
                 hasMetadata: false,
-                isComplete: false
+                isComplete: false,
+                receivedChunkCount: 0
             };
             this.audioTurnQueue.push(currentTurn);
         }
 
         currentTurn.chunks.push(audioData);
+        currentTurn.receivedChunkCount++;
+        
+        if (currentTurn.expectedChunkCount && currentTurn.receivedChunkCount >= currentTurn.expectedChunkCount && currentTurn.hasMetadata) {
+            currentTurn.isComplete = true;
+            this.currentTurnId = null;
+        }
     }
 
-    addMetadataToCurrentTurn(responseData: any): void {
+    addMetadataToCurrentTurn(responseData: any): boolean {
         if (!this.currentTurnId) {
-            return;
+            return false;
         }
 
         const currentTurn = this.audioTurnQueue.find(turn => turn.turnId === this.currentTurnId);
         if (!currentTurn) {
-            return;
+            return false;
         }
 
         currentTurn.metadata = {
@@ -74,12 +90,22 @@ export class AudioQueueManager {
             message: responseData.message || '',
             started_at: responseData.started_at || '',
             ended_at: responseData.ended_at || '',
-            current_state: responseData.current_state || ''
+            current_state: responseData.current_state || '',
+            chunking_count: responseData.chunking_count
         };
         currentTurn.hasMetadata = true;
-        currentTurn.isComplete = true;
-
-        this.currentTurnId = null;
+        
+        if (responseData.chunking_count && responseData.chunking_count > 0) {
+            currentTurn.expectedChunkCount = responseData.chunking_count;
+        }
+        
+        if (currentTurn.expectedChunkCount && currentTurn.receivedChunkCount >= currentTurn.expectedChunkCount) {
+            currentTurn.isComplete = true;
+            this.currentTurnId = null;
+            this.callProcessAudioQueue();
+            return true;
+        } 
+        return false;
     }
 
     private async processAudioQueue(
@@ -92,7 +118,17 @@ export class AudioQueueManager {
         }
 
         const completeTurnIndex = this.audioTurnQueue.findIndex(
-            turn => turn.isComplete && turn.hasMetadata && turn.chunks.length > 0
+            turn => {
+                if (!turn.isComplete || !turn.hasMetadata || turn.chunks.length === 0) {
+                    return false;
+                }
+                
+                if (turn.expectedChunkCount && turn.expectedChunkCount > 0) {
+                    return turn.receivedChunkCount >= turn.expectedChunkCount;
+                }
+                
+                return true;
+            }
         );
             
         if (completeTurnIndex === -1) {
@@ -155,6 +191,7 @@ export class AudioQueueManager {
             callbacks.setIsAiSpeaking(false);
             
             if (callbacks.getIsSessionCompleted?.()) {
+                await sleep(1000);
                 callbacks.sendCompleteSession?.();
             }
             
@@ -175,6 +212,7 @@ export class AudioQueueManager {
     ): void {
         if (!this.isPlaying) {
             this.processAudioQueue(callbacks, isHeadphonesMuted, isConnected);
+        } else {
         }
     }
 
@@ -205,5 +243,22 @@ export class AudioQueueManager {
 
     getIsPlaying(): boolean {
         return this.isPlaying;
+    }
+
+    completeCurrentTurn(): void {
+        if (!this.currentTurnId) {
+            return;
+        }
+
+        const currentTurn = this.audioTurnQueue.find(turn => turn.turnId === this.currentTurnId);
+        if (!currentTurn) {
+            return;
+        }
+
+        if (currentTurn.chunks.length > 0 && !currentTurn.expectedChunkCount) {
+            currentTurn.isComplete = true;
+            this.currentTurnId = null;
+            this.callProcessAudioQueue();
+        }
     }
 }

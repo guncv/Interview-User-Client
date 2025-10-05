@@ -15,8 +15,6 @@ interface InterviewRecordingProps {
     isUserTurn?: boolean;
     onMicMuteChange?: (isMuted: boolean) => void;
     onHeadphoneMuteChange?: (isMuted: boolean) => void;
-    onReconnect?: () => void;
-    websocketRef?: React.MutableRefObject<WebSocket | null>;
     elapsedTime?: number;
     isConnected?: boolean;
     isConversationStarted?: boolean;
@@ -43,8 +41,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     isUserTurn = false,
     onMicMuteChange,
     onHeadphoneMuteChange,
-    onReconnect,
-    websocketRef,
     elapsedTime = 0,
     isConnected = false,
     isConversationStarted = false,
@@ -67,7 +63,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     const [isMicMuted, setIsMicMuted] = useState<boolean>(false);
     const [isHeadphonesMuted, setIsHeadphonesMuted] = useState<boolean>(false);
     const [showSettings, setShowSettings] = useState<boolean>(false);
-    const [isReconnecting, setIsReconnecting] = useState<boolean>(false);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
@@ -274,76 +269,8 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
         setShowSettings(!showSettings);
     };
 
-    const initAudio = async () => {
-        try {
-            if (mediaStreamRef.current) {
-                mediaStreamRef.current.getTracks().forEach(track => track.stop());
-            }
-            if (audioContextRef.current) {
-                audioContextRef.current.close();
-            }
-
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: { 
-                    deviceId: selectedMicId === 'default' ? undefined : selectedMicId 
-                } 
-            });
-            
-            mediaStreamRef.current = stream;
-            audioContextRef.current = new AudioContext();
-            const source = audioContextRef.current.createMediaStreamSource(stream);
-            
-            gainNodeRef.current = audioContextRef.current.createGain();
-            
-            analyserRef.current = audioContextRef.current.createAnalyser();
-            analyserRef.current.fftSize = 512;
-            analyserRef.current.smoothingTimeConstant = 0.3;
-            
-            source.connect(gainNodeRef.current);
-            gainNodeRef.current.connect(analyserRef.current);
-            
-            const updateAudioLevel = () => {
-                if (analyserRef.current && !isMicMuted && isConnected) {
-                    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
-                    analyserRef.current.getByteFrequencyData(dataArray);
-                    const average = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
-                    const normalizedLevel = average / 255;
-                    setAudioLevel(normalizedLevel);
-                } else {
-                    setAudioLevel(0);
-                }
-                requestAnimationFrame(updateAudioLevel);
-            };
-            
-            updateAudioLevel();
-        } catch (error) {
-            console.error('Failed to initialize audio:', error);
-        }
-    };
-
-    const handleReconnect = async () => {
-        setIsReconnecting(true);
-        
-        try {
-            if (websocketRef?.current) {
-                websocketRef.current.close();
-            }
-
-            await initAudio();
-
-            setSessionInfo(prev => ({
-                ...prev,
-                interviewState: 'Ready for interview'
-            }));
-
-            if (onReconnect) {
-                onReconnect();
-            }
-        } catch (error) {
-            console.error('Failed to reconnect:', error);
-        } finally {
-            setIsReconnecting(false);
-        }
+    const handleReconnect = () => {
+        window.location.reload();
     };
 
     const handleEndInterview = () => {
@@ -544,7 +471,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                                 color: Colors.SECONDARY_TEXT_COLOR,
                                 fontWeight: '500'
                             }}>
-                                Software Engineer
+                                Interviewer
                             </div>
                         </div>
                         <div style={{
@@ -635,7 +562,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                     icon={<RotateCcw />}
                     buttonId="reconnect"
                     onClick={handleReconnect}
-                    isActive={!isReconnecting}
+                    isActive={true}
                     tooltip="Reconnect"
                     size="38px"
                     iconSize="38px"

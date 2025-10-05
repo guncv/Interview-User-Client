@@ -66,7 +66,7 @@ export function useVoiceStreaming(
                         const audioArrayBuffer = reader.result as ArrayBuffer;
             
                         const headerObj = {
-                            type: "segment_audio",
+                            type: WEBSOCKET_TYPES.SEGMENT_AUDIO,
                             session_id: sessionId,
                             segment_id: segmentIdRef.current,
                         };
@@ -85,6 +85,7 @@ export function useVoiceStreaming(
                         websocketRef.current?.send(framedBuffer);
                         
                         lastSegmentEndTimeRef.current = Date.now();
+                        console.log("sending segment end");
                         websocketRef.current?.send(
                             JSON.stringify({
                                 type: WEBSOCKET_TYPES.SEGMENT_END,
@@ -100,7 +101,6 @@ export function useVoiceStreaming(
                         if (isUserTurnRef) {
                             isUserTurnRef.current = false;
                         }
-                        console.log("sending segment end after setting", speakingRef.current, segmentStartedRef.current, isUserTurnRef?.current, "lastSegmentEndTime:", lastSegmentEndTimeRef.current, "currentTime:", Date.now(), "isUserTurn:", isUserTurnRef?.current);
                     };
             
                     reader.readAsArrayBuffer(fullBlob);
@@ -151,7 +151,6 @@ export function useVoiceStreaming(
                     const canStartNewSegment = timeSinceLastSegment >= segmentCooldownRef.current;
                     
                     if (!speakingRef.current && !segmentStartedRef.current && isUserTurnRef?.current && canStartNewSegment) {
-                        console.log("sending segment start", speakingRef.current, segmentStartedRef.current, isUserTurnRef?.current, canStartNewSegment, "timeSinceLastSegment:", timeSinceLastSegment, "lastSegmentEndTime:", lastSegmentEndTimeRef.current, "currentTime:", currentTime, "isUserTurn:", isUserTurnRef?.current);
                         speakingRef.current = true;
                         segmentStartTimeRef.current = currentTime;
                         const segmentId = generateSegmentId(sessionId || '');
@@ -159,6 +158,7 @@ export function useVoiceStreaming(
                         segmentStartedRef.current = true;
                         onUserSpeakingChange?.(true);
                         
+                        console.log("sending segment start");
                         websocketRef.current?.send(
                             JSON.stringify({
                                 type: WEBSOCKET_TYPES.SEGMENT_START,
