@@ -12,13 +12,14 @@ import { useContextProvider } from "../components/layout/ContextProvider";
 import { setEndInterviewSessionLoadingAction, setEndInterviewSessionFinishedAction } from "../actions/interviewAction";
 import { AudioQueueManager } from "../utils/AudioQueueManager";
 import { safeNavigate } from "../utils/navigation";
+import { config } from "../../env";
 
 type WebSocketConnectionState =typeof CONVERSATION_STATUS.CONNECTING | typeof CONVERSATION_STATUS.CONNECTED | typeof CONVERSATION_STATUS.DISCONNECTED | typeof CONVERSATION_STATUS.ERROR;
 
 const InterviewSimulation = () => {
     const [searchParams] = useSearchParams();
     const sessionTokenParam = searchParams.get('session_token');
-    const [websocketUrl] = useState(`ws://localhost:8080/api/v1/ws/connect/${sessionTokenParam}`);
+    const [websocketUrl] = useState(`${config.WebSocketUrl}/api/v1/ws/connect/${sessionTokenParam}`);
     const sessionIdRef = useRef<string | null>(null);
     const [isAiSpeaking, setIsAiSpeaking] = useState<boolean>(false);
     const [isUserSpeaking, setIsUserSpeaking] = useState<boolean>(false);
