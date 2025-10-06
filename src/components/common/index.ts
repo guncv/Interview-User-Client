@@ -7,6 +7,7 @@ export { default as ErrorMessage } from './ErrorMessage';
 export { default as FullPageError } from './FullPageError';
 export { default as FullPageLoading } from './FullPageLoading';
 export { default as IconLabelPair } from './IconLabelPair';
+export { GoogleSignInButton } from './GoogleSignInButton';
 export { PrimaryButton } from './PrimaryButton';
 export { PrimaryDatePicker } from './PrimaryDatePicker';
 export { PrimaryDropdown } from './PrimaryDropdown';

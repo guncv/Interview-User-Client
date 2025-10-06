@@ -1,5 +1,5 @@
 import { all } from 'redux-saga/effects';
-import { watcherForgotPassword, watcherSignOut, watcherSignIn, watcherVerifyEmail, watcherSignUp, watcherResetVerifyEmail, watcherResetPassword } from './userSaga';
+import { watcherSignOut, watcherGetGoogleAuthURL, watcherHandleGoogleCallback } from './userSaga';
 import { watcherGetResumeById, watcherListResume, watcherDownloadResumeBySessionToken } from './resumeSaga';
 import { watcherCreateSessionWithNewResume, watcherCreateSessionWithExistingResume, watcherGetChatHistoryBySessionToken, watcherEndInterviewSessionLoading, watcherEndInterviewSessionFinished, watcherGetInterviewSessionListCursor, watcherGetInterviewSessionListPage, watcherDeleteInterviewSessionById, watcherGetInterviewSessionInformationById, watcherGetChatHistoryBySessionIDWithEvaluation, watcherGetFinalizingSessions } from './interviewSaga';
 import { watcherListIssueCategories, watcherCreateIssueReport } from './issueReport';
@@ -9,13 +9,9 @@ import { watcherGetEvaluationRubricAndCriteria, watcherGetPhraseEvaluationsWithC
 export default function* rootSaga() {
     yield all([
         // ===== USER AUTHENTICATION MODULE =====
-        watcherSignIn(),
-        watcherForgotPassword(),
         watcherSignOut(),
-        watcherSignUp(),
-        watcherVerifyEmail(),
-        watcherResetVerifyEmail(),
-        watcherResetPassword(),
+        watcherGetGoogleAuthURL(),
+        watcherHandleGoogleCallback(),
         
         // ===== RESUME MANAGEMENT MODULE =====
         watcherListResume(),

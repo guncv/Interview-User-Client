@@ -1,14 +1,10 @@
 // API Constants
 export const API_ENDPOINTS = {
   // Auth API
-  SIGN_UP: '/api/v1/auth/sign-up',
   SIGN_IN: '/api/v1/auth/sign-in',
-  VERIFY_EMAIL: '/api/v1/auth/verify-email',
-  RESET_VERIFY_EMAIL: '/api/v1/auth/reset-verify-email',
-  RESET_PASSWORD: '/api/v1/auth/reset-password',
-  FORGOT_PASSWORD: '/api/v1/auth/forgot-password',
   SIGN_OUT: '/api/v1/auth/sign-out',
-  REFRESH_TOKEN: '/api/v1/auth/refresh-token',
+  GOOGLE_AUTH_URL: '/api/v1/auth/google/url',
+  GOOGLE_CALLBACK: '/api/v1/auth/google/callback',
 
   // Resume API
   LIST_RESUME: '/api/v1/resumes/list',
@@ -113,11 +109,6 @@ export const HTTP_STATUS = {
 // Navigation Routes
 export const ROUTES = {
   SIGN_IN: '/',
-  VERIFY_EMAIL: '/verify-email',
-  SIGN_UP: '/sign-up',
-  FORGOT_PASSWORD: '/forgot-password',
-  RESET_PASSWORD: '/reset-password',
-  RESET_PASSWORD_SUCCESS: '/reset-password-success',
   RECORDINGS: '/recordings',
   INTERVIEW: '/interview',
 } as const;
