@@ -5,6 +5,8 @@ export const API_ENDPOINTS = {
   SIGN_OUT: '/api/v1/auth/sign-out',
   GOOGLE_AUTH_URL: '/api/v1/auth/google/url',
   GOOGLE_CALLBACK: '/api/v1/auth/google/callback',
+  FACEBOOK_AUTH_URL: '/api/v1/auth/facebook/url',
+  FACEBOOK_CALLBACK: '/api/v1/auth/facebook/callback',
 
   // Resume API
   LIST_RESUME: '/api/v1/resumes/list',

@@ -1,5 +1,11 @@
 import { AxiosError } from 'axios';
-import type { GoogleAuthURLResponse, GoogleCallbackRequest, GoogleCallbackResponse } from '../interface/userInterface';
+import type { GoogleAuthURLResponse,
+    GoogleCallbackRequest,
+    GoogleCallbackResponse,
+    FacebookAuthURLResponse,
+    FacebookCallbackRequest,
+    FacebookCallbackResponse,
+} from '../interface/userInterface';
 import { handleApiError } from './errorApi';
 import { API_ENDPOINTS } from '../constants';
 import { axiosInstance } from './axiosInstance';
@@ -24,6 +30,31 @@ export const apiHandleGoogleCallback = async (payload: GoogleCallbackRequest) =>
         });
 
         return { success: true, data: response.data as GoogleCallbackResponse };
+    } catch (error) {
+        return handleApiError(error as AxiosError);
+    }
+};
+
+export const apiGetFacebookAuthURL = async () => {
+    try {
+        const response = await axiosInstance.get(API_ENDPOINTS.FACEBOOK_AUTH_URL);
+
+        return { success: true, data: response.data as FacebookAuthURLResponse };
+    } catch (error) {
+        return handleApiError(error as AxiosError);
+    }
+};
+
+export const apiHandleFacebookCallback = async (payload: FacebookCallbackRequest) => {
+    try {
+        const response = await axiosInstance.get(API_ENDPOINTS.FACEBOOK_CALLBACK, {
+            params: {
+                code: payload.code,
+                state: payload.state,
+            },
+        });
+
+        return { success: true, data: response.data as FacebookCallbackResponse };
     } catch (error) {
         return handleApiError(error as AxiosError);
     }

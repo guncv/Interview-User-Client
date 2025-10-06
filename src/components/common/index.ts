@@ -8,6 +8,8 @@ export { default as FullPageError } from './FullPageError';
 export { default as FullPageLoading } from './FullPageLoading';
 export { default as IconLabelPair } from './IconLabelPair';
 export { GoogleSignInButton } from './GoogleSignInButton';
+export { FacebookSignInButton } from './FacebookSignInButton';
+export { OrDivider } from './OrDivider';
 export { PrimaryButton } from './PrimaryButton';
 export { PrimaryDatePicker } from './PrimaryDatePicker';
 export { PrimaryDropdown } from './PrimaryDropdown';
