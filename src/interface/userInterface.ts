@@ -1,37 +1,27 @@
-export interface UserSignInRequest {
-    email: string;
-    password: string;
+export interface GoogleAuthURLResponse {
+    auth_url: string;
 }
 
-export interface UserSignUpRequest {
-    email: string;
-    password: string;
-    full_name: string;
-    country: string;
-    gender: string;
-    date_of_birth: string;
-}
-
-export interface UserVerifyEmailRequest {
-    token: string;
+export interface GoogleCallbackRequest {
     code: string;
+    state?: string;
 }
 
-export interface UserSignInResponse {
-    id: string;
+export interface GoogleCallbackResponse {
     access_token: string;
-    is_temp_password: boolean;
+    refresh_token: string;
 }
 
-export interface UserForgotPasswordRequest {
-    email: string;
+export interface FacebookAuthURLResponse {
+    auth_url: string;
 }
 
-export interface UserResetPasswordRequest {
-    token: string;
-    password: string;
+export interface FacebookCallbackRequest {
+    code: string;
+    state?: string;
 }
 
-export interface UserSetInitialPasswordRequest {
-    password: string;
+export interface FacebookCallbackResponse {
+    access_token: string;
+    refresh_token: string;
 }

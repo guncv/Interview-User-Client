@@ -1,9 +1,6 @@
 import SignInPage from '../features/SignInPage';
-import ForgotPasswordPage from '../features/ForgotPasswordPage';
-import SignUpPage from '../features/SignUpPage';
-import VerifyEmail from '../features/VerifyEmail';
-import ResetPassword from '../features/ResetPassword';
-import ResetPasswordSuccess from '../features/ResetPasswordSuccess';
+import OAuthCallbackPage from '../features/OAuthCallbackPage';
+import FacebookCallbackPage from '../features/FacebookCallbackPage';
 import RecordingListPage from '../features/RecordingListPage';
 import CreateInterviewPage from '../features/CreateInterviewPage';
 import InterviewSimulation from '../features/InterviewSimulation';
@@ -22,11 +19,8 @@ export interface RouteConfig {
 
 export const routes: RouteConfig[]= [
   { path: '/', component: SignInPage, exact: true },
-  { path: '/forgot-password', component: ForgotPasswordPage, exact: true },
-  { path: '/sign-up', component: SignUpPage, exact: true},
-  { path: '/verify-email', component: VerifyEmail, exact: true},
-  { path: '/reset-password', component: ResetPassword, exact: true},
-  { path: '/reset-password-success', component: ResetPasswordSuccess, exact: true},
+  { path: '/auth/google/callback', component: OAuthCallbackPage, exact: true },
+  { path: '/auth/facebook/callback', component: FacebookCallbackPage, exact: true },
   { path: '/recordings', component: RecordingListPage, exact: true},
   { path: '/create-interview', component: CreateInterviewPage, exact: true},
   { path: '/interview', component: InterviewSimulation, exact: true},

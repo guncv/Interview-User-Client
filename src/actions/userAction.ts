@@ -1,28 +1,24 @@
-import type { UserSignUpRequest, UserVerifyEmailRequest } from "../interface/userInterface";
-
-export const SIGN_IN = 'SIGN_IN';
-export const SIGN_UP = 'SIGN_UP';
-export const FORGOT_PASSWORD = 'FORGOT_PASSWORD';
 export const SET_USER_ERROR = 'SET_USER_ERROR';
 export const SIGN_OUT = 'SIGN_OUT';
-export const VERIFY_EMAIL = 'VERIFY_EMAIL';
-export const RESET_VERIFY_EMAIL = 'RESET_VERIFY_EMAIL';
-export const RESET_PASSWORD = 'RESET_PASSWORD';
+export const GET_GOOGLE_AUTH_URL = 'GET_GOOGLE_AUTH_URL';
+export const HANDLE_GOOGLE_CALLBACK = 'HANDLE_GOOGLE_CALLBACK';
+export const GET_FACEBOOK_AUTH_URL = 'GET_FACEBOOK_AUTH_URL';
+export const HANDLE_FACEBOOK_CALLBACK = 'HANDLE_FACEBOOK_CALLBACK';
 
-export const verifyEmail = (payload: UserVerifyEmailRequest) => {
-    return { type: VERIFY_EMAIL, payload };
+export const getGoogleAuthURL = () => {
+    return { type: GET_GOOGLE_AUTH_URL };
 };
 
-export const signUp = (payload: UserSignUpRequest) => {
-    return { type: SIGN_UP, payload };
+export const handleGoogleCallback = (code: string, state?: string) => {
+    return { type: HANDLE_GOOGLE_CALLBACK, payload: { code, state } };
 };
 
-export const signIn = (email: string, password: string) => {
-    return { type: SIGN_IN, payload: { email, password } };
+export const getFacebookAuthURL = () => {
+    return { type: GET_FACEBOOK_AUTH_URL };
 };
 
-export const forgotPassword = (email: string) => {
-    return { type: FORGOT_PASSWORD, payload: { email } };
+export const handleFacebookCallback = (code: string, state?: string) => {
+    return { type: HANDLE_FACEBOOK_CALLBACK, payload: { code, state } };
 };
 
 export const setUserError = (message: string) => {
@@ -31,12 +27,4 @@ export const setUserError = (message: string) => {
 
 export const signOut = () => {
     return { type: SIGN_OUT };
-};
-
-export const resetVerifyEmail = (token: string) => {
-    return { type: RESET_VERIFY_EMAIL, payload: { token } };
-};
-
-export const resetPassword = (token: string, password: string) => {
-    return { type: RESET_PASSWORD, payload: { token, password } };
 };

@@ -1,8 +1,3 @@
-const isValidEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-};
-
 const formatDateForBackend = (dateString: string): string => {
     if (!dateString) return '';
     
@@ -62,4 +57,4 @@ const formatDate = (dateString: string): string => {
     }
 };
 
-export { isValidEmail, formatDateForBackend, formatDuration, formatFileSize, formatDate };
+export { formatDateForBackend, formatDuration, formatFileSize, formatDate };
