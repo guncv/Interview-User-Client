@@ -33,8 +33,10 @@ const InterviewSimulation = () => {
     const [isConversationStarted, setIsConversationStarted] = useState<boolean>(false);
     const [showInactivityPopup, setShowInactivityPopup] = useState<boolean>(false);
     const [showSessionTimeoutPopup, setShowSessionTimeoutPopup] = useState<boolean>(false);
+    const [showMicPermissionPopup, setShowMicPermissionPopup] = useState<boolean>(false);
     const [inactivityMessage, setInactivityMessage] = useState<string>("");
     const [timeoutMessage, setTimeoutMessage] = useState<string>("");
+    const [micPermissionError, setMicPermissionError] = useState<string>("");
     const { isMobile, isTablet } = useContextProvider();
     const isInterviewerTurnEndedReceivedRef = useRef<boolean>(false);
     
@@ -191,7 +193,23 @@ const InterviewSimulation = () => {
         safeNavigate(ROUTES.RECORDINGS);
     }, []);
 
-    useVoiceStreaming(websocketRef, sessionIdRef.current, handleUserSpeakingChange, isMicMuted, connectionState === CONVERSATION_STATUS.CONNECTED, isConversationStarted, isUserTurnRef);
+    const handleMicPermissionError = useCallback((error: string) => {
+        setMicPermissionError(error);
+        setShowMicPermissionPopup(true);
+    }, []);
+
+    const handleRetryMicPermission = useCallback(async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(track => track.stop());
+            setShowMicPermissionPopup(false);
+            setMicPermissionError("");
+        } catch (error) {
+            console.error('Microphone permission still denied:', error);
+        }
+    }, []);
+
+    useVoiceStreaming(websocketRef, sessionIdRef.current, handleUserSpeakingChange, isMicMuted, connectionState === CONVERSATION_STATUS.CONNECTED, isConversationStarted, isUserTurnRef, handleMicPermissionError);
 
     const handleMicMuteChange = useCallback((isMuted: boolean) => {
         setIsMicMuted(isMuted);
@@ -471,6 +489,7 @@ const InterviewSimulation = () => {
                             isConnected={connectionState === CONVERSATION_STATUS.CONNECTED}
                             isConversationStarted={isConversationStarted}
                             onEndInterview={handleEndInterviewSession}
+                            onMicPermissionError={handleMicPermissionError}
                         />
                     </div>
                     <div style={{ width: isMobile ? '80%' : isTablet ? '70%' : '60%', overflow: 'hidden' }}>
@@ -501,6 +520,19 @@ const InterviewSimulation = () => {
                 confirmButtonColor={Colors.TEXT_ERROR_COLOR}
                 onConfirm={handleGoToRecordings}
                 onCancel={handleGoToRecordings}
+            />
+
+            <ConfirmationModal
+                isOpen={showMicPermissionPopup}
+                title="Microphone Access Required"
+                message={micPermissionError || "This application needs microphone access to conduct the interview. Please allow microphone access and try again."}
+                confirmText="Retry"
+                cancelText="Continue Without Mic"
+                confirmButtonColor={Colors.SUCCESS_COLOR}
+                cancelButtonColor={Colors.TEXT_WHITE_COLOR}
+                cancelButtonBackground={Colors.SECONDARY_TEXT_COLOR}
+                onConfirm={handleRetryMicPermission}
+                onCancel={() => setShowMicPermissionPopup(false)}
             />
         </ContentLayout>
     );

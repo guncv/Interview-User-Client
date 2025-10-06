@@ -19,6 +19,7 @@ interface InterviewRecordingProps {
     isConnected?: boolean;
     isConversationStarted?: boolean;
     onEndInterview?: () => void;
+    onMicPermissionError?: (error: string) => void;
 }
 
 interface MicrophoneDevice {
@@ -45,6 +46,7 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
     isConnected = false,
     isConversationStarted = false,
     onEndInterview,
+    onMicPermissionError,
 }) => {
     void websocketUrl;
     void sessionToken;
@@ -184,6 +186,33 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 
                 updateAudioLevel();
             } catch (error) {
+                console.error('Failed to initialize audio analysis:', error);
+                
+                let errorMessage = "Microphone access is required for audio analysis.";
+                
+                if (error instanceof DOMException) {
+                    switch (error.name) {
+                        case 'NotAllowedError':
+                            errorMessage = "Microphone access was denied. Please allow microphone access in your browser settings and refresh the page.";
+                            break;
+                        case 'NotFoundError':
+                            errorMessage = "No microphone found. Please connect a microphone and try again.";
+                            break;
+                        case 'NotReadableError':
+                            errorMessage = "Microphone is being used by another application. Please close other applications using the microphone and try again.";
+                            break;
+                        case 'OverconstrainedError':
+                            errorMessage = "Microphone constraints cannot be satisfied. Please check your microphone settings.";
+                            break;
+                        case 'SecurityError':
+                            errorMessage = "Microphone access is blocked due to security restrictions. Please check your browser settings.";
+                            break;
+                        default:
+                            errorMessage = `Microphone access failed: ${error.message}`;
+                    }
+                }
+                
+                onMicPermissionError?.(errorMessage);
             }
         };
 
