@@ -1,6 +1,6 @@
 import React, { useState, useEffect, type CSSProperties } from 'react';
-import { X, AlertCircle } from 'lucide-react';
-import { PrimaryButton, PrimaryTextArea, PrimaryDropdown } from '../common';
+import { X } from 'lucide-react';
+import { InsiderLoadingSpinner, PrimaryButton, PrimaryTextArea } from '../common';
 import Colors from '../../assets/styles/Color';
 import Size from '../../assets/styles/Size';
 import font from '../../assets/styles/Font';
@@ -21,7 +21,7 @@ const CreateAndUpdateIssuePopup: React.FC<CreateAndUpdateIssuePopupProps> = ({
 }) => {
     const { isMobile } = useContextProvider();
     const dispatch = useDispatch();
-    const { listIssueCategories } = useSelector((state: RootState) => state.issueReport);
+    const { listIssueCategories, listIssueCategoriesLoading } = useSelector((state: RootState) => state.issueReport);
 
     const [description, setDescription] = useState('');
     const [categoryId, setCategoryId] = useState('');
@@ -191,63 +191,63 @@ const CreateAndUpdateIssuePopup: React.FC<CreateAndUpdateIssuePopupProps> = ({
                 </div>
 
                 <form style={formStyle} onSubmit={(e) => e.preventDefault()}>
-                    {listIssueCategories.data.length > 0 ? (
-                        <PrimaryDropdown
-                            label="Category"
-                            value={categoryId}
-                            onChange={setCategoryId}
-                            options={listIssueCategories.data.map((category) => ({
-                                value: category.id,
-                                label: category.name,
-                            }))}
-                            placeholder="Select a category"
-                            error={errors.categoryId}
-                            disabled={isSubmitting}
-                        />
-                    ) : (
-                        <div>
+                    <div>
+                        <div style={{
+                            fontSize: isMobile ? Size.Small : Size.Medium,
+                            color: Colors.PRIMARY_COLOR,
+                            marginBottom: Size.Small,
+                            textAlign: 'start',
+                        }}>
+                            Category
+                        </div>
+
+                        {listIssueCategoriesLoading ? (
                             <div style={{
-                                fontSize: isMobile ? Size.Small : Size.Medium,
-                                color: Colors.PRIMARY_COLOR,
-                                marginBottom: Size.Small,
-                                textAlign: 'start',
-                            }}>
-                                Category
-                            </div>
-                            <div style={{
-                                width: '100%',
-                                marginTop: Size.Small,
-                                height: isMobile ? '35px' : '45px',
-                                border: `1px solid ${Colors.SECONDARY_TEXT_COLOR}`,
-                                borderRadius: Size.Small,
-                                padding: Size.Small,
-                                paddingLeft: Size.Medium,
-                                paddingRight: Size.Medium,
-                                fontFamily: font.Regular,
-                                backgroundColor: Colors.BORDER_COLOR,
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'center',
-                                color: Colors.SECONDARY_TEXT_COLOR,
-                                fontSize: isMobile ? Size.Small : Size.Medium,
-                                gap: Size.Small,
+                                gap: '8px',
                             }}>
-                                <AlertCircle size={16} />
-                                No categories available
+                                <InsiderLoadingSpinner isVisible={true} wrapperStyle={{ display: 'flex', alignItems: 'center', gap: '8px' }}/>
                             </div>
-                            {errors.categoryId && (
-                                <div style={{
-                                    fontSize: Size.Small,
-                                    color: Colors.TEXT_ERROR_COLOR,
-                                    fontFamily: font.Regular,
-                                    textAlign: 'right',
-                                    marginTop: Size.Small,
-                                }}>
-                                    {errors.categoryId}
-                                </div>
-                            )}
+                        ) : (
+
+                        <div style={{ 
+                            display: 'flex', 
+                            flexWrap: 'wrap', 
+                            gap: '8px',
+                            marginBottom: '20px'
+                        }}>
+                            {listIssueCategories.data.map((category) => (
+                                <button
+                                    key={category.id}
+                                    type="button"
+                                    onClick={() => setCategoryId(category.id)}
+                                    disabled={isSubmitting}
+                                    style={{
+                                        padding: '8px 16px',
+                                        borderRadius: '20px',
+                                        border: categoryId === category.id
+                                            ? `1px solid ${Colors.ACCENT_COLOR}`
+                                        : `1px solid ${Colors.BORDER_COLOR}`,
+                                        backgroundColor: categoryId === category.id
+                                            ? Colors.ACCENT_COLOR_LIGHT
+                                            : Colors.BACKGROUND_COLOR,
+                                        color: categoryId === category.id
+                                            ? Colors.ACCENT_COLOR
+                                            : Colors.PRIMARY_COLOR,
+                                        cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                                        fontSize: '12px',
+                                        fontFamily: font.Regular,
+                                        transition: 'all 0.2s ease',
+                                        opacity: isSubmitting ? 0.6 : 1
+                                }}
+                            >
+                                {category.name}
+                            </button>
+                            ))}
                         </div>
-                    )}
+                        )}
+                    </div>
 
                     <div>
                         <PrimaryTextArea

@@ -1,11 +1,13 @@
 import { createSelector } from '@reduxjs/toolkit';
 import type { RootState } from './rootReducer';
 import type { ListIssueCategoriesResp, UserIssueReport } from '../interface/reportIssueInterface';
-import { SET_ISSUE_REPORT_ERROR, SET_LIST_ISSUE_CATEGORY } from '../actions/issueReport';
+import { SET_ISSUE_REPORT_ERROR, SET_LIST_ISSUE_CATEGORY, SET_LIST_ISSUE_CATEGORY_LOADING, SET_LIST_ISSUE_CATEGORY_ERROR } from '../actions/issueReport';
 
 type IssueReportState = {
     error: string;
     listIssueCategories: ListIssueCategoriesResp;
+    listIssueCategoriesLoading: boolean;
+    listIssueCategoriesError: string;
 }
 
 type IssueReportStateAction = {
@@ -14,6 +16,8 @@ type IssueReportStateAction = {
         error: string;
         listIssueCategories: ListIssueCategoriesResp;
         issueReport: UserIssueReport;
+        listIssueCategoriesLoading: boolean;
+        listIssueCategoriesError: string;
     }
 }
 
@@ -22,6 +26,8 @@ const initialState: IssueReportState = {
     listIssueCategories: {
         data: [],
     },
+    listIssueCategoriesLoading: false,
+    listIssueCategoriesError: '',
 };
 
 export const issueReportReducer = (
@@ -38,6 +44,19 @@ export const issueReportReducer = (
             return {
             ...state,
             listIssueCategories: action.payload.listIssueCategories,
+            listIssueCategoriesLoading: false,
+            listIssueCategoriesError: '',
+            };
+        case SET_LIST_ISSUE_CATEGORY_LOADING:
+            return {
+            ...state,
+            listIssueCategoriesLoading: action.payload.listIssueCategoriesLoading,
+            };
+        case SET_LIST_ISSUE_CATEGORY_ERROR:
+            return {
+            ...state,
+            listIssueCategoriesError: action.payload.listIssueCategoriesError,
+            listIssueCategoriesLoading: false,
             };
         default:
             return state;
@@ -51,5 +70,7 @@ export const issueReportReducer = (
         (issueReport: IssueReportState) => ({
             error: issueReport.error,
             listIssueCategories: issueReport.listIssueCategories,
+            listIssueCategoriesLoading: issueReport.listIssueCategoriesLoading,
+            listIssueCategoriesError: issueReport.listIssueCategoriesError,
         }),
     );

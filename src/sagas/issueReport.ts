@@ -5,7 +5,7 @@ import { ERROR_MESSAGES, HTTP_STATUS, STORAGE_KEYS } from "../constants";
 import { apiCreateIssueReport, apiListIssueCategories } from "../api/issueReportApi";
 import { safeNavigate } from "../utils/navigation";
 import { ROUTES } from "../constants";
-import { setIssueReportErrorAction, setListIssueCategoryAction, LIST_ISSUE_CATEGORIES, CREATE_ISSUE_REPORT } from "../actions/issueReport";
+import { setIssueReportErrorAction, setListIssueCategoryAction, LIST_ISSUE_CATEGORIES, CREATE_ISSUE_REPORT, setListIssueCategoryLoadingAction, setListIssueCategoryErrorAction } from "../actions/issueReport";
 import type { CreateUserIssueReportReq } from "../interface/reportIssueInterface";
 
 function* workerCreateIssueReport(payload: CreateUserIssueReportReq): SagaIterator {
@@ -38,8 +38,7 @@ export function* watcherCreateIssueReport(): SagaIterator {
 
 function* workerListIssueCategories(): SagaIterator {
     try {
-        yield delay(0);
-        yield call(showSpinner);
+        yield put(setListIssueCategoryLoadingAction(true));
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         const response = yield call(apiListIssueCategories, token || '');
 
@@ -47,15 +46,16 @@ function* workerListIssueCategories(): SagaIterator {
             yield put(setListIssueCategoryAction(response.data));
         } else {
             yield put(setListIssueCategoryAction({ data: [] }));
-            yield call(hideSpinner);
+            yield put(setListIssueCategoryLoadingAction(false));
             yield call(handleStatusIssueReportError, response.statusCode, response.message);
         }
-        yield call(hideSpinner);
+        yield put(setListIssueCategoryLoadingAction(false));
     }
     catch (error) {
         yield put(setListIssueCategoryAction({ data: [] }));
-        yield call(hideSpinner);
+        yield put(setListIssueCategoryLoadingAction(false));
         const message = (error as { message?: string })?.message || ERROR_MESSAGES.UNEXPECTED_ERROR;
+        yield put(setListIssueCategoryErrorAction(message));
         yield call(handleStatusIssueReportError, 0, message);
     }
 }
