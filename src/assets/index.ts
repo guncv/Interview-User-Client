@@ -1,2 +1,1 @@
-// Assets
 export * from './styles'; 

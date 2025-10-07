@@ -29,10 +29,12 @@ export const SET_CREATE_INTERVIEW_SUCCESS = 'SET_CREATE_INTERVIEW_SUCCESS';
 export const GET_INTERVIEW_SESSION_LIST_CURSOR = 'GET_INTERVIEW_SESSION_LIST_CURSOR';
 export const GET_INTERVIEW_SESSION_LIST_PAGE = 'GET_INTERVIEW_SESSION_LIST_PAGE';
 export const SET_INTERVIEW_SESSION_LIST = 'SET_INTERVIEW_SESSION_LIST';
+export const SET_INTERVIEW_SESSION_LIST_LOADING = 'SET_INTERVIEW_SESSION_LIST_LOADING';
 export const DELETE_INTERVIEW_SESSION_BY_ID = 'DELETE_INTERVIEW_SESSION_BY_ID';
 
 export const GET_FINALIZING_SESSIONS = 'GET_FINALIZING_SESSIONS';
 export const SET_FINALIZING_SESSIONS = 'SET_FINALIZING_SESSIONS';
+export const SET_FINALIZING_SESSIONS_LOADING = 'SET_FINALIZING_SESSIONS_LOADING';
 
 export const GET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION = 'GET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION';
 export const SET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION = 'SET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION';
@@ -80,6 +82,14 @@ export const setEndInterviewSessionLoadingAction = () => {
 
 export const setEndInterviewSessionFinishedAction = () => {
     return { type: SET_END_INTERVIEW_SESSION_FINISHED};
+};
+
+export const setInterviewSessionListLoading = (isLoading: boolean) => {
+    return { type: SET_INTERVIEW_SESSION_LIST_LOADING, payload: { isLoading } };
+};
+
+export const setFinalizingSessionsLoading = (isLoading: boolean) => {
+    return { type: SET_FINALIZING_SESSIONS_LOADING, payload: { isLoading } };
 };
 
 export const getInterviewSessionListCursorAction = (params: GetInterviewSessionListCursorReq) => {

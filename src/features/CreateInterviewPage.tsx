@@ -57,9 +57,6 @@ const CreateInterviewPage = () => {
   }, []);
 
   useEffect(() => {
-    if (error) {
-      console.error(error);
-    }
     if (success) {
       setUpdatedAt(success.last_updated_at);
       setResumeList(success.resume_content);
@@ -132,7 +129,6 @@ const CreateInterviewPage = () => {
           });
           
         } catch (error: any) {
-          console.error('Failed to create interview:', error);
 
           if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
             safeNavigate(ROUTES.SIGN_IN);
@@ -157,7 +153,6 @@ const CreateInterviewPage = () => {
         dispatch(createInterviewSessionWithExistingResume(request));;
       }
     } catch (error) {
-      console.error('Error creating interview session:', error);
     } 
   };
 

@@ -2,8 +2,8 @@ export interface InterviewRecording {
     id: string;
     title: string;
     description?: string;
-    duration: number; // in seconds
-    fileSize: number; // in bytes
+    duration: number;
+    fileSize: number;
     fileUrl: string;
     thumbnailUrl?: string;
     status: 'processing' | 'completed' | 'failed';
@@ -68,8 +68,8 @@ export interface InterviewRecordingListResponse {
 
 export interface InterviewRecordingStats {
     totalRecordings: number;
-    totalDuration: number; // in seconds
-    totalFileSize: number; // in bytes
+    totalDuration: number;
+    totalFileSize: number;
     recordingsByStatus: {
         processing: number;
         completed: number;
@@ -78,7 +78,6 @@ export interface InterviewRecordingStats {
     recordingsByCategory: Record<string, number>;
 }
 
-// New interfaces for creating interview sessions
 export interface CreateInterviewSessionWithNewResumeRequest {
     file: File;
     position: string;
@@ -186,7 +185,6 @@ export interface JobRequirement {
     isRequired: boolean;
 }
 
-// Form validation errors
 export interface CreateInterviewFormErrors {
     file?: string;
     resumeId?: string;
@@ -263,12 +261,12 @@ export interface SubCategoryScore {
 }
 
 export interface EvaluationAnalytics {
-	total_duration: number; // in seconds
+	total_duration: number;
 	speaking_time: {
 		user: number;
 		interviewer: number;
 	};
-	response_times: number[]; // average response times
+	response_times: number[];
 	keywords_used: string[];
 	confidence_score: number;
 	clarity_score: number;

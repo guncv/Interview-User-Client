@@ -38,7 +38,6 @@ export function useVoiceStreaming(
             try {
                 mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             } catch (error) {
-                console.error('🎤 Failed to get microphone access:', error);
                 
                 let errorMessage = "Microphone access is required for the interview.";
                 
@@ -82,8 +81,6 @@ export function useVoiceStreaming(
                 };
 
                 recorder.onstop = () => {
-                    console.log("MediaRecorder stopped");
-                    // Chunks are already collected, they will be sent by sendSegmentAudio
                 };
 
                 return recorder;
@@ -94,17 +91,14 @@ export function useVoiceStreaming(
                     return;
                 }
 
-                // Stop the recorder first to get all remaining chunks
                 if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
                     mediaRecorderRef.current.stop();
                 }
 
                 const currentSegmentId = segmentIdRef.current;
                 
-                // Wait a bit for onstop to fire and all chunks to be collected
                 setTimeout(() => {
                     if (chunksRef.current.length === 0) {
-                        console.log("No audio chunks to send");
                         segmentIdRef.current = null;
                         segmentStartedRef.current = false;
                         segmentStartTimeRef.current = 0;
@@ -142,7 +136,6 @@ export function useVoiceStreaming(
                             websocketRef.current?.send(framedBuffer);
 
                             lastSegmentEndTimeRef.current = Date.now();
-                            console.log("sending segment end");
                             websocketRef.current?.send(
                                 JSON.stringify({
                                     type: WEBSOCKET_TYPES.SEGMENT_END,
@@ -178,7 +171,6 @@ export function useVoiceStreaming(
             function detectSilence() {
                 if (!isUserTurnRef?.current) {
                     if (segmentIdRef.current && segmentStartedRef.current) {
-                        console.log("User turn ended, sending remaining segment");
                         sendSegmentAudio();
                     }
                     
@@ -216,13 +208,9 @@ export function useVoiceStreaming(
                         isStoppingRef.current = false; 
                         onUserSpeakingChange?.(true);
                         
-                        // Create a new MediaRecorder for this segment and start recording
                         chunksRef.current = [];
                         mediaRecorderRef.current = createRecorder();
                         mediaRecorderRef.current.start();
-                        console.log("MediaRecorder started for segment:", segmentId);
-                        
-                        console.log("sending segment start");
                         websocketRef.current?.send(
                             JSON.stringify({
                                 type: WEBSOCKET_TYPES.SEGMENT_START,

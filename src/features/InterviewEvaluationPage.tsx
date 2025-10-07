@@ -86,7 +86,6 @@ const InterviewEvaluationPage: React.FC = () => {
         minHeight: 0
     };
 
-    // Mobile Tab Styles
     const mobileTabContainerStyle: CSSProperties = {
         display: 'flex',
         backgroundColor: 'white',

@@ -11,7 +11,7 @@ interface FileUploadProps {
     isMobile?: boolean;
     isTablet?: boolean;
     accept?: string;
-    maxSize?: number; // in bytes
+    maxSize?: number;
     placeholder?: string;
     subtext?: string;
 }
@@ -23,7 +23,7 @@ const FileUpload = ({
     isMobile = false, 
     isTablet = false,
     accept = ".pdf",
-    maxSize = 10 * 1024 * 1024, // 10MB default
+    maxSize = 10 * 1024 * 1024,
     placeholder = "Click to upload or drag and drop",
     subtext = "PDF up to 10MB"
 }: FileUploadProps) => {

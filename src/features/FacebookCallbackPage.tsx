@@ -20,7 +20,6 @@ const FacebookCallbackPage = () => {
     };
 
     useEffect(() => {
-        // Extract code and state from URL parameters
         const urlParams = new URLSearchParams(location.search);
         const code = urlParams.get('code');
         const state = urlParams.get('state');

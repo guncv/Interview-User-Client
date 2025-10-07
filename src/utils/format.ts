@@ -7,7 +7,6 @@ const formatDateForBackend = (dateString: string): string => {
         
         return date.toISOString();
     } catch (error) {
-        console.error('Error formatting date:', error);
         return '';
     }
 };
@@ -52,7 +51,6 @@ const formatDate = (dateString: string): string => {
             minute: '2-digit'
         });
     } catch (error) {
-        console.error('Error formatting date:', error);
         return '';
     }
 };

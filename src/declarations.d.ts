@@ -27,3 +27,13 @@ declare module "*.webp" {
     const value: string;
     export default value;
 }
+
+declare module "*.lottie" {
+    const value: string;
+    export default value;
+}
+
+declare module "*.lottie?url" {
+    const value: string;
+    export default value;
+}

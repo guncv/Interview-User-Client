@@ -1,4 +1,3 @@
-// Layout Components
 export { default as AuthLayout } from './AuthLayout';
 export { default as AuthPageLayout } from './AuthPageLayout';
 export { default as ContentLayout } from './ContentLayout';

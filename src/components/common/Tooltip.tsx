@@ -40,7 +40,7 @@ export const Tooltip = ({ children, content, position = 'top', delay = 300 }: Pr
     };
 
     const calculatePosition = (rect: DOMRect, pos: TooltipPosition) => {
-        const offset = 8; // Distance from the element
+        const offset = 8;
         
         switch (pos) {
             case 'top':
@@ -71,12 +71,12 @@ export const Tooltip = ({ children, content, position = 'top', delay = 300 }: Pr
     function getTooltipTop() {
         switch (position) {
             case 'top':
-                return tooltipPosition.top - 30; // Approximate tooltip height
+                return tooltipPosition.top - 30;
             case 'bottom':
                 return tooltipPosition.top;
             case 'left':
             case 'right':
-                return tooltipPosition.top - 15; // Half tooltip height
+                return tooltipPosition.top - 15;
             default:
                 return tooltipPosition.top;
         }
@@ -86,9 +86,9 @@ export const Tooltip = ({ children, content, position = 'top', delay = 300 }: Pr
         switch (position) {
             case 'top':
             case 'bottom':
-                return tooltipPosition.left - 50; // Half approximate tooltip width
+                return tooltipPosition.left - 50;
             case 'left':
-                return tooltipPosition.left - 100; // Approximate tooltip width
+                return tooltipPosition.left - 100;
             case 'right':
                 return tooltipPosition.left;
             default:

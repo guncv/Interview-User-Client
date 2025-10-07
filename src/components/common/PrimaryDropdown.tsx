@@ -55,14 +55,12 @@ export const PrimaryDropdown = ({
 
     const handleToggle = () => {
         if (!disabled) {
-            // Check if there's enough space below
             if (dropdownRef.current) {
                 const rect = dropdownRef.current.getBoundingClientRect();
                 const spaceBelow = window.innerHeight - rect.bottom;
                 const spaceAbove = rect.top;
-                const dropdownHeight = Math.min(options.length * 40 + 20, 200); // Approximate height
+                const dropdownHeight = Math.min(options.length * 40 + 20, 200);
                 
-                // Show above if there's not enough space below but enough space above
                 setShowAbove(spaceBelow < dropdownHeight && spaceAbove > dropdownHeight);
             }
             setIsOpen(!isOpen);

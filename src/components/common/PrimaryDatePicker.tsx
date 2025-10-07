@@ -125,7 +125,6 @@ export const PrimaryDatePicker = ({
         maxHeight: '80vh',
         overflow: 'auto',
         display: 'block',
-        // Ensure visibility
         visibility: 'visible',
         opacity: 1,
     };
@@ -280,7 +279,7 @@ export const PrimaryDatePicker = ({
 
     const isFutureDate = (date: Date) => {
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+        today.setHours(0, 0, 0, 0);
         return date > today;
     };
 

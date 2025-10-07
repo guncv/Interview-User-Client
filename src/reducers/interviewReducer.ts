@@ -23,7 +23,9 @@ type InterviewState = {
     loadMoreChatHistoryBySessionTokenLoading: boolean;
     interviewSessionInformationById: GetInterviewSessionInformationResp;
     interviewSessionList: GetInterviewSessionListResp;
+    interviewSessionListLoading: boolean;
     finalizingSessions: GetFinalizingSessionsResp;
+    finalizingSessionsLoading: boolean;
     chatHistoryBySessionIDWithEvaluation: GetChatHistoryBySessionIDWithEvaluationResp;
     chatHistoryBySessionIDWithEvaluationLoading: boolean;
     loadMoreChatHistoryLoading: boolean;
@@ -38,7 +40,9 @@ type InterviewStateAction = {
         loadMoreChatHistoryBySessionTokenLoading: boolean;
         interviewSessionInformationById: GetInterviewSessionInformationResp;
         interviewSessionList: GetInterviewSessionListResp;
+        interviewSessionListLoading: boolean;
         finalizingSessions: GetFinalizingSessionsResp;
+        finalizingSessionsLoading: boolean;
         chatHistoryBySessionIDWithEvaluation: GetChatHistoryBySessionIDWithEvaluationResp;
         chatHistoryBySessionIDWithEvaluationLoading: boolean;
         isLoading: boolean;
@@ -79,10 +83,12 @@ const initialState: InterviewState = {
         total_pages: 0,
         page_size: 0,
     },
+    interviewSessionListLoading: true,
     finalizingSessions: {
         sessions: [],
         total_count: 0,
     },
+    finalizingSessionsLoading: true,
     chatHistoryBySessionIDWithEvaluation: {
         chat_history: [],
         cursor_turn_next: 0,
@@ -139,11 +145,13 @@ export const interviewReducer = (
             return {
             ...state,
             interviewSessionList: action.payload.interviewSessionList,
+            interviewSessionListLoading: false,
             };
         case SET_FINALIZING_SESSIONS:
             return {
             ...state,
             finalizingSessions: action.payload.finalizingSessions,
+            finalizingSessionsLoading: false,
             };
         case SET_CHAT_HISTORY_BY_SESSION_ID_WITH_EVALUATION:
             return {

@@ -1,4 +1,3 @@
-// API Constants
 export const API_ENDPOINTS = {
   // Auth API
   SIGN_IN: '/api/v1/auth/sign-in',
@@ -95,7 +94,6 @@ export const ROLE = {
   TRAINEE: 'trainee',
 } as const;
 
-// Local Storage Keys
 export const STORAGE_KEYS = {
   ACCESS_TOKEN: 'access_token',
   REFRESH_TOKEN: 'refresh_token',
@@ -103,19 +101,16 @@ export const STORAGE_KEYS = {
   X_ACCESS_TOKEN_LOWER: 'x-access-token',
 } as const;
 
-// HTTP Status Codes
 export const HTTP_STATUS = {
   UNAUTHORIZED: 401,
 } as const;
 
-// Navigation Routes
 export const ROUTES = {
   SIGN_IN: '/',
   RECORDINGS: '/recordings',
   INTERVIEW: '/interview',
 } as const;
 
-// Rating Constants
 export const RATING = {
   MAX_STARS: 5,
   MIN_STARS: 1,
@@ -124,13 +119,11 @@ export const RATING = {
   LARGE_SIZE: 25,
 } as const;
 
-// Review Constants
 export const REVIEW = {
   MIN_DESCRIPTION_LENGTH: 50,
   DEFAULT_RATING: 0,
 } as const;
 
-// UI Constants
 export const UI = {
   BORDER_RADIUS: {
     SMALL: '4px',
@@ -163,13 +156,11 @@ export const UI = {
   },
 } as const;
 
-// Colors
 export const COLORS = {
   GOLD: 'gold',
   GRAY: 'gray',
 } as const;
 
-// Event Names
 export const EVENTS = {
   SHOW_SPINNER: 'show_spinner',
   HIDE_SPINNER: 'hide_spinner',
@@ -177,7 +168,6 @@ export const EVENTS = {
   HIDE_SIGN_OUT_POPUP: 'hide_sign_out_popup',
 } as const;
 
-// Error Messages
 export const ERROR_MESSAGES = {
   UNEXPECTED_ERROR: 'Unexpected error',
 } as const;

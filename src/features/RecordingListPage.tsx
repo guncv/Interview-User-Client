@@ -1,6 +1,6 @@
 import ContentLayout from "../components/layout/ContentLayout";
 import type { CSSProperties } from "react";
-import { PrimaryButton, Pagination } from "../components/common";
+import { PrimaryButton, Pagination, InsiderLoadingSpinner } from "../components/common";
 import RecordingRow from "../components/common/RecordingRow";
 import Colors from "../assets/styles/Color";
 import Size from "../assets/styles/Size";
@@ -17,7 +17,7 @@ import { useContextProvider } from "../components/layout/ContextProvider";
 import noDataImage from "../assets/images/no_data.png";
 import { Eye, EyeOff } from "lucide-react";
 import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
+import relativeTime from "dayjs/plugin/relativeTime";;
 dayjs.extend(relativeTime);
 
 const RecordingListPage = () => {
@@ -33,7 +33,8 @@ const RecordingListPage = () => {
         dispatch(downloadResumeByResumeId(resumeId));
     }
 
-    const { interviewSessionList, finalizingSessions } = useSelector((state: RootState) => state.interview);
+    const { interviewSessionList, finalizingSessions, interviewSessionListLoading, finalizingSessionsLoading } = useSelector((state: RootState) => state.interview);
+    const isLoading = interviewSessionListLoading && finalizingSessionsLoading;
 
     useEffect(() => {
         dispatch(getFinalizingSessionsAction());
@@ -323,6 +324,7 @@ const RecordingListPage = () => {
 
                 <div style={contentAreaStyle}>
                     {finalizingSessions.sessions.length > 0 && (
+                        
                     <div style={finalizingContainerStyle}>
                         <div 
                             style={finalizingHeaderStyle}
@@ -362,7 +364,7 @@ const RecordingListPage = () => {
                             </button>
                         </div>
                         
-                        {isFinalizingExpanded && (
+                        {isFinalizingExpanded && !isLoading && (
                             <>
                                 <div style={finalizingInfoStyle}>
                                     Your interview session is being processed. Scores are being calculated...
@@ -447,76 +449,88 @@ const RecordingListPage = () => {
                             </tr>
                         </thead>
 
-                        <tbody>
-                            {interviewSessionList.sessions.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} style={{
-                                        textAlign: 'center',
-                                        padding: '60px 20px',
-                                    }}>
-                                        <div style={{
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: 'center',
-                                            gap: '20px',
-                                            maxWidth: '400px',
-                                            margin: '0 auto'
+                        {!isLoading ? (
+                            <tbody>
+                                {interviewSessionList.sessions.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} style={{
+                                            textAlign: 'center',
+                                            padding: '60px 20px',
                                         }}>
-                                            <img 
-                                                src={noDataImage} 
-                                                alt="No recordings found"
-                                                style={{
-                                                    width: isMobile ? '120px' : '150px',
-                                                    height: isMobile ? '120px' : '150px',
-                                                    objectFit: 'contain',
-                                                    opacity: 0.8
-                                                }}
-                                            />
                                             <div style={{
-                                                textAlign: 'center'
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                gap: '20px',
+                                                maxWidth: '400px',
+                                                margin: '0 auto'
                                             }}>
-                                                <h3 style={{
-                                                    fontSize: isMobile ? '18px' : '22px',
-                                                    fontFamily: font.Regular,
-                                                    color: Colors.PRIMARY_COLOR,
-                                                    margin: '0 0 8px 0'
-                                                }}>
-                                                    No Interview Recordings Yet
-                                                </h3>
-                                                <p style={{
-                                                    fontSize: isMobile ? '14px' : Size.Medium,
-                                                    color: Colors.SECONDARY_TEXT_COLOR,
-                                                    fontFamily: font.Regular,
-                                                    margin: '0 0 24px 0',
-                                                    lineHeight: '1.5'
-                                                }}>
-                                                    Start your first interview to see your recordings and performance analytics here.
-                                                </p>
-                                                <PrimaryButton 
-                                                    label="Start Your First Interview"
-                                                    onClick={handleStartNewInterviews}
+                                                <img 
+                                                    src={noDataImage} 
+                                                    alt="No recordings found"
                                                     style={{
-                                                        fontSize: isMobile ? '14px' : Size.Medium,
-                                                        borderRadius: '8px',
-                                                        fontFamily: font.Medium
+                                                        width: isMobile ? '120px' : '150px',
+                                                        height: isMobile ? '120px' : '150px',
+                                                        objectFit: 'contain',
+                                                        opacity: 0.8
                                                     }}
                                                 />
+                                                <div style={{
+                                                    textAlign: 'center'
+                                                }}>
+                                                    <h3 style={{
+                                                        fontSize: isMobile ? '18px' : '22px',
+                                                        fontFamily: font.Regular,
+                                                        color: Colors.PRIMARY_COLOR,
+                                                        margin: '0 0 8px 0'
+                                                    }}>
+                                                        No Interview Recordings Yet
+                                                    </h3>
+                                                    <p style={{
+                                                        fontSize: isMobile ? '14px' : Size.Medium,
+                                                        color: Colors.SECONDARY_TEXT_COLOR,
+                                                        fontFamily: font.Regular,
+                                                        margin: '0 0 24px 0',
+                                                        lineHeight: '1.5'
+                                                    }}>
+                                                        Start your first interview to see your recordings and performance analytics here.
+                                                    </p>
+                                                    <PrimaryButton 
+                                                        label="Start Your First Interview"
+                                                        onClick={handleStartNewInterviews}
+                                                        style={{
+                                                            fontSize: isMobile ? '14px' : Size.Medium,
+                                                            borderRadius: '8px',
+                                                            fontFamily: font.Medium
+                                                        }}
+                                                    />
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                </tr>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    interviewSessionList.sessions.map((interview) => (
+                                        <RecordingRow 
+                                            key={interview.id}
+                                            interview={interview}
+                                            onDownloadResume={handleDownloadResume}
+                                        />
+                                    ))
+                                )}
+                            </tbody>
                             ) : (
-                                interviewSessionList.sessions.map((interview) => (
-                                    <RecordingRow 
-                                        key={interview.id}
-                                        interview={interview}
-                                        onDownloadResume={handleDownloadResume}
-                                    />
-                                ))
+                                <tbody>
+                                    <tr>
+                                        <td colSpan={6} style={{ textAlign: 'center', padding: '60px 20px' }}>
+                                            <InsiderLoadingSpinner
+                                                isVisible={true}
+                                                wrapperStyle={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '100%' }}
+                                            />
+                                        </td>
+                                    </tr>
+                                </tbody>
                             )}
-                        </tbody>
-                        
-                    </table>
+                        </table>
                 </div>
 
                 <div style={{ 
@@ -525,7 +539,7 @@ const RecordingListPage = () => {
                     paddingTop: '16px',
                     borderTop: '1px solid #e9ecef'
                 }}>
-                    {interviewSessionList.total_pages > 0 && (
+                    {interviewSessionList.total_pages > 0 && !isLoading && (
                         <Pagination
                             currentPage={currentPage}
                             totalPages={interviewSessionList.total_pages || 1}

@@ -97,7 +97,6 @@ function* workerDownloadResumeByResumeId(payload: { resume_id: string }): SagaIt
             try {
                 const fileResponse = yield call(fetch, response.data.file_url);
                 
-                // Check if fetch succeeded
                 if (!fileResponse.ok) {
                     throw new Error(`HTTP error! status: ${fileResponse.status}`);
                 }
@@ -113,14 +112,10 @@ function* workerDownloadResumeByResumeId(payload: { resume_id: string }): SagaIt
                 link.click();
                 document.body.removeChild(link);
         
-                // Clean up the blob URL
                 setTimeout(() => {
                     URL.revokeObjectURL(blobUrl);
                 }, 1000);
             } catch (error) {
-                console.error('Failed to fetch or download file:', error);
-        
-                // Fallback: open in new tab (if all else fails)
                 const fallback = document.createElement('a');
                 fallback.href = response.data.file_url;
                 fallback.download = response.data.file_name;

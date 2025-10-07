@@ -157,7 +157,6 @@ const InterviewSimulation = () => {
         try {
             websocketRef.current.send(JSON.stringify(endSessionMessage));
         } catch (error) {
-            console.error('Failed to send end interview session message:', error);
         }
     }, [dispatch]);
 
@@ -175,7 +174,6 @@ const InterviewSimulation = () => {
         try {
             websocketRef.current.send(JSON.stringify(completeSessionMessage));
         } catch (error) {
-            console.error('Failed to send complete session message:', error);
         }
     }, [dispatch]);
 
@@ -205,7 +203,6 @@ const InterviewSimulation = () => {
             setShowMicPermissionPopup(false);
             setMicPermissionError("");
         } catch (error) {
-            console.error('Microphone permission still denied:', error);
         }
     }, []);
 
@@ -268,10 +265,8 @@ const InterviewSimulation = () => {
                 isInterviewerTurnEndedReceivedRef.current = true;
                 break;
             case CONVERSATION_STATUS.ERROR:
-                console.error("Server error:", response.message || response);
                 break;
             case CONVERSATION_STATUS.DISCONNECTED:
-                console.warn("Server disconnect:", response.message || response);
                 break;
                 
             case WEBSOCKET_TYPES.INTERVIEW_SESSION_TIMED_OUT:
@@ -286,7 +281,6 @@ const InterviewSimulation = () => {
                 safeNavigate(ROUTES.RECORDINGS);
                 break;
             default:
-                console.warn("Unknown message type:", response);
         }
     }, [connectionState, websocketRef]);
 
@@ -311,8 +305,7 @@ const InterviewSimulation = () => {
                 audioQueueManagerRef.current.clearQueue();
             };
 
-            websocketRef.current.onerror = (error) => {
-                console.error("WebSocket error:", error);
+            websocketRef.current.onerror = () => {
                 setConnectionState(CONVERSATION_STATUS.ERROR);
             };
 
@@ -343,11 +336,9 @@ const InterviewSimulation = () => {
                         handleWebSocketMessage(data);
                     }
                 } catch (error) {
-                    console.error("Failed to handle WebSocket message:", error);
                 }
             };
         } catch (error) {
-            console.error("Failed to initialize WebSocket:", error);
         }
     }, [websocketUrl, handleWebSocketMessage]);
 

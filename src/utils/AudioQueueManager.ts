@@ -174,8 +174,7 @@ export class AudioQueueManager {
                 };
 
                 audio.play()
-                    .catch((err) => {
-                        console.error("🔴 Error starting MP3 for turn:", currentTurn.turnId, err);
+                    .catch(() => {
                         this.currentAudio = null;
                         resolve();
                     });
@@ -183,7 +182,6 @@ export class AudioQueueManager {
 
             URL.revokeObjectURL(url);
         } catch (error) {
-            console.error("🔴 Error processing audio for turn:", currentTurn.turnId, error);
             this.currentAudio = null;
         } finally {
             this.isPlaying = false;

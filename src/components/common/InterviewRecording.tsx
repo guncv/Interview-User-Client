@@ -117,7 +117,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                     }));
                 }
             } catch (error) {
-                console.error('Failed to get microphone devices:', error);
             }
         };
 
@@ -186,8 +185,6 @@ const InterviewRecording: React.FC<InterviewRecordingProps> = ({
                 
                 updateAudioLevel();
             } catch (error) {
-                console.error('Failed to initialize audio analysis:', error);
-                
                 let errorMessage = "Microphone access is required for audio analysis.";
                 
                 if (error instanceof DOMException) {

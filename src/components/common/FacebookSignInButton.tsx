@@ -71,7 +71,6 @@ export const FacebookSignInButton = ({ onClick, disabled = false }: Props) => {
         }
     };
 
-    // Facebook "f" logo SVG
     const FacebookIcon = () => (
         <svg
             style={facebookIconStyle}

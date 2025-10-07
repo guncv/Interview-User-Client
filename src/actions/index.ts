@@ -1,4 +1,3 @@
-// Actions
 export * from './userAction';
 export * from './resumeAction';
 export * from './interviewAction';

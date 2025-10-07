@@ -18,6 +18,8 @@ import { CREATE_SESSION_WITH_NEW_RESUME, CREATE_SESSION_WITH_EXISTING_RESUME, se
     addChatHistory,
     GET_FINALIZING_SESSIONS,
     setFinalizingSessions,
+    setFinalizingSessionsLoading,
+    setInterviewSessionListLoading,
     } from "../actions/interviewAction";
 import { setCreateInterviewError } from "../actions/interviewAction";
 import { hideSpinner, safeNavigate, showSpinner, type GetChatHistoryBySessionIDWithEvaluationReq, type GetChatHistoryBySessionTokenReq, type GetInterviewSessionListCursorReq, type GetInterviewSessionListPageReq } from "..";
@@ -169,20 +171,19 @@ export function* watcherEndInterviewSessionFinished(): SagaIterator {
 
 function* workerGetInterviewSessionListCursor(payload: GetInterviewSessionListCursorReq): SagaIterator {
     try {
-        yield delay(0);
-        yield call(showSpinner);
+        yield put(setInterviewSessionListLoading(true));
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         const response = yield call(apiGetInterviewSessionListCursor, payload, token || '');
         if (response && response.success) {
             yield put(setInterviewSessionList(response.data));
         } else {
-            yield call(hideSpinner);
+            yield put(setInterviewSessionListLoading(false));
             yield call(handleStatusInterviewError, response.statusCode, response.message);
         }
-        yield call(hideSpinner);
+        yield put(setInterviewSessionListLoading(false));
     }
     catch (error) {
-        yield call(hideSpinner);
+        yield put(setInterviewSessionListLoading(false));
         const message = (error as { message?: string })?.message || ERROR_MESSAGES.UNEXPECTED_ERROR;
         yield call(handleStatusInterviewError, 0, message);
     }
@@ -197,20 +198,19 @@ export function* watcherGetInterviewSessionListCursor(): SagaIterator {
 
 function* workerGetInterviewSessionListPage(payload: GetInterviewSessionListPageReq): SagaIterator {
     try {
-        yield delay(0);
-        yield call(showSpinner);
+        yield put(setInterviewSessionListLoading(true));
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         const response = yield call(apiGetInterviewSessionListPage, payload, token || '');
         if (response && response.success) {
             yield put(setInterviewSessionList(response.data));
         } else {
-            yield call(hideSpinner);
+            yield put(setInterviewSessionListLoading(false));
             yield call(handleStatusInterviewError, response.statusCode, response.message);
         }
-        yield call(hideSpinner);
+        yield put(setInterviewSessionListLoading(false));
     }
     catch (error) {
-        yield call(hideSpinner);
+        yield put(setInterviewSessionListLoading(false));
         const message = (error as { message?: string })?.message || ERROR_MESSAGES.UNEXPECTED_ERROR;
         yield call(handleStatusInterviewError, 0, message);
     }
@@ -310,20 +310,19 @@ export function* watcherGetChatHistoryBySessionIDWithEvaluation(): SagaIterator 
 
 function* workerGetFinalizingSessions(): SagaIterator {
     try {
-        yield delay(0);
-        yield call(showSpinner);
+        yield put(setFinalizingSessionsLoading(true));
         const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         const response = yield call(apiGetFinalizingSessions, token || '');
         
         if (response && response.success) {
             yield put(setFinalizingSessions(response.data));
         } else {
-            yield call(hideSpinner);
+            yield put(setFinalizingSessionsLoading(false));
             yield put(setFinalizingSessions({ sessions: [], total_count: 0 }));
         }
     }
     catch (error) {
-        yield call(hideSpinner);
+        yield put(setFinalizingSessionsLoading(false));
         yield put(setFinalizingSessions({ sessions: [], total_count: 0 }));
     }
 }

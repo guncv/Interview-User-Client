@@ -78,7 +78,6 @@ const CreateAndUpdateIssuePopup: React.FC<CreateAndUpdateIssuePopupProps> = ({
 
             onClose();
         } catch (error) {
-            console.error('Error submitting issue report:', error);
         } finally {
             setIsSubmitting(false);
         }

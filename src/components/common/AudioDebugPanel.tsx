@@ -60,8 +60,7 @@ const AudioDebugPanel: React.FC<AudioDebugPanelProps> = ({
             URL.revokeObjectURL(url);
         });
 
-        audio.addEventListener('error', (e) => {
-            console.error('Audio playback error:', e);
+        audio.addEventListener('error', () => {
             setPlayingChunkId(null);
             URL.revokeObjectURL(url);
         });
@@ -69,7 +68,6 @@ const AudioDebugPanel: React.FC<AudioDebugPanelProps> = ({
         try {
             await audio.play();
         } catch (error) {
-            console.error('Failed to play audio:', error);
             setPlayingChunkId(null);
             URL.revokeObjectURL(url);
         }

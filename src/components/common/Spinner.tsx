@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import loadingAnimation from '../../assets/animations/loading.lottie?url';
+import insiderLoadingAnimation from '../../assets/animations/insiderLoading.lottie?url';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import Colors from '../../assets/styles/Color';
 
@@ -24,7 +24,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ isVisible }) => {
     
     const backdropStyle: React.CSSProperties = {
         backgroundColor: Colors.PRIMARY_COLOR,
-        opacity: 0.75,
+        opacity: 0.5,
         width: '100%',
         height: '100%',
         position: 'absolute',
@@ -44,7 +44,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ isVisible }) => {
     };
     
     const animationStyle: React.CSSProperties = {
-        width: '400px',
+        width: '200px',
         height: 'auto',
     };
 
@@ -56,7 +56,6 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ isVisible }) => {
         backgroundColor: 'rgba(255, 255, 255, 0.9)',
         borderRadius: '8px',
         fontSize: '18px',
-        color: '#333',
         fontWeight: 'bold',
     };
 
@@ -71,7 +70,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ isVisible }) => {
                 ) : (
                     <DotLottieReact
                         key={uniqueKeyRef.current}
-                        src={loadingAnimation}
+                        src={insiderLoadingAnimation}
                         loop={true}
                         autoplay={true}
                         style={animationStyle}

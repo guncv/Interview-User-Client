@@ -73,7 +73,6 @@ export const GoogleSignInButton = ({ onClick, disabled = false }: Props) => {
         }
     };
 
-    // Google "G" logo SVG
     const GoogleIcon = () => (
         <svg
             style={googleIconStyle}

@@ -19,8 +19,7 @@ export default tseslint.config([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
-    rules: {
-      // Code quality rules
+    rules: {      
       'no-console': 'warn',
       'no-debugger': 'error',
       'no-alert': 'error',
@@ -29,29 +28,22 @@ export default tseslint.config([
       'no-new-func': 'error',
       'no-script-url': 'error',
       
-      // Best practices
       'no-var': 'error',
       'object-shorthand': 'error',
       'prefer-template': 'error',
       
-      // React specific rules
       'react-hooks/exhaustive-deps': 'warn',
       'react-hooks/rules-of-hooks': 'error',
       'react-refresh/only-export-components': 'off',
       
-      // TypeScript specific rules
       '@typescript-eslint/no-unused-vars': 'error',
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-non-null-assertion': 'warn',
-      
-
-      // Complexity rules
 
       'complexity': ['warn', 10],
       'max-depth': ['warn', 4],
       'max-lines': ['warn', 300],
       
-      // Styling rules
       'quotes': ['error', 'single'],
       'semi': ['error', 'always'],
       'comma-dangle': ['error', 'always-multiline'],
