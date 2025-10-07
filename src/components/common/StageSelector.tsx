@@ -224,28 +224,6 @@ const StageSelector = ({
             })}
         </div>
 
-        {optionalSelectedStages.length === 0 && (
-            <div
-            style={{
-                padding: Size.Small,
-                backgroundColor: Colors.TEXT_ERROR_COLOR + '10',
-                borderRadius: Size.Small,
-                border: `1px solid ${Colors.TEXT_ERROR_COLOR}`,
-            }}
-            >
-            <p
-                style={{
-                margin: 0,
-                fontSize: isMobile ? '12px' : Size.Small,
-                fontFamily: font.Regular,
-                color: Colors.TEXT_ERROR_COLOR,
-                }}
-            >
-                Please select at least one optional stage to continue
-            </p>
-            </div>
-        )}
-
         <div
             style={{
             padding: Size.Small,

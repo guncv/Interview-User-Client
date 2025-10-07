@@ -108,11 +108,6 @@ const CreateInterviewPage = () => {
     if (resumeMode === 'existing' && !formData.resumeId) newErrors.resumeId = 'Please select an existing resume';
     if (!formData.position.trim()) newErrors.position = 'required';
     if (!formData.consentGiven) newErrors.consentGiven = 'You must give consent to continue';
-    
-    const selectedOptionalCount = formData.selectedStages.filter(
-      label => !INTERVIEW_STAGES.find(s => s.label === label)?.isMandatory
-    ).length;
-    if (selectedOptionalCount === 0) newErrors.position = 'Please select at least one optional interview stage';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -121,14 +116,9 @@ const CreateInterviewPage = () => {
   const isFormComplete = (): boolean => {
     const hasResume = resumeMode === 'upload' ? !!formData.file : !!formData.resumeId;
     
-    const selectedOptionalCount = formData.selectedStages.filter(
-      label => !INTERVIEW_STAGES.find(s => s.label === label)?.isMandatory
-    ).length;
-    
     const hasRequiredFields =
       !!formData.position.trim() &&
-      !!formData.consentGiven &&
-      selectedOptionalCount > 0;
+      !!formData.consentGiven;
 
     const hasConsent = !!formData.consentGiven;
 
