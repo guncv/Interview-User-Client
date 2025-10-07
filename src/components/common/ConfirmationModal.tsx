@@ -11,7 +11,7 @@ interface ConfirmationModalProps {
     confirmButtonColor?: string;
     cancelButtonBackground?: string;
     cancelButtonColor?: string;
-    onConfirm: () => void;
+    onConfirm?: () => void;
     onCancel: () => void;
 }
 
@@ -89,6 +89,8 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                             {cancelText}
                         </button>
                     )}
+
+                    {onConfirm && (
                     <button
                         onClick={onConfirm}
                         style={{
@@ -101,9 +103,10 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                             fontSize: '14px',
                             cursor: 'pointer'
                         }}
-                    >
-                        {confirmText}
-                    </button>
+                        >
+                            {confirmText}
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

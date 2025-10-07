@@ -533,24 +533,25 @@ const RecordingListPage = () => {
                         </table>
                 </div>
 
-                <div style={{ 
-                    flexShrink: 0, 
-                    marginTop: '16px', 
-                    paddingTop: '16px',
-                    borderTop: '1px solid #e9ecef'
-                }}>
-                    {interviewSessionList.total_pages > 0 && !isLoading && (
-                        <Pagination
-                            currentPage={currentPage}
-                            totalPages={interviewSessionList.total_pages || 1}
-                            onPageChange={handlePageChange}
-                            onPrevious={() => handlePrevious(currentPage)}
-                            onNext={() => handleNext(currentPage)}
-                            onFirst={handleFirst}
-                            onLast={handleLast}
-                        />
+                                    
+                {interviewSessionList.total_pages > 0 && !isLoading && (
+                        <div style={{ 
+                            flexShrink: 0, 
+                            paddingTop: '16px',
+                            display: 'flex',
+                            justifyContent: 'center'
+                        }}>
+                            <Pagination
+                                currentPage={currentPage}
+                                totalPages={interviewSessionList.total_pages || 1}
+                                onPageChange={handlePageChange}
+                                onPrevious={() => handlePrevious(currentPage)}
+                                onNext={() => handleNext(currentPage)}
+                                onFirst={handleFirst}
+                                onLast={handleLast}
+                            />
+                        </div>
                     )}
-                </div>
                 </div>
             </div>
         </ContentLayout>
