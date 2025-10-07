@@ -3,7 +3,7 @@ import { Upload, FileText, Plus } from 'lucide-react';
 import ContentLayout from "../components/layout/ContentLayout";
 import { PrimaryButton } from "../components/common/PrimaryButton";
 import { PrimaryTextField } from "../components/common/PrimaryTextField";
-import { ResumeList, FileUpload } from "../components/common";
+import { ResumeList, FileUpload, StageSelector } from "../components/common";
 import Colors from "../assets/styles/Color";
 import Size from "../assets/styles/Size";
 import font from "../assets/styles/Font";
@@ -17,7 +17,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { resumeSelector } from '../reducers/resumeReducer';
 import { listResume } from '../actions/resumeAction';
 import { createInterviewSessionWithExistingResume, setCreateInterviewError } from '../actions/interviewAction';
-import { API_ENDPOINTS, CONTENT_TYPES, HTTP_HEADERS, HTTP_STATUS, ROUTES, STORAGE_KEYS } from '../constants';
+import { API_ENDPOINTS, CONTENT_TYPES, HTTP_HEADERS, HTTP_STATUS, ROUTES, STORAGE_KEYS, INTERVIEW_STAGES } from '../constants';
 import { axiosInstance } from '../api/axiosInstance';
 import { safeNavigate } from '../utils';
 import { hideSpinner, showSpinner } from '..';
@@ -29,9 +29,10 @@ interface FormDataState {
   resumeId: string;
   position: string;
   consentGiven: boolean;
+  selectedStages: string[];
 }
 
-type EditableField = Exclude<keyof FormDataState, 'file' | 'consentGiven'>;
+type EditableField = Exclude<keyof FormDataState, 'file' | 'consentGiven' | 'selectedStages'>;
 
 const CreateInterviewPage = () => {
   const { isMobile, isTablet } = useContextProvider();
@@ -46,6 +47,7 @@ const CreateInterviewPage = () => {
     resumeId: '',
     position: '',
     consentGiven: false,
+    selectedStages: INTERVIEW_STAGES.filter(s => !s.isMandatory).map(stage => stage.label),
   });
 
   const [errors, setErrors] = useState<CreateInterviewFormErrors>({});
@@ -85,6 +87,20 @@ const CreateInterviewPage = () => {
     setErrors(prev => ({ ...prev, consentGiven: undefined }));
   };
 
+  const handleStageToggle = (stageLabel: string) => {
+    setFormData(prev => {
+      const isSelected = prev.selectedStages.includes(stageLabel);
+      const newStages = isSelected
+        ? prev.selectedStages.filter(label => label !== stageLabel)
+        : [...prev.selectedStages, stageLabel];
+      
+      return {
+        ...prev,
+        selectedStages: newStages,
+      };
+    });
+  };
+
   const validateForm = (): boolean => {
     const newErrors: CreateInterviewFormErrors = {};
 
@@ -92,6 +108,11 @@ const CreateInterviewPage = () => {
     if (resumeMode === 'existing' && !formData.resumeId) newErrors.resumeId = 'Please select an existing resume';
     if (!formData.position.trim()) newErrors.position = 'required';
     if (!formData.consentGiven) newErrors.consentGiven = 'You must give consent to continue';
+    
+    const selectedOptionalCount = formData.selectedStages.filter(
+      label => !INTERVIEW_STAGES.find(s => s.label === label)?.isMandatory
+    ).length;
+    if (selectedOptionalCount === 0) newErrors.position = 'Please select at least one optional interview stage';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -99,9 +120,15 @@ const CreateInterviewPage = () => {
 
   const isFormComplete = (): boolean => {
     const hasResume = resumeMode === 'upload' ? !!formData.file : !!formData.resumeId;
+    
+    const selectedOptionalCount = formData.selectedStages.filter(
+      label => !INTERVIEW_STAGES.find(s => s.label === label)?.isMandatory
+    ).length;
+    
     const hasRequiredFields =
       !!formData.position.trim() &&
-      !!formData.consentGiven;
+      !!formData.consentGiven &&
+      selectedOptionalCount > 0;
 
     const hasConsent = !!formData.consentGiven;
 
@@ -110,6 +137,7 @@ const CreateInterviewPage = () => {
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
+    const allSelectedStages = formData.selectedStages;
 
     try {
       if (resumeMode === 'upload') {
@@ -117,6 +145,7 @@ const CreateInterviewPage = () => {
         formDataToSend.append('file', formData.file! as File);
         formDataToSend.append('position', formData.position as string);
         formDataToSend.append('is_consent', formData.consentGiven.toString() as string);
+        formDataToSend.append('selected_stages', JSON.stringify(allSelectedStages));
 
         let response;
         try {
@@ -148,6 +177,7 @@ const CreateInterviewPage = () => {
           resume_id: formData.resumeId,
           position: formData.position,
           is_consent: formData.consentGiven,
+          selected_stages: allSelectedStages,
         };
         
         dispatch(createInterviewSessionWithExistingResume(request));;
@@ -233,7 +263,7 @@ const CreateInterviewPage = () => {
           style={{
             display: 'grid',
             gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-            gap: isMobile ? Size.Medium : Size.Large,
+            gap: isMobile ? '0px' : Size.Large,
             marginBottom: isMobile ? Size.Medium : Size.Large,
             alignItems: 'start',
             width: '100%',
@@ -266,7 +296,7 @@ const CreateInterviewPage = () => {
                 display: 'flex',
                 flexDirection: isMobile ? 'column' : 'row',
                 gap: Size.Small,
-                marginBottom: Size.Small,
+                marginBottom: isMobile ? '0px' : Size.Small,
                 background: `linear-gradient(135deg, ${Colors.TEXT_WHITE_COLOR} 0%, ${Colors.LECTURE_CONTENT_PART_COLOR} 100%)`,
                 borderRadius: Size.Small,
                 border: `1px solid ${Colors.LECTURE_CONTENT_PART_COLOR}`,
@@ -488,6 +518,50 @@ const CreateInterviewPage = () => {
                   error={errors.position}
                 />
 
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: Size.Small,
+                  paddingTop: Size.Medium,
+                  borderTop: `1px solid ${Colors.LECTURE_CONTENT_PART_COLOR}`,
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    marginBottom: Size.Small,
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontSize: isMobile ? Size.Small : Size.Medium,
+                      color: Colors.PRIMARY_COLOR,
+                      margin: 0,
+                    }}
+                  >
+                    Select Interview Stages
+                  </h3>
+                </div>
+                <p
+                  style={{
+                    fontSize: isMobile ? '12px' : Size.Small,
+                    fontFamily: font.Regular,
+                    color: Colors.SECONDARY_TEXT_COLOR,
+                    margin: 0,
+                    marginBottom: Size.Small,
+                    lineHeight: '1.5',
+                  }}
+                >
+                  Choose which stages you'd like to practice. You can select all or only specific sections.
+                </p>
+                <StageSelector
+                  selectedStages={formData.selectedStages}
+                  onStageToggle={handleStageToggle}
+                />
               </div>
             </div>
           </div>

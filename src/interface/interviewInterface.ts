@@ -78,16 +78,24 @@ export interface InterviewRecordingStats {
     recordingsByCategory: Record<string, number>;
 }
 
+export interface InterviewStage {
+	key: string;
+	label: string;
+	description?: string;
+}
+
 export interface CreateInterviewSessionWithNewResumeRequest {
     file: File;
     position: string;
     is_consent: boolean;
+    selected_stages?: string[];
 }
 
 export interface CreateInterviewSessionWithExistingResumeRequest {
     resume_id: string;
     position: string;
     is_consent: boolean;
+    selected_stages: string[];
 }
 
 export interface CreateInterviewSessionResponse {
