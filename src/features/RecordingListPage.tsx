@@ -531,8 +531,10 @@ const RecordingListPage = () => {
                                 </tbody>
                             )}
                         </table>
-                    
-                    {interviewSessionList.total_pages > 0 && !isLoading && (
+                </div>
+
+                                    
+                {interviewSessionList.total_pages > 0 && !isLoading && (
                         <div style={{ 
                             flexShrink: 0, 
                             paddingTop: '16px',
@@ -550,7 +552,6 @@ const RecordingListPage = () => {
                             />
                         </div>
                     )}
-                </div>
                 </div>
             </div>
         </ContentLayout>

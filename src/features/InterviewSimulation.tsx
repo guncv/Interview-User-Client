@@ -149,48 +149,35 @@ const InterviewSimulation = () => {
                         const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
                         
                         if (permissionStatus.state === 'denied') {
-                            setMicPermissionError("Microphone access was denied. Please allow microphone access in your browser settings and refresh the page.");
+                            setMicPermissionError("Microphone access was denied. Click the button below to request permission again.");
                             setShowMicPermissionPopup(true);
                             setHasMicPermission(false);
                             return;
                         } else if (permissionStatus.state === 'granted') {
                             setHasMicPermission(true);
                             return;
+                        } else if (permissionStatus.state === 'prompt') {
+                            setMicPermissionError("This application needs microphone access to conduct the interview. Click the button below to grant access.");
+                            setShowMicPermissionPopup(true);
+                            setHasMicPermission(false);
+                            return;
                         }
                     } catch (permError) {
-
+                        setMicPermissionError("This application needs microphone access to conduct the interview. Click the button below to grant access.");
+                        setShowMicPermissionPopup(true);
+                        setHasMicPermission(false);
                     }
+                } else {
+                    setMicPermissionError("This application needs microphone access to conduct the interview. Click the button below to grant access.");
+                    setShowMicPermissionPopup(true);
+                    setHasMicPermission(false);
                 }
-
-
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                stream.getTracks().forEach(track => track.stop());
-                setHasMicPermission(true);
             } catch (error) {
-                let errorMessage = "Microphone access is required for the interview.";
-                
-                if (error instanceof DOMException) {
-                    switch (error.name) {
-                        case 'NotAllowedError':
-                            errorMessage = "Microphone access was denied. Please allow microphone access in your browser settings to start the interview.";
-                            break;
-                        case 'NotFoundError':
-                            errorMessage = "No microphone found. Please connect a microphone to participate in the interview.";
-                            break;
-                        case 'NotReadableError':
-                            errorMessage = "Microphone is being used by another application. Please close other applications using the microphone.";
-                            break;
-                        default:
-                            errorMessage = `Microphone access is required: ${error instanceof Error ? error.message : 'Unknown error'}`;
-                    }
-                }
-                
-                setMicPermissionError(errorMessage);
+                setMicPermissionError("Microphone access is required for the interview. Click the button below to grant access.");
                 setShowMicPermissionPopup(true);
                 setHasMicPermission(false);
             }
         };
-
 
         checkMicrophonePermission();
     }, []);
@@ -251,6 +238,52 @@ const InterviewSimulation = () => {
     const handleMicPermissionError = useCallback((error: string) => {
         setMicPermissionError(error);
         setShowMicPermissionPopup(true);
+    }, []);
+
+    const handleRetryMicPermission = useCallback(async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true
+                }
+            });
+            
+            stream.getTracks().forEach(track => track.stop());
+            
+            setShowMicPermissionPopup(false);
+            setMicPermissionError("");
+            setHasMicPermission(true);
+            
+        } catch (error) {
+            let errorMessage = "Microphone access is required for the interview.";
+            
+            if (error instanceof DOMException) {
+                switch (error.name) {
+                    case 'NotAllowedError':
+                        errorMessage = "Microphone access was denied. You can try again by clicking the button below, or manually allow microphone access in your browser settings.";
+                        break;
+                    case 'NotFoundError':
+                        errorMessage = "No microphone found. Please connect a microphone and try again.";
+                        break;
+                    case 'NotReadableError':
+                        errorMessage = "Microphone is being used by another application. Please close other applications using the microphone and try again.";
+                        break;
+                    case 'OverconstrainedError':
+                        errorMessage = "Microphone constraints cannot be satisfied. Please check your microphone settings.";
+                        break;
+                    case 'SecurityError':
+                        errorMessage = "Microphone access is blocked due to security restrictions. Please check your browser settings.";
+                        break;
+                    default:
+                        errorMessage = `Microphone access failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
+                }
+            }
+            
+            setMicPermissionError(errorMessage);
+            setShowMicPermissionPopup(true);
+        }
     }, []);
 
     useVoiceStreaming(websocketRef, sessionIdRef.current, handleUserSpeakingChange, isMicMuted, connectionState === CONVERSATION_STATUS.CONNECTED, isConversationStarted, isUserTurnRef, handleMicPermissionError);
@@ -564,9 +597,12 @@ const InterviewSimulation = () => {
                 isOpen={showMicPermissionPopup}
                 title="Microphone Access Required"
                 message={micPermissionError || "This application needs microphone access to conduct the interview. Please allow microphone access before starting the interview."}
-                cancelText="Close" 
+                confirmText="Allow Microphone Access"
+                cancelText="Close"
+                confirmButtonColor={Colors.SUCCESS_COLOR}
                 cancelButtonColor={Colors.TEXT_WHITE_COLOR}
                 cancelButtonBackground={Colors.SECONDARY_TEXT_COLOR}
+                onConfirm={handleRetryMicPermission}
                 onCancel={() => setShowMicPermissionPopup(false)}
             />
         </ContentLayout>
