@@ -185,3 +185,42 @@ export const AUDIO_LEVEL = {
   MIN_AUDIO_LEVEL: 0.05,
   MIN_AUDIO_LEVEL_FOR_SHOW_USER_WAVE: 0.3,
 } as const;
+
+export const INTERVIEW_STAGES = [
+  { 
+    key: 'greeting', 
+    label: 'Greeting', 
+    description: 'Initial rapport building, ice-breaker questions, and making you comfortable. This is a warm-up phase to establish a friendly conversation.',
+    isMandatory: true
+  },
+  { 
+    key: 'introduction', 
+    label: 'Introduction', 
+    description: 'Tell me about yourself, your background, career journey, and what brings you to this role. A chance to present your professional story.',
+    isMandatory: true
+  },
+  { 
+    key: 'experience', 
+    label: 'Experience', 
+    description: 'Deep dive into your work history, key accomplishments, roles and responsibilities, and lessons learned from previous positions.',
+    isMandatory: false
+  },
+  { 
+    key: 'project', 
+    label: 'Project', 
+    description: 'Discussion about specific projects you\'ve worked on, your contributions, challenges faced, and outcomes achieved. Technical and non-technical details.',
+    isMandatory: false
+  },
+  { 
+    key: 'technical', 
+    label: 'Technical', 
+    description: 'Assessment of technical skills, problem-solving abilities, coding challenges, system design, algorithms, and domain-specific knowledge.',
+    isMandatory: false
+  },
+  { 
+    key: 'behavioral', 
+    label: 'Behavioral', 
+    description: 'Situational questions about teamwork, conflict resolution, leadership, time management, and how you handle various workplace scenarios.',
+    isMandatory: false
+  },
+] as const;

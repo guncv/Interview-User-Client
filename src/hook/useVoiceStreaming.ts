@@ -23,6 +23,14 @@ export function useVoiceStreaming(
     const lastSegmentEndTimeRef = useRef<number>(0);
     const segmentCooldownRef = useRef<number>(2000);
     const isStoppingRef = useRef<boolean>(false);
+    const animationFrameIdRef = useRef<number | null>(null);
+    const onUserSpeakingChangeRef = useRef(onUserSpeakingChange);
+    const onMicPermissionErrorRef = useRef(onMicPermissionError);
+    
+    useEffect(() => {
+        onUserSpeakingChangeRef.current = onUserSpeakingChange;
+        onMicPermissionErrorRef.current = onMicPermissionError;
+    }, [onUserSpeakingChange, onMicPermissionError]);
 
     useEffect(() => {
         if (!sessionId || !isConnected || !isConversationStarted) {
@@ -63,7 +71,7 @@ export function useVoiceStreaming(
                     }
                 }
                 
-                onMicPermissionError?.(errorMessage);
+                onMicPermissionErrorRef.current?.(errorMessage);
                 return;
             }
 
@@ -176,9 +184,9 @@ export function useVoiceStreaming(
                     
                     if (speakingRef.current) {
                         speakingRef.current = false;
-                        onUserSpeakingChange?.(false);
+                        onUserSpeakingChangeRef.current?.(false);
                     }
-                    requestAnimationFrame(detectSilence);
+                    animationFrameIdRef.current = requestAnimationFrame(detectSilence);
                     return;
                 }
 
@@ -199,14 +207,14 @@ export function useVoiceStreaming(
                     const timeSinceLastSegment = Date.now() - lastSegmentEndTimeRef.current;
                     const canStartNewSegment = timeSinceLastSegment >= segmentCooldownRef.current;
                     
-                    if (!speakingRef.current && !segmentStartedRef.current && isUserTurnRef?.current && canStartNewSegment) {
+                    if (!segmentStartedRef.current && !segmentIdRef.current &&isUserTurnRef?.current && canStartNewSegment) {
                         speakingRef.current = true;
                         segmentStartTimeRef.current = currentTime;
                         const segmentId = generateSegmentId(sessionId || '');
                         segmentIdRef.current = segmentId;
                         segmentStartedRef.current = true;
                         isStoppingRef.current = false; 
-                        onUserSpeakingChange?.(true);
+                        onUserSpeakingChangeRef.current?.(true);
                         
                         chunksRef.current = [];
                         mediaRecorderRef.current = createRecorder();
@@ -222,21 +230,24 @@ export function useVoiceStreaming(
                     }
 
                     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-                } else if (speakingRef.current && segmentIdRef.current) {
+                } else if (segmentIdRef.current && segmentStartedRef.current) {
                     const silenceDuration = currentTime - lastSpeechTimeRef.current;
-                    const totalSpeakingTime = currentTime - segmentStartTimeRef.current;
                     
-                    if (silenceDuration > 2000 && totalSpeakingTime > 2000) {
-                        silenceTimerRef.current = window.setTimeout(() => {
-                            speakingRef.current = false;
-                            onUserSpeakingChange?.(false);
-
-                            sendSegmentAudio();
-                        }, 500);
+                    if (silenceDuration > 2000) {
+                        if (!silenceTimerRef.current) {
+                            silenceTimerRef.current = window.setTimeout(() => {
+                                if (speakingRef.current) {
+                                    speakingRef.current = false;
+                                    onUserSpeakingChangeRef.current?.(false);
+                                }
+                                sendSegmentAudio();
+                                silenceTimerRef.current = null;
+                            }, 500);
+                        }
                     }
                 }
 
-                requestAnimationFrame(detectSilence);
+                animationFrameIdRef.current = requestAnimationFrame(detectSilence);
             }
 
             detectSilence();
@@ -245,6 +256,11 @@ export function useVoiceStreaming(
         startRecording();
 
         return () => {
+            if (animationFrameIdRef.current) {
+                cancelAnimationFrame(animationFrameIdRef.current);
+                animationFrameIdRef.current = null;
+            }
+            
             if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
             
             if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
@@ -259,5 +275,12 @@ export function useVoiceStreaming(
             segmentStartedRef.current = false;
             speakingRef.current = false;
         };
-    }, [websocketRef, sessionId, onUserSpeakingChange, isMicMuted, isConnected, isConversationStarted, isUserTurnRef, onMicPermissionError]);
+    }, [websocketRef, sessionId, isConnected, isConversationStarted, isUserTurnRef]);
+
+    useEffect(() => {
+        if (isMicMuted && speakingRef.current) {
+            speakingRef.current = false;
+            onUserSpeakingChangeRef.current?.(false);
+        }
+    }, [isMicMuted]);
 }
