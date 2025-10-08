@@ -17,7 +17,7 @@ const AuthPageLayout = ({ title, highlight, description, signUp = false, childre
     const { isMobile } = useContextProvider();
 
     const titleStyle: CSSProperties = {
-        fontSize: isMobile ? '20px' : '35px',
+        fontSize: isMobile ? '25px' : '35px',
         color: Colors.PRIMARY_COLOR,
     };
 
@@ -26,7 +26,7 @@ const AuthPageLayout = ({ title, highlight, description, signUp = false, childre
     };
 
     const descriptionStyle: CSSProperties = {
-        fontSize: isMobile ? Size.Small : Size.Medium,
+        fontSize: isMobile ? "13px" : Size.Medium,
         color: Colors.SECONDARY_TEXT_COLOR,
         whiteSpace: 'pre-line',
     };
