@@ -5,6 +5,7 @@ import RecordingListPage from '../features/RecordingListPage';
 import CreateInterviewPage from '../features/CreateInterviewPage';
 import InterviewSimulation from '../features/InterviewSimulation';
 import InterviewEvaluationPage from '../features/InterviewEvaluationPage';
+import PrivacyPolicyPage from '../features/PrivacyPolicyPage';
 
 interface ComponentProps {
   title: string;
@@ -24,5 +25,6 @@ export const routes: RouteConfig[]= [
   { path: '/recordings', component: RecordingListPage, exact: true},
   { path: '/create-interview', component: CreateInterviewPage, exact: true},
   { path: '/interview', component: InterviewSimulation, exact: true},
-  { path: '/evaluation/:sessionId', component: InterviewEvaluationPage, exact: true}, 
+  { path: '/evaluation/:sessionId', component: InterviewEvaluationPage, exact: true},
+  { path: '/privacy-policy', component: PrivacyPolicyPage, exact: true},
 ];
