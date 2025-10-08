@@ -6,6 +6,7 @@ import CreateInterviewPage from '../features/CreateInterviewPage';
 import InterviewSimulation from '../features/InterviewSimulation';
 import InterviewEvaluationPage from '../features/InterviewEvaluationPage';
 import PrivacyPolicyPage from '../features/PrivacyPolicyPage';
+import TermsOfServicePage from '../features/TermsOfServicePage';
 
 interface ComponentProps {
   title: string;
@@ -27,4 +28,5 @@ export const routes: RouteConfig[]= [
   { path: '/interview', component: InterviewSimulation, exact: true},
   { path: '/evaluation/:sessionId', component: InterviewEvaluationPage, exact: true},
   { path: '/privacy-policy', component: PrivacyPolicyPage, exact: true},
+  { path: '/terms-of-service', component: TermsOfServicePage, exact: true},
 ];
