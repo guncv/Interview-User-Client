@@ -341,6 +341,7 @@ const InterviewSimulation = () => {
                 websocketRef.current?.close();
                 break;
             case WEBSOCKET_TYPES.INTERVIEW_COMPLETED:
+                audioQueueManagerRef.current.completeCurrentTurn();
                 isSessionCompletedRef.current = true;
                 isInterviewerTurnEndedReceivedRef.current = true;
                 break;
